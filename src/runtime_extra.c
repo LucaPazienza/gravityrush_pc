@@ -1,4 +1,4 @@
-/* System functions added for MediEvil (CUSA11227, Unreal Engine 4), with the same offline,
+/* System functions added for Gravity Rush Remastered (CUSA01113) and Unreal Engine 4 games, with the same offline,
  * single-user contracts as runtime_services.c:
  *   - kernel event flags (full implementation), small kernel/libc queries;
  *   - POSIX names for rwlocks and scheduling;
@@ -348,6 +348,19 @@ static ABI int32_t ngs2_render(uintptr_t system, Ngs2RenderBuffer *buffers, uint
     return 0;
 }
 static ABI int32_t ngs2_unsupported_waveform(void) { return (int32_t)0x804A0200; } /* invalid waveform */
+/* GOW3_AUDIO_TRACE=1: the first waveforms the game asks NGS2 to parse (all reported as invalid). */
+static ABI int32_t ngs2_parse_waveform(const unsigned char *data, uint64_t size, void *info) {
+    static int left=-1;
+    if (left<0) { const char *e=getenv("GOW3_AUDIO_TRACE"); left=e && e[0]=='1' ? 40 : 0; }
+    if (left>0) {
+        --left;
+        printf("Runtime: NGS2 parse waveform %p size=%llu head=%02x%02x%02x%02x '%.4s' info=%p\n",(const void *)data,
+               (unsigned long long)size,data ? data[0] : 0,data ? data[1] : 0,data ? data[2] : 0,data ? data[3] : 0,
+               data ? (const char *)data : "",info);
+        fflush(stdout);
+    }
+    return ngs2_unsupported_waveform();
+}
 
 /* ---- Json2 (C++ ABI, this in rdi). Parsing reports failure; values read as null/empty. ---- */
 static unsigned char json_null[64];
@@ -539,7 +552,7 @@ static const RuntimeExport exports[]={
     {"sceNgs2RackGetVoiceHandle",ngs2_voice_handle}, {"sceNgs2VoiceControl",ok_noop},
     {"sceNgs2VoiceGetState",ngs2_voice_state}, {"sceNgs2VoiceGetStateFlags",ngs2_voice_flags},
     {"sceNgs2SystemRender",ngs2_render}, {"sceNgs2PanInit",ok_noop}, {"sceNgs2PanGetVolumeMatrix",ok_noop},
-    {"sceNgs2ParseWaveformData",ngs2_unsupported_waveform}, {"sceNgs2CalcWaveformBlock",ngs2_unsupported_waveform},
+    {"sceNgs2ParseWaveformData",ngs2_parse_waveform}, {"sceNgs2CalcWaveformBlock",ngs2_unsupported_waveform},
     {"_ZN3sce4Json11InitializerC1Ev",json_nothing}, {"_ZN3sce4Json11InitializerD1Ev",json_nothing},
     {"_ZN3sce4Json11Initializer10initializeEPKNS0_13InitParameterE",json_initialize},
     {"_ZN3sce4Json12MemAllocatorC2Ev",json_nothing}, {"_ZN3sce4Json12MemAllocatorD2Ev",json_nothing},
@@ -562,7 +575,7 @@ static const RuntimeExport exports[]={
     {"scePthreadRwlockattrInit",ok_noop}, {"scePthreadRwlockattrDestroy",ok_noop}, {"scePthreadRwlockattrSettype",ok_noop}, {"scePthreadRwlockattrGettype",ok_noop},
     {"sceScreenShotSetParam",ok_noop}, {"sceScreenShotSetOverlayImage",ok_noop}, {"sceScreenShotSetOverlayImageWithOrigin",ok_noop}, {"sceScreenShotIsDisabled",ok_noop},
 };
-/* MediEvil native output (GOW3_UE4_SETRES=WxH, run.py): the base PS4 renderer makes its buffers at
+/* Unreal Engine 4 native output (GOW3_UE4_SETRES=WxH, run.py): the base PS4 renderer makes its buffers at
  * the display size at start and only a live r.SetRes change resizes them (the debug menu's
  * Cinematic button). After about 10 s of play this sets the game's own r.SetRes console variable
  * as UE4's FSystemResolution::RequestResolutionChange does (0x2765ef1): flags = GetFlags()
@@ -601,7 +614,7 @@ void runtime_ue4_request_setres(const char *text) {
     __atomic_store_n(&ue4_request_pending,1,__ATOMIC_RELEASE);
 }
 
-/* MediEvil native output (GOW3_UE4_SETRES=WxH, run.py): the base PS4 renderer makes its buffers at
+/* Unreal Engine 4 native output (GOW3_UE4_SETRES=WxH, run.py): the base PS4 renderer makes its buffers at
  * the display size at start and only a live r.SetRes change resizes them (the debug menu's
  * Cinematic button). After about 10 s of play this sets the game's own r.SetRes console variable
  * as UE4's FSystemResolution::RequestResolutionChange does (0x2765ef1): flags = GetFlags()
