@@ -5,3 +5,5 @@
 namespace Libraries::Kernel {
 int* PS4_SYSV_ABI __Error();
 } // namespace Libraries::Kernel
+#include "core/libraries/kernel/process.h"
+#include "core/libraries/kernel/time.h"

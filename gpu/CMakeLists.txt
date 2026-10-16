@@ -140,7 +140,9 @@ set(COMMON
     shadps4/common/string_util.cpp shadps4/common/thread.cpp shadps4/common/signal_context.cpp
     shim/common/logging/log.cpp)
 file(GLOB AVPLAYER CONFIGURE_DEPENDS shadps4/core/libraries/avplayer/*.cpp)
+file(GLOB FONTLIB CONFIGURE_DEPENDS shadps4/core/libraries/font/*.cpp)
 pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET libavformat libavcodec libavutil libswscale libswresample)
+pkg_check_modules(FREETYPE REQUIRED IMPORTED_TARGET freetype2)
 file(GLOB SHIM_SOURCES CONFIGURE_DEPENDS shim/*.cpp shim/*/*.cpp)
 # Windows: a DLL cannot leave the runtime_* symbols for medievil-runtime.exe to resolve, so the
 # library is static there and linked into the executable.
@@ -152,7 +154,7 @@ endif()
 add_library(gow3gpu ${GOW3GPU_KIND} ${VIDEO_CORE} ${RECOMPILER} ${COMMON} ${SHIM_SOURCES}
     shadps4/core/libraries/gnmdriver/gnmdriver.cpp
     shadps4/core/libraries/videoout/driver.cpp shadps4/core/libraries/videoout/video_out.cpp
-    shadps4/core/libraries/kernel/equeue.cpp ${AVPLAYER}
+    shadps4/core/libraries/kernel/equeue.cpp ${AVPLAYER} ${FONTLIB}
     shadps4/core/libraries/videodec/video_utils.cpp)
 add_dependencies(gow3gpu host_shaders)
 # In-game settings menu: Dear ImGui (third_party/imgui, MIT) with its Vulkan backend, and an
@@ -174,7 +176,7 @@ if (NOT WIN32)
 endif()
 target_link_libraries(gow3gpu PRIVATE ffx-vulkan::portable ffx-vulkan::fsr4-v07-vulkan)
 target_link_libraries(gow3gpu PUBLIC Vulkan::Headers fmt::fmt Boost::headers magic_enum::magic_enum
-    tsl::robin_map GPUOpen::VulkanMemoryAllocator PkgConfig::XXHASH PkgConfig::SDL3 PkgConfig::FFMPEG miniz::miniz Zydis::Zydis sirit)
+    tsl::robin_map GPUOpen::VulkanMemoryAllocator PkgConfig::XXHASH PkgConfig::SDL3 PkgConfig::FFMPEG PkgConfig::FREETYPE miniz::miniz Zydis::Zydis sirit)
 if (WIN32)
     # Guest code is entered with the System V ABI; NOMINMAX/WIN32_LEAN_AND_MEAN keep
     # <windows.h> out of the way of std::min/max and the Vulkan/SDL headers.

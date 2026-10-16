@@ -3,6 +3,7 @@
 #pragma once
 #include <algorithm>
 #include <cstdlib>
+#include <filesystem>
 #include <string>
 #include "common/types.h"
 
@@ -21,6 +22,9 @@ public:
         const char* v = std::getenv(name);
         return v ? std::strtol(v, nullptr, 10) : fallback;
     }
+    // gow3: the font library looks for PS4 system fonts in this folder. A PC port has none (the game
+    // brings its own fonts), so it is empty: "no system fonts".
+    std::filesystem::path GetFontsDir() { return {}; }
     s32 GetGpuId() { static const auto value = s32(Number("GOW3_GPU_ID", -1)); return value; }
     u32 GetInternalScreenWidth() { static const auto value = u32(Number("GOW3_INTERNAL_WIDTH", 1920)); return value; }
     u32 GetInternalScreenHeight() { static const auto value = u32(Number("GOW3_INTERNAL_HEIGHT", 1080)); return value; }

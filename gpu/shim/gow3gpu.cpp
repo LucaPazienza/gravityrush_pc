@@ -52,6 +52,8 @@ Frontend::WindowSDL* g_window = nullptr;
 
 namespace Libraries::GnmDriver { void RegisterLib(Core::Loader::SymbolsResolver* sym); }
 namespace Libraries::AvPlayer { void RegisterLib(Core::Loader::SymbolsResolver* sym); }
+namespace Libraries::Font { void RegisterLib(Core::Loader::SymbolsResolver* sym); }
+namespace Libraries::FontFt { void RegisterLib(Core::Loader::SymbolsResolver* sym); }
 namespace Libraries::VideoOut { void RegisterLib(Core::Loader::SymbolsResolver* sym); }
 namespace Libraries::Kernel { void RegisterEventQueue(Core::Loader::SymbolsResolver* sym); }
 
@@ -256,6 +258,8 @@ extern "C" void gow3gpu_register_kernel(void) {
     Core::Loader::SymbolsResolver resolver;
     Libraries::Kernel::RegisterEventQueue(&resolver);
     Libraries::AvPlayer::RegisterLib(&resolver);
+    Libraries::Font::RegisterLib(&resolver);
+    Libraries::FontFt::RegisterLib(&resolver);
 }
 
 extern "C" uintptr_t gow3gpu_resolve(const char* scoped_nid) {

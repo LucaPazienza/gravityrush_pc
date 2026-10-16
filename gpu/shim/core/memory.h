@@ -16,6 +16,13 @@ public:
         // The PS4's GPU can only handle 40 bit addresses.
         return virtual_addr + size < 0x100'0000'0000ULL;
     }
+    // gow3: the font library asks whether a pointer from the game is usable. Guest pointers (stack, image
+    // and heap alike) are below 1 TiB, so that is the test; a bad pointer inside that range faults exactly
+    // as it would in every other HLE function.
+    bool IsValidMapping(VAddr virtual_addr, u64 size = 0) const {
+        constexpr u64 kGuestLimit = 1ull << 40;
+        return virtual_addr >= 0x10000 && virtual_addr < kGuestLimit && size < kGuestLimit - virtual_addr;
+    }
     u64 ClampRangeSize(VAddr virtual_addr, u64 size);
     void CopySparseMemory(VAddr source, u8* dest, u64 size);
     bool TryWriteBacking(void* address, const void* data, u64 size);
