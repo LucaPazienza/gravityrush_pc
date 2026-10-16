@@ -28,16 +28,25 @@ Project Goals
 - Preserve the original gameplay, especially gravity shifting, traversal, and combat.
 - Document technical findings, compatibility, and progress as the project develops.
 These are project goals, not a statement that the features are already implemented.
-Current Status
-Status: Work in progress.
-The project is under development. Compatibility, playable areas, performance, supported platforms, and known issues will be added here once they have been verified.
-Area	Status
-Project setup and technical investigation	In progress
-Native runtime and game boot	Not yet documented
-Gameplay compatibility	Not yet documented
-Graphics and audio	Not yet documented
-Input and settings	Not yet documented
+## Current Status
 
+**Status: Early Development**
+
+This project is in its very early stages. Development is currently focused on initial research, understanding the existing God of War native port, and evaluating the work required to bring Gravity Rush to PC.
+
+No playable build or working features are currently guaranteed.
+
+Progress updates, technical findings, compatibility information, and build instructions will be added as development moves forward.
+
+### Roadmap
+
+- [ ] Initial research and project setup
+- [ ] Analyze the existing porting framework
+- [ ] Investigate Gravity Rush's engine and platform-specific systems
+- [ ] Establish a working native runtime
+- [ ] Implement and test core game functionality
+- [ ] Improve graphics, audio, input, and performance
+- [ ] Document build instructions and compatibility
 
 Please do not assume the game is currently playable. This section will be updated as milestones are tested.
 
