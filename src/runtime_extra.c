@@ -326,7 +326,7 @@ static ABI int32_t ngs2_system_create(const void *option, const void *allocator,
 static long ngs2_n_state, ngs2_n_flags, ngs2_n_control;
 static int ngs2_trace_left(void) {
     static int left=-1;
-    if (left<0) { const char *e=getenv("GOW3_AUDIO_TRACE"); left=e && e[0]=='1' ? 300 : 0; }
+    if (left<0) { const char *e=getenv("GOW3_AUDIO_TRACE"); left=e && e[0]=='1' ? 3000 : 0; }
     return left>0 ? left-- : 0;
 }
 void runtime_ngs2_report(void) {
@@ -350,9 +350,14 @@ static ABI int32_t ngs2_voice_control(uintptr_t voice, const Ngs2ParamHeader *pa
     if (trace) {
         char line[512];
         int n=snprintf(line,sizeof(line),"Runtime: NGS2 VoiceControl 0x%llx:",(unsigned long long)voice);
-        for (int i=0;param && i<16 && n<(int)sizeof(line)-48;++i) {
+        /* Room for one more param (up to ~80 characters); snprintf's return can pass the end. */
+        for (int i=0;param && i<16 && n>=0 && n<(int)sizeof(line)-96;++i) {
             n+=snprintf(line+n,sizeof(line)-n," [id 0x%x size %u",param->id,param->size);
             if (param->size>=12) n+=snprintf(line+n,sizeof(line)-n," v 0x%x",((const uint32_t *)param)[2]);
+            if (param->size>=16) {
+                float f; memcpy(&f,(const uint32_t *)param+3,4);
+                n+=snprintf(line+n,sizeof(line)-n," w 0x%x (%g)",((const uint32_t *)param)[3],(double)f);
+            }
             n+=snprintf(line+n,sizeof(line)-n,"]");
             param=param->next ? (const Ngs2ParamHeader *)((const char *)param+param->next) : NULL;
         }
@@ -382,7 +387,10 @@ static ABI int32_t ngs2_render(uintptr_t system, Ngs2RenderBuffer *buffers, uint
         memset(buffers[i].buffer,0,buffers[i].size);
         if (i==0 && buffers[i].channels) samples=(uint32_t)(buffers[i].size/(4u*buffers[i].channels));
     }
-    gr_voice_render(samples);
+    if (!ngs2_renders && count && buffers && ngs2_trace_left())
+        printf("Runtime: NGS2 render buffers=%u first: size=%llu waveform=0x%x channels=%u\n",count,
+               (unsigned long long)buffers[0].size,buffers[0].waveform,buffers[0].channels);
+    gr_voice_render(count && buffers && buffers[0].buffer ? buffers[0].buffer : NULL,count && buffers ? buffers[0].channels : 0,samples);
     ++ngs2_renders;
     return 0;
 }

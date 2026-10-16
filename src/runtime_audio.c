@@ -34,6 +34,7 @@ typedef struct {
     int32_t volume[8];
     SDL_AudioStream *stream;
     uint64_t next_deadline_ns; /* next return of sceAudioOutOutput */
+    unsigned trace_count;      /* GOW3_AUDIO_TRACE sampling */
     int64_t adjust_ns; int window_min, window_count; /* queue level control */
     uint64_t last_output_us;
     pthread_mutex_t lock;
@@ -158,6 +159,15 @@ static int32_t output_port(int32_t handle, const void *data, int pace) {
     size_t samples=(size_t)p->frames*(size_t)p->channels, bytes=samples*(size_t)p->sample_bytes;
     uint64_t period=(uint64_t)p->frames*1000000000u/48000u;
     if (data) {
+        /* GOW3_AUDIO_TRACE=1: every ~2 s per port, the buffer the game sends, its peak and volume. */
+        static int trace=-1;
+        if (trace<0) { const char *e=getenv("GOW3_AUDIO_TRACE"); trace=e && e[0]=='1'; }
+        if (trace && p->is_float && ++p->trace_count%((unsigned)(96000/p->frames))==1) {
+            float peak=0;
+            for (size_t i=0;i<samples;++i) { float v; memcpy(&v,(const char *)data+i*4,4); if (v<0) v=-v; if (v>peak) peak=v; }
+            printf("Audio trace: port %d data=%p peak=%.4f volume[0]=%d volume[1]=%d\n",(int)(p-ports),data,peak,
+                   (int)p->volume[0],(int)p->volume[1]);
+        }
         /* Apply per-channel volume and map PS4 8ch (L R C LFE SL SR BL BR) to SDL 7.1 order. */
         unsigned char converted[2048*8*4];
         static const int remap[8]={0,1,2,3,6,7,4,5};
