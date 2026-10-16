@@ -24,3 +24,6 @@ mods.json
 patches.json
 !launcher/gow3.png
 !launcher/medievil.png
+gr_run*.txt
+build_log.txt
+.vscode/

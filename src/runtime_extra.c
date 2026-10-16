@@ -451,6 +451,8 @@ static ABI __attribute__((noreturn)) void load_exec(const char *path, const void
     _exit(0);
 }
 
+#include "gr_fiber.inc"
+#include "gr_ngs2.inc"
 static const RuntimeExport exports[]={
     {"sceKernelLoadStartModule",load_start_module}, {"sceKernelDlsym",not_found},
     {"fcntl",posix_fcntl}, {"pthread_cancel",posix_cancel},
@@ -551,6 +553,12 @@ static const RuntimeExport exports[]={
     {"_ZNK3sce4Json5ValueixEPKc",json_null_value}, {"_ZNK3sce4Json5ValueixEm",json_null_value},
     {"_ZNK3sce4Json6String4sizeEv",json_zero}, {"_ZNK3sce4Json6String5c_strEv",json_c_str},
     {"_ZNK3sce4Json6String5emptyEv",json_empty}, {"_ZNK3sce4Json6StringeqEPKc",json_equals},
+    /* gr-stubs */
+    {"sceNetCtlInit",ok_noop},
+    {"sceNgs2SystemQueryBufferSize",gr_ngs2_system_query}, {"sceNgs2RackQueryBufferSize",gr_ngs2_rack_query}, {"sceNgs2SystemCreate",gr_ngs2_system_create}, {"sceNgs2RackCreate",gr_ngs2_rack_create},
+    {"_sceFiberInitializeImpl",gr_fiber_initialize}, {"sceFiberFinalize",gr_fiber_finalize}, {"sceFiberRun",gr_fiber_run}, {"sceFiberSwitch",gr_fiber_switch}, {"sceFiberReturnToThread",gr_fiber_return_to_thread}, {"sceFiberGetSelf",gr_fiber_get_self},
+    {"scePthreadRwlockattrInit",ok_noop}, {"scePthreadRwlockattrDestroy",ok_noop}, {"scePthreadRwlockattrSettype",ok_noop}, {"scePthreadRwlockattrGettype",ok_noop},
+    {"sceScreenShotSetParam",ok_noop}, {"sceScreenShotSetOverlayImage",ok_noop}, {"sceScreenShotSetOverlayImageWithOrigin",ok_noop}, {"sceScreenShotIsDisabled",ok_noop},
 };
 /* MediEvil native output (GOW3_UE4_SETRES=WxH, run.py): the base PS4 renderer makes its buffers at
  * the display size at start and only a live r.SetRes change resizes them (the debug menu's
