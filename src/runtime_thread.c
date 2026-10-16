@@ -47,6 +47,7 @@ typedef struct GuestThread {
     char name[32];
     int detached, finished, joined, host_owned;
 #ifdef _WIN32
+    HANDLE win; /* for thread dumps (F12) */
     gow3_jmp_buf exit_jump; /* no SEH unwinding through guest frames */
 #else
     jmp_buf exit_jump;
@@ -104,6 +105,9 @@ static void attach(GuestThread *t) {
     t->tls_block=block; t->tcb=tcb;
     set_gs(tcb);
     current=t;
+#ifdef _WIN32
+    DuplicateHandle(GetCurrentProcess(),GetCurrentThread(),GetCurrentProcess(),&t->win,0,FALSE,DUPLICATE_SAME_ACCESS);
+#endif
 }
 static GuestThread *new_thread(void) {
     GuestThread *t=calloc(1,sizeof(*t));
@@ -111,8 +115,10 @@ static GuestThread *new_thread(void) {
     t->attr=(ThreadAttr){.magic=ATTR_MAGIC,.policy=1,.prio=DEFAULT_PRIO,.stack=DEFAULT_STACK,.affinity=0x7f};
     return t;
 }
+static void start_dump_watcher(void);
 static void publish(GuestThread *t) {
     pthread_mutex_lock(&lock); t->next=threads; threads=t; pthread_mutex_unlock(&lock);
+    start_dump_watcher();
 }
 /* Host threads that call into guest code without being created by the guest
  * (the main thread, test threads) get a record on first use. */
@@ -413,4 +419,105 @@ void runtime_thread_report(void) {
     printf("Runtime: guest threads created=%zu, exited=%zu, joined=%zu\n",created,exited,joined_count);
     pthread_mutex_unlock(&lock);
 }
+
+#ifdef _WIN32
+/* F12 (or GOW3_THREAD_DUMP=<seconds> once): where every live guest thread is. Each thread is
+ * suspended only to copy its registers and the top of its stack, then resumed; printing happens
+ * afterwards, so a thread stopped while holding the heap or stdio lock cannot block the dump.
+ * Addresses in the game image print as "eboot+<offset>", others as "<module>+<offset>"; stack
+ * values are the ones that point into code (likely return addresses). */
+#define DUMP_STACK_BYTES 8192
+#define DUMP_MAX_THREADS 256
+#define DUMP_MAX_FRAMES 24
+#define GUEST_SPAN 0x20000000u
+typedef struct { char name[32]; DWORD id; int ok; CONTEXT c; size_t stack_len; uint64_t stack[DUMP_STACK_BYTES/8]; } DumpEntry;
+
+static int code_label(uint64_t a, char *out, size_t size) {
+    const unsigned char *image=runtime_image_base();
+    if (image && a-(uintptr_t)image<GUEST_SPAN) { snprintf(out,size,"eboot+0x%llx",(unsigned long long)(a-(uintptr_t)image)); return 1; }
+    HMODULE m=NULL;
+    if (a<0x10000 || !GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS|GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,(LPCSTR)(uintptr_t)a,&m) || !m)
+        return 0;
+    MEMORY_BASIC_INFORMATION mi;
+    if (!VirtualQuery((void *)(uintptr_t)a,&mi,sizeof(mi)) || !(mi.Protect & (PAGE_EXECUTE|PAGE_EXECUTE_READ|PAGE_EXECUTE_READWRITE|PAGE_EXECUTE_WRITECOPY)))
+        return 0;
+    char path[MAX_PATH];
+    DWORD n=GetModuleFileNameA(m,path,sizeof(path));
+    const char *base=path;
+    for (DWORD i=0;i<n;++i) if (path[i]=='\\' || path[i]=='/') base=path+i+1;
+    snprintf(out,size,"%s+0x%llx",n ? base : "?",(unsigned long long)(a-(uintptr_t)m));
+    return 1;
+}
+
+static void dump_threads(const char *why) {
+    DumpEntry *e=calloc(DUMP_MAX_THREADS,sizeof(*e));
+    if (!e) return;
+    HANDLE handles[DUMP_MAX_THREADS];
+    size_t count=0;
+    pthread_mutex_lock(&lock);
+    for (GuestThread *t=threads;t && count<DUMP_MAX_THREADS;t=t->next) {
+        if (t->finished || !t->win || t==current) continue;
+        snprintf(e[count].name,sizeof(e[count].name),"%s",t->name);
+        e[count].id=GetThreadId(t->win);
+        handles[count++]=t->win;
+    }
+    pthread_mutex_unlock(&lock);
+    for (size_t i=0;i<count;++i) {
+        if (SuspendThread(handles[i])==(DWORD)-1) continue;
+        e[i].c.ContextFlags=CONTEXT_CONTROL|CONTEXT_INTEGER;
+        if (GetThreadContext(handles[i],&e[i].c)) {
+            e[i].ok=1;
+            MEMORY_BASIC_INFORMATION mi;
+            uint64_t sp=e[i].c.Rsp;
+            if (VirtualQuery((void *)(uintptr_t)sp,&mi,sizeof(mi)) && mi.State==MEM_COMMIT) {
+                uint64_t end=(uint64_t)(uintptr_t)mi.BaseAddress+mi.RegionSize;
+                size_t len=end-sp<DUMP_STACK_BYTES ? (size_t)(end-sp) : DUMP_STACK_BYTES;
+                memcpy(e[i].stack,(void *)(uintptr_t)sp,len&~(size_t)7);
+                e[i].stack_len=len/8;
+            }
+        }
+        ResumeThread(handles[i]);
+    }
+    printf("==== Thread dump (%s): %zu guest threads ====\n",why,count);
+    for (size_t i=0;i<count;++i) {
+        char label[160];
+        if (!e[i].ok) { printf("[%s] tid %lu: no context\n",e[i].name,e[i].id); continue; }
+        if (!code_label(e[i].c.Rip,label,sizeof(label))) snprintf(label,sizeof(label),"0x%llx",(unsigned long long)e[i].c.Rip);
+        printf("[%s] tid %lu rip=%s rsp=0x%llx rdi=0x%llx rsi=0x%llx\n",e[i].name,e[i].id,label,(unsigned long long)e[i].c.Rsp,
+               (unsigned long long)e[i].c.Rdi,(unsigned long long)e[i].c.Rsi);
+        int frames=0;
+        for (size_t k=0;k<e[i].stack_len && frames<DUMP_MAX_FRAMES;++k)
+            if (code_label(e[i].stack[k],label,sizeof(label))) { printf("    [rsp+0x%zx] %s\n",k*8,label); ++frames; }
+    }
+    runtime_ngs2_report();
+    printf("==== end of thread dump ====\n");
+    fflush(stdout);
+    free(e);
+}
+
+static void *dump_watcher(void *arg) {
+    (void)arg;
+    const char *env=getenv("GOW3_THREAD_DUMP");
+    ULONGLONG auto_at=env && atoi(env)>0 ? GetTickCount64()+(ULONGLONG)atoi(env)*1000 : 0;
+    int was_down=0;
+    for (;;) {
+        Sleep(100);
+        int down=(GetAsyncKeyState(VK_F12)&0x8000)!=0;
+        if (down && !was_down) dump_threads("F12");
+        was_down=down;
+        if (auto_at && GetTickCount64()>=auto_at) { auto_at=0; dump_threads("GOW3_THREAD_DUMP"); }
+    }
+    return NULL;
+}
+static void start_dump_watcher_once(void) {
+    pthread_t watcher;
+    if (!pthread_create(&watcher,NULL,dump_watcher,NULL)) pthread_detach(watcher);
+}
+static void start_dump_watcher(void) {
+    static pthread_once_t once=PTHREAD_ONCE_INIT;
+    pthread_once(&once,start_dump_watcher_once);
+}
+#else
+static void start_dump_watcher(void) {}
+#endif
 

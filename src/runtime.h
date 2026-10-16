@@ -35,6 +35,7 @@ void runtime_set_procparam(void *param);
 void **runtime_application_heap_api(void);
 uintptr_t runtime_thread_resolve(const char *name);
 void runtime_thread_report(void);
+void runtime_ngs2_report(void);
 void runtime_set_main_tls(const void *data, uint64_t filesz, uint64_t memsz, uint64_t align);
 void runtime_thread_attach_main(void);
 int32_t *runtime_errno(void);

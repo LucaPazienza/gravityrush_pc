@@ -321,29 +321,68 @@ static ABI int32_t ngs2_system_create(const void *option, const void *allocator,
     puts("Runtime: NGS2 system created (silent renderer)");
     return 0;
 }
+/* Call counts (printed with the F12 thread dump) and, with GOW3_AUDIO_TRACE=1, the first voice
+ * commands, to see what the game waits for while no sound plays. */
+static long ngs2_n_state, ngs2_n_flags, ngs2_n_control;
+static int ngs2_trace_left(void) {
+    static int left=-1;
+    if (left<0) { const char *e=getenv("GOW3_AUDIO_TRACE"); left=e && e[0]=='1' ? 300 : 0; }
+    return left>0 ? left-- : 0;
+}
+void runtime_ngs2_report(void) {
+    printf("NGS2 calls so far: VoiceGetState=%ld VoiceGetStateFlags=%ld VoiceControl=%ld SystemRender=%zu\n",
+           __atomic_load_n(&ngs2_n_state,__ATOMIC_RELAXED),__atomic_load_n(&ngs2_n_flags,__ATOMIC_RELAXED),
+           __atomic_load_n(&ngs2_n_control,__ATOMIC_RELAXED),ngs2_renders);
+}
 static ABI int32_t ngs2_rack_create(uintptr_t system, uint32_t rack, const void *option, const void *allocator, uintptr_t *out) {
-    (void)system; (void)rack; (void)option; (void)allocator;
+    (void)system; (void)option; (void)allocator;
     if (!out) return (int32_t)0x804A0003;
-    *out=ngs2_token(); return 0;
+    *out=ngs2_token();
+    if (ngs2_trace_left()) printf("Runtime: NGS2 rack id 0x%x -> 0x%llx\n",rack,(unsigned long long)*out);
+    return 0;
+}
+typedef struct { uint16_t size; int16_t next; uint32_t id; } Ngs2ParamHeader;
+#include "gr_ngs2_voice.inc"
+static ABI int32_t ngs2_voice_control(uintptr_t voice, const Ngs2ParamHeader *param) {
+    __atomic_add_fetch(&ngs2_n_control,1,__ATOMIC_RELAXED);
+    int trace=param && ngs2_trace_left();
+    gr_voice_control(voice,param,trace);
+    if (trace) {
+        char line[512];
+        int n=snprintf(line,sizeof(line),"Runtime: NGS2 VoiceControl 0x%llx:",(unsigned long long)voice);
+        for (int i=0;param && i<16 && n<(int)sizeof(line)-48;++i) {
+            n+=snprintf(line+n,sizeof(line)-n," [id 0x%x size %u",param->id,param->size);
+            if (param->size>=12) n+=snprintf(line+n,sizeof(line)-n," v 0x%x",((const uint32_t *)param)[2]);
+            n+=snprintf(line+n,sizeof(line)-n,"]");
+            param=param->next ? (const Ngs2ParamHeader *)((const char *)param+param->next) : NULL;
+        }
+        puts(line);
+    }
+    return 0;
 }
 static ABI int32_t ngs2_voice_handle(uintptr_t rack, uint32_t index, uintptr_t *out) {
     if (!out) return (int32_t)0x804A0003;
     *out=rack+0x100000+(uintptr_t)index*0x10; return 0;
 }
 static ABI int32_t ngs2_voice_state(uintptr_t voice, void *state, uint64_t size) {
-    (void)voice;
-    if (state && size) memset(state,0,size); /* stopped, not in use */
+    __atomic_add_fetch(&ngs2_n_state,1,__ATOMIC_RELAXED);
+    gr_voice_state(voice,state,size);
     return 0;
 }
 static ABI int32_t ngs2_voice_flags(uintptr_t voice, uint32_t *flags) {
-    (void)voice;
-    if (flags) *flags=0;
+    __atomic_add_fetch(&ngs2_n_flags,1,__ATOMIC_RELAXED);
+    if (flags) *flags=gr_voice_flags(voice);
     return 0;
 }
 typedef struct { void *buffer; uint64_t size; uint32_t waveform, channels; } Ngs2RenderBuffer;
 static ABI int32_t ngs2_render(uintptr_t system, Ngs2RenderBuffer *buffers, uint32_t count) {
     (void)system;
-    for (uint32_t i=0;buffers && i<count;++i) if (buffers[i].buffer) memset(buffers[i].buffer,0,buffers[i].size);
+    uint32_t samples=256; /* default grain; the first buffer (float samples) tells the real one */
+    for (uint32_t i=0;buffers && i<count;++i) if (buffers[i].buffer) {
+        memset(buffers[i].buffer,0,buffers[i].size);
+        if (i==0 && buffers[i].channels) samples=(uint32_t)(buffers[i].size/(4u*buffers[i].channels));
+    }
+    gr_voice_render(samples);
     ++ngs2_renders;
     return 0;
 }
@@ -549,7 +588,7 @@ static const RuntimeExport exports[]={
     {"sceAppContentTemporaryDataMount2",temp_mount2},
     {"sceNgs2SystemCreateWithAllocator",ngs2_system_create}, {"sceNgs2SystemDestroy",ok_noop},
     {"sceNgs2RackCreateWithAllocator",ngs2_rack_create}, {"sceNgs2RackDestroy",ok_noop},
-    {"sceNgs2RackGetVoiceHandle",ngs2_voice_handle}, {"sceNgs2VoiceControl",ok_noop},
+    {"sceNgs2RackGetVoiceHandle",ngs2_voice_handle}, {"sceNgs2VoiceControl",ngs2_voice_control},
     {"sceNgs2VoiceGetState",ngs2_voice_state}, {"sceNgs2VoiceGetStateFlags",ngs2_voice_flags},
     {"sceNgs2SystemRender",ngs2_render}, {"sceNgs2PanInit",ok_noop}, {"sceNgs2PanGetVolumeMatrix",ok_noop},
     {"sceNgs2ParseWaveformData",ngs2_parse_waveform}, {"sceNgs2CalcWaveformBlock",ngs2_unsupported_waveform},
