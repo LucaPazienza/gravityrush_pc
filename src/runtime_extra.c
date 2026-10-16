@@ -453,6 +453,7 @@ static ABI __attribute__((noreturn)) void load_exec(const char *path, const void
 
 #include "gr_fiber.inc"
 #include "gr_ngs2.inc"
+#include "gr_font.inc"
 static const RuntimeExport exports[]={
     {"sceKernelLoadStartModule",load_start_module}, {"sceKernelDlsym",not_found},
     {"fcntl",posix_fcntl}, {"pthread_cancel",posix_cancel},
@@ -554,6 +555,8 @@ static const RuntimeExport exports[]={
     {"_ZNK3sce4Json6String4sizeEv",json_zero}, {"_ZNK3sce4Json6String5c_strEv",json_c_str},
     {"_ZNK3sce4Json6String5emptyEv",json_empty}, {"_ZNK3sce4Json6StringeqEPKc",json_equals},
     /* gr-stubs */
+    {"sceAudioOutSetMixLevelPadSpk",ok_noop},
+    {"sceFontMemoryInit",gr_font_sceFontMemoryInit}, {"sceFontMemoryTerm",gr_font_sceFontMemoryTerm}, {"sceFontSupportSystemFonts",gr_font_sceFontSupportSystemFonts}, {"sceFontSupportExternalFonts",gr_font_sceFontSupportExternalFonts}, {"sceFontCreateLibraryWithEdition",gr_font_sceFontCreateLibraryWithEdition}, {"sceFontCreateRendererWithEdition",gr_font_sceFontCreateRendererWithEdition}, {"sceFontOpenFontMemory",gr_font_sceFontOpenFontMemory}, {"sceFontAttachDeviceCacheBuffer",gr_font_sceFontAttachDeviceCacheBuffer}, {"sceFontBindRenderer",gr_font_sceFontBindRenderer}, {"sceFontUnbindRenderer",gr_font_sceFontUnbindRenderer}, {"sceFontCloseFont",gr_font_sceFontCloseFont}, {"sceFontDestroyLibrary",gr_font_sceFontDestroyLibrary}, {"sceFontDestroyRenderer",gr_font_sceFontDestroyRenderer}, {"sceFontGetCharGlyphMetrics",gr_font_sceFontGetCharGlyphMetrics}, {"sceFontGetKerning",gr_font_sceFontGetKerning}, {"sceFontGetScalePixel",gr_font_sceFontGetScalePixel}, {"sceFontSetScalePixel",gr_font_sceFontSetScalePixel}, {"sceFontSetupRenderScalePixel",gr_font_sceFontSetupRenderScalePixel}, {"sceFontRenderCharGlyphImageHorizontal",gr_font_sceFontRenderCharGlyphImageHorizontal}, {"sceFontRenderSurfaceInit",gr_font_sceFontRenderSurfaceInit}, {"sceFontSelectLibraryFt",gr_font_sceFontSelectLibraryFt}, {"sceFontSelectRendererFt",gr_font_sceFontSelectRendererFt},
     {"sceNetCtlInit",ok_noop},
     {"sceNgs2SystemQueryBufferSize",gr_ngs2_system_query}, {"sceNgs2RackQueryBufferSize",gr_ngs2_rack_query}, {"sceNgs2SystemCreate",gr_ngs2_system_create}, {"sceNgs2RackCreate",gr_ngs2_rack_create},
     {"_sceFiberInitializeImpl",gr_fiber_initialize}, {"sceFiberFinalize",gr_fiber_finalize}, {"sceFiberRun",gr_fiber_run}, {"sceFiberSwitch",gr_fiber_switch}, {"sceFiberReturnToThread",gr_fiber_return_to_thread}, {"sceFiberGetSelf",gr_fiber_get_self},

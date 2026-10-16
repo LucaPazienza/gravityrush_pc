@@ -1,0 +1,775 @@
+// SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
+// SPDX-License-Identifier: GPL-2.0-or-later
+
+#pragma once
+
+#include <cstddef>
+#include "common/types.h"
+
+namespace Core::Loader {
+class SymbolsResolver;
+}
+
+namespace Libraries::Font {
+
+struct OrbisFontHandleOpaque {
+    u32 reserved[64];
+};
+
+using OrbisFontLib = void*;
+using OrbisFontHandle = OrbisFontHandleOpaque*;
+using OrbisFontRendererCreateParams = void*;
+using OrbisFontRenderer = void*;
+using OrbisFontLibCreateParams = void*;
+
+struct OrbisFontMem;
+
+struct OrbisFontOpenParams {
+    u16 tag;
+    u16 pad16;
+    u32 flags;
+    u32 subfont_index;
+    s32 unique_id;
+    const void* reserved_ptr2;
+    const void* reserved_ptr1;
+};
+
+// Fontlib APIs use Unicode scalar values (UTF-32 codepoints) in `u32` parameters such as `code` and
+// `codepoint`. Codepoint-to-glyph resolution is performed via FreeType charmaps, with additional
+// sysfont mapping and fallback behavior handled internally.
+struct OrbisFontGlyphMetrics {
+    float width;
+    float height;
+    struct {
+        float bearingX;
+        float bearingY;
+        float advance;
+    } Horizontal;
+    struct {
+        float bearingX;
+        float bearingY;
+        float advance;
+    } Vertical;
+};
+
+struct OrbisFontGlyphMetricsHorizontal {
+    float width;
+    float height;
+    struct {
+        float bearing_x;
+        float bearing_y;
+        float advance;
+    } horizontal;
+};
+
+struct OrbisFontGlyphMetricsHorizontalX {
+    float width;
+    struct {
+        float bearing_x;
+        float advance;
+    } horizontal;
+};
+
+struct OrbisFontGlyphMetricsHorizontalAdvance {
+    struct {
+        float advance;
+    } horizontal;
+};
+
+struct OrbisFontKerning {
+    float offsetX;
+    float offsetY;
+    float positionX;
+    float positionY;
+};
+
+struct OrbisFontGlyphImageMetrics {
+    float bearingX;
+    float bearingY;
+    float advance;
+    float stride;
+    u32 width;
+    u32 height;
+};
+
+struct OrbisFontGenerateGlyphParams {
+    u16 id;
+    u16 res0;
+    // Bitmask copied into `OrbisFontGlyphOpaque::flags`. Only bits `0x01` and `0x10` are accepted
+    // by the public API; other bits are rejected as invalid.
+    u16 form_options;
+    u8 glyph_form;
+    u8 metrics_form;
+    const OrbisFontMem* mem;
+    void* res1;
+    void* res2;
+};
+
+struct OrbisFontGlyphOutlinePoint {
+    float x;
+    float y;
+};
+
+struct OrbisFontGlyphOutline {
+    s16 contours_cnt;
+    s16 points_cnt;
+    u32 outline_flags;
+    OrbisFontGlyphOutlinePoint* points_ptr;
+    u8* tags_ptr;
+    u16* contour_end_idx;
+};
+
+struct OrbisFontGlyphOpaque {
+    u16 magic;
+    // Encoded flags copied from `OrbisFontGenerateGlyphParams::form_options`.
+    u16 flags;
+    u8 glyph_form;
+    u8 metrics_form;
+    u16 em_size;
+    u16 baseline;
+    u16 height_px;
+    u16 origin_x;
+    u16 origin_y;
+    float scale_x;
+    float base_scale;
+    const OrbisFontMem* memory;
+};
+
+using OrbisFontGlyph = OrbisFontGlyphOpaque*;
+
+struct OrbisFontResultStage {
+    u8* p_00;
+    u32 u32_08;
+    u32 u32_0C;
+    u32 u32_10;
+};
+
+struct OrbisFontSurfaceImage {
+    u8* address;
+    u32 widthByte;
+    u8 pixelSizeByte;
+    u8 pixelFormat;
+    u16 pad16;
+};
+
+struct OrbisFontRenderOutput {
+    const OrbisFontResultStage* stage;
+    OrbisFontSurfaceImage SurfaceImage;
+    struct {
+        u32 x;
+        u32 y;
+        u32 w;
+        u32 h;
+    } UpdateRect;
+    OrbisFontGlyphImageMetrics ImageMetrics;
+};
+
+using OrbisFontAllocFn = void*(void* object, u32 size);
+using OrbisFontFreeFn = void(void* object, void* p);
+using OrbisFontReallocFn = void*(void* object, void* p, u32 newSize);
+using OrbisFontCallocFn = void*(void* object, u32 nBlock, u32 size);
+using OrbisFontMspaceCreateFn = void*(void* parent, const char* name, void* address, u32 size,
+                                      u32 attr);
+using OrbisFontMspaceDestroyFn = void(void* parent, void* mspace);
+using OrbisFontMemDestroyFn = void(OrbisFontMem* fontMemory, void* object, void* destroyArg);
+
+using OrbisFontAllocCb = OrbisFontAllocFn*;
+using OrbisFontFreeCb = OrbisFontFreeFn*;
+using OrbisFontReallocCb = OrbisFontReallocFn*;
+using OrbisFontCallocCb = OrbisFontCallocFn*;
+using OrbisFontMspaceCreateCb = OrbisFontMspaceCreateFn*;
+using OrbisFontMspaceDestroyCb = OrbisFontMspaceDestroyFn*;
+using OrbisFontMemDestroyCb = OrbisFontMemDestroyFn*;
+
+struct OrbisFontMemInterface {
+    OrbisFontAllocCb alloc{};
+    OrbisFontFreeCb dealloc{};
+    OrbisFontReallocCb realloc_fn{};
+    OrbisFontCallocCb calloc_fn{};
+    OrbisFontMspaceCreateCb mspace_create{};
+    OrbisFontMspaceDestroyCb mspace_destroy{};
+};
+
+struct OrbisFontMem {
+    u16 mem_kind;
+    u16 attr_bits;
+    u32 region_size;
+    void* region_base;
+    void* mspace_handle;
+    const OrbisFontMemInterface* iface;
+    OrbisFontMemDestroyCb on_destroy;
+    void* destroy_ctx;
+    void* some_ctx1;
+    void* some_ctx2;
+};
+
+struct OrbisFontTextCharacter {
+    struct OrbisFontTextCharacter* prev;
+    struct OrbisFontTextCharacter* next;
+    void* textOrder;
+    OrbisFontHandle font;
+    void* shapeEntry;
+    u32 characterCode;
+    u8 reserved_0x2c[4];
+    u8 clusterSpan;
+    u8 clusterIndex;
+    u8 clusterKind;
+    s8 synthetic;
+    u8 reserved_0x34[4];
+    u64 flags;
+    u8 reserved_0x40[136];
+};
+
+struct OrbisFontRenderSurface {
+    void* buffer;
+    s32 widthByte;
+    s8 pixelSizeByte;
+    u8 pad0;
+    u8 styleFlag;
+    u8 pad2;
+    s32 width, height;
+    u32 sc_x0;
+    u32 sc_y0;
+    u32 sc_x1;
+    u32 sc_y1;
+    u64 reserved_q[11];
+};
+
+struct OrbisFontStyleFrame {
+    /*0x00*/ u16 magic;
+    // `flags1` controls which fields are considered valid overrides:
+    //  - bit0: scale override present (scaleUnit/scalePixelW/scalePixelH)
+    //  - bit1: slant override present (slantRatio)
+    //  - bit2: weight override present (effectWeightX/effectWeightY)
+    /*0x02*/ u8 flags1;
+    /*0x03*/ u8 flags2;
+    /*0x04*/ u32 hDpi;
+    /*0x08*/ u32 vDpi;
+    // `scaleUnit` selects how scale fields are interpreted:
+    //  - 0: pixel scale (`scalePixelW/scalePixelH`)
+    //  - 1: point scale (converted via DPI by style-state getters)
+    /*0x0C*/ u32 scaleUnit;
+    /*0x10*/ float baseScale;
+    /*0x14*/ float scalePixelW;
+    /*0x18*/ float scalePixelH;
+    /*0x1C*/ float effectWeightX;
+    /*0x20*/ float effectWeightY;
+    /*0x24*/ float slantRatio;
+    /*0x28*/ u32 reserved_0x28;
+    /*0x2C*/ u32 layout_cache_state;
+    // Packed cache metadata:
+    //  - bits [7:0]   cache flags
+    //  - bits [31:16] direction word
+    /*0x30*/ u32 cache_flags_and_direction;
+    /*0x34*/ u32 cache_lock_word;
+    /*0x38*/ u8 layout_cache_bytes[0x20];
+    /*0x58*/ u32 reserved_0x58;
+    /*0x5C*/ u32 cached_scalar_bits;
+};
+
+struct OrbisFontTextSource;
+
+union OrbisFontTextParseResult {
+    void* reserved[4];
+
+    struct {
+        OrbisFontHandle font;
+        u32 code;
+    } FontCode;
+
+    struct {
+        void* reserved;
+        u32 terminateCode;
+    } Terminate;
+
+    struct {
+        void* reserved;
+        s32 errorCode;
+    } Error;
+};
+
+using OrbisFontTextParseFunction = s32(PS4_SYSV_ABI*)(OrbisFontTextSource* fontTextSource,
+                                                      void** order,
+                                                      OrbisFontTextParseResult* result);
+
+using OrbisFontTextParser = OrbisFontTextParseFunction;
+
+struct OrbisFontTextSource {
+    u64 systemUse0;
+
+    const void* start;
+    const void* end;
+    const void* current;
+    OrbisFontTextParseFunction textParser;
+    void* textObject;
+
+    OrbisFontHandle defaultFont;
+
+    void* systemUse[5];
+};
+
+static_assert(sizeof(OrbisFontStyleFrame) == 0x60, "OrbisFontStyleFrame size");
+static_assert(offsetof(OrbisFontStyleFrame, magic) == 0x00, "OrbisFontStyleFrame magic offset");
+static_assert(offsetof(OrbisFontStyleFrame, flags1) == 0x02, "OrbisFontStyleFrame flags1 offset");
+static_assert(offsetof(OrbisFontStyleFrame, hDpi) == 0x04, "OrbisFontStyleFrame hDpi offset");
+static_assert(offsetof(OrbisFontStyleFrame, vDpi) == 0x08, "OrbisFontStyleFrame vDpi offset");
+static_assert(offsetof(OrbisFontStyleFrame, scaleUnit) == 0x0C,
+              "OrbisFontStyleFrame scaleUnit offset");
+static_assert(offsetof(OrbisFontStyleFrame, scalePixelW) == 0x14,
+              "OrbisFontStyleFrame scalePixelW offset");
+static_assert(offsetof(OrbisFontStyleFrame, scalePixelH) == 0x18,
+              "OrbisFontStyleFrame scalePixelH offset");
+static_assert(offsetof(OrbisFontStyleFrame, cache_lock_word) == 0x34,
+              "OrbisFontStyleFrame cache_lock_word offset");
+static_assert(offsetof(OrbisFontStyleFrame, reserved_0x58) == 0x58,
+              "OrbisFontStyleFrame reserved_0x58 offset");
+
+static_assert(sizeof(OrbisFontGlyphMetrics) == 0x20, "OrbisFontGlyphMetrics size");
+static_assert(sizeof(OrbisFontResultStage) == 0x18, "OrbisFontTransImage size");
+static_assert(sizeof(OrbisFontSurfaceImage) == 0x10, "OrbisFontSurfaceImage size");
+static_assert(sizeof(OrbisFontRenderOutput) == 0x40, "OrbisFontRenderOutput size");
+
+static_assert(sizeof(OrbisFontTextSource) == 0x60, "OrbisFontTextSource ABI size");
+static_assert(offsetof(OrbisFontTextSource, systemUse0) == 0x00,
+              "OrbisFontTextSource systemUse0 offset");
+static_assert(offsetof(OrbisFontTextSource, start) == 0x08, "OrbisFontTextSource start offset");
+static_assert(offsetof(OrbisFontTextSource, end) == 0x10, "OrbisFontTextSource end offset");
+static_assert(offsetof(OrbisFontTextSource, current) == 0x18, "OrbisFontTextSource current offset");
+static_assert(offsetof(OrbisFontTextSource, textParser) == 0x20,
+              "OrbisFontTextSource textParser offset");
+static_assert(offsetof(OrbisFontTextSource, textObject) == 0x28,
+              "OrbisFontTextSource textObject offset");
+static_assert(offsetof(OrbisFontTextSource, defaultFont) == 0x30,
+              "OrbisFontTextSource defaultFont offset");
+static_assert(offsetof(OrbisFontTextSource, systemUse) == 0x38,
+              "OrbisFontTextSource systemUse offset");
+
+struct OrbisFontCreateStringDetail {
+    u16 detailId;
+    u8 detailType;
+    u8 detections;
+    u32 ordersOption;
+
+    OrbisFontHandle defaultFont;
+
+    union {
+        struct {
+            void* function;
+            void* object;
+        } Callback;
+    } Orders;
+};
+
+static_assert(sizeof(OrbisFontCreateStringDetail) == 0x20, "OrbisFontCreateStringDetail ABI size");
+
+struct OrbisFontStringOpaque;
+using OrbisFontString = OrbisFontStringOpaque*;
+
+using OrbisFontCharacter = const OrbisFontTextCharacter*;
+using OrbisFontRenderCharacter = const OrbisFontTextCharacter*;
+
+struct OrbisFontWriting {
+    void* systemUse[32];
+};
+
+static_assert(sizeof(OrbisFontWriting) == 0x100, "OrbisFontWriting ABI size");
+
+struct OrbisFontWritingProfile {
+    u32 characterCount : 8;
+    u32 invisibleGlyph : 1;
+    u32 reserved : 23;
+};
+
+static_assert(sizeof(OrbisFontWritingProfile) == sizeof(u32), "OrbisFontWritingProfile ABI size");
+
+struct OrbisFontWritingStep {
+    float x;
+    float y;
+    float advanceX;
+    float advanceY;
+
+    OrbisFontHandle font;
+    OrbisFontWritingProfile Profile;
+    u32 glyphCode;
+
+    struct {
+        float x;
+        float y;
+    } Positioning;
+
+    OrbisFontGlyphMetrics GlyphMetrics;
+};
+
+using OrbisFontWritingRenderStep = const OrbisFontWritingStep*;
+
+struct OrbisFontWritingLetterStep {
+    float x;
+    float y;
+    float advanceX;
+    float advanceY;
+
+    struct {
+        u32 textsCount;
+        u32 textsIndex;
+        u32 glyphsCount;
+        u32 glyphsIndex;
+        u8 baseComponentsCount;
+        u8 baseComponentsIndex;
+        u8 baseFocusCount;
+        u8 baseFocusIndex;
+        u8 oppositeDirection;
+        u8 characterTextCount;
+        u8 baseTextCount;
+        u8 markTextCount;
+        u32 marksTextCount;
+        u32 marksTextNumber;
+        u32 reserved[3];
+        s32 textLetterOffset;
+    } Components;
+};
+
+static_assert(sizeof(OrbisFontWritingLetterStep) == 0x40, "OrbisFontWritingLetterStep ABI size");
+
+struct OrbisFontWritingExtent {
+    float top;
+    float bottom;
+    float left;
+    float right;
+};
+
+struct OrbisFontWritingMetrics {
+    float advanceX;
+    float advanceY;
+    OrbisFontWritingExtent Extent;
+};
+
+static_assert(sizeof(OrbisFontWritingMetrics) == 0x18, "OrbisFontWritingMetrics ABI size");
+struct OrbisFontHorizontalLayout {
+    float baselineOffset;
+    float lineAdvance;
+    float decorationExtent;
+};
+struct OrbisFontVerticalLayout {
+    float baselineOffsetX;
+    float columnAdvance;
+    float decorationSpan;
+};
+
+#if INTPTR_MAX == INT64_MAX
+static_assert(sizeof(OrbisFontOpenParams) == 32, "OrbisFontOpenParams size");
+static_assert(sizeof(OrbisFontGlyphMetrics) == 32, "OrbisFontGlyphMetrics size");
+static_assert(sizeof(OrbisFontKerning) == 16, "OrbisFontKerning size");
+static_assert(sizeof(OrbisFontRenderSurface) == 128, "OrbisFontRenderSurface ABI size");
+static_assert(sizeof(OrbisFontGlyphImageMetrics) == 24, "OrbisFontGlyphImageMetrics ABI size");
+static_assert(sizeof(OrbisFontRenderOutput) == 64, "OrbisFontRenderOutput ABI size");
+static_assert(sizeof(OrbisFontMem) == 64, "OrbisFontMem ABI size");
+#endif
+
+s32 PS4_SYSV_ABI sceFontAttachDeviceCacheBuffer(OrbisFontLib library, void* buffer, u32 size);
+s32 PS4_SYSV_ABI sceFontBindRenderer(OrbisFontHandle fontHandle, OrbisFontRenderer renderer);
+s32 PS4_SYSV_ABI sceFontCharacterGetBidiLevel(OrbisFontTextCharacter* textCharacter,
+                                              int* bidiLevel);
+s32 PS4_SYSV_ABI sceFontCharacterGetSyllableStringState();
+s32 PS4_SYSV_ABI sceFontCharacterGetTextFontCode(OrbisFontTextCharacter* textCharacter,
+                                                 OrbisFontHandle* pFontHandle, u32* textCode);
+s32 PS4_SYSV_ABI sceFontCharacterGetTextOrder(OrbisFontTextCharacter* textCharacter,
+                                              void** pTextOrder);
+u32 PS4_SYSV_ABI sceFontCharacterLooksFormatCharacters(OrbisFontTextCharacter* textCharacter);
+u32 PS4_SYSV_ABI sceFontCharacterLooksWhiteSpace(OrbisFontTextCharacter* textCharacter);
+OrbisFontTextCharacter* PS4_SYSV_ABI
+sceFontCharacterRefersTextBack(OrbisFontTextCharacter* textCharacter);
+OrbisFontTextCharacter* PS4_SYSV_ABI
+sceFontCharacterRefersTextNext(OrbisFontTextCharacter* textCharacter);
+s32 PS4_SYSV_ABI sceFontCharactersRefersTextCodes();
+s32 PS4_SYSV_ABI sceFontClearDeviceCache(OrbisFontLib library);
+s32 PS4_SYSV_ABI sceFontCloseFont();
+s32 PS4_SYSV_ABI sceFontControl();
+s32 PS4_SYSV_ABI sceFontCreateGraphicsDevice();
+s32 PS4_SYSV_ABI sceFontCreateGraphicsService();
+s32 PS4_SYSV_ABI sceFontCreateGraphicsServiceWithEdition();
+s32 PS4_SYSV_ABI sceFontCreateLibrary(const OrbisFontMem* memory,
+                                      OrbisFontLibCreateParams create_params,
+                                      OrbisFontLib* pLibrary);
+s32 PS4_SYSV_ABI sceFontCreateLibraryWithEdition(const OrbisFontMem* memory,
+                                                 OrbisFontLibCreateParams create_params,
+                                                 u64 edition, OrbisFontLib* pLibrary);
+s32 PS4_SYSV_ABI sceFontCreateRenderer(const OrbisFontMem* memory,
+                                       OrbisFontRendererCreateParams create_params,
+                                       OrbisFontRenderer* pRenderer);
+s32 PS4_SYSV_ABI sceFontCreateRendererWithEdition(const OrbisFontMem* memory,
+                                                  OrbisFontRendererCreateParams create_params,
+                                                  u64 edition, OrbisFontRenderer* pRenderer);
+s32 PS4_SYSV_ABI sceFontCreateString(const OrbisFontMem* fontMemory,
+                                     OrbisFontTextSource* fontTextSource,
+                                     const OrbisFontCreateStringDetail* stringDetail,
+                                     OrbisFontString* pFontString);
+s32 PS4_SYSV_ABI sceFontCreateWords();
+s32 PS4_SYSV_ABI sceFontCreateWritingLine();
+s32 PS4_SYSV_ABI sceFontDefineAttribute();
+s32 PS4_SYSV_ABI sceFontDeleteGlyph(const OrbisFontMem* memory, OrbisFontGlyph* glyph);
+s32 PS4_SYSV_ABI sceFontDestroyGraphicsDevice();
+s32 PS4_SYSV_ABI sceFontDestroyGraphicsService();
+s32 PS4_SYSV_ABI sceFontDestroyLibrary(OrbisFontLib* pLibrary);
+s32 PS4_SYSV_ABI sceFontDestroyRenderer(OrbisFontRenderer* pRenderer);
+s32 PS4_SYSV_ABI sceFontDestroyString(OrbisFontString* pFontString);
+s32 PS4_SYSV_ABI sceFontDestroyWords();
+s32 PS4_SYSV_ABI sceFontDestroyWritingLine();
+s32 PS4_SYSV_ABI sceFontDettachDeviceCacheBuffer();
+s32 PS4_SYSV_ABI sceFontGenerateCharGlyph(OrbisFontHandle glyph_handle, u32 codepoint,
+                                          const OrbisFontGenerateGlyphParams* gen_params,
+                                          OrbisFontGlyph* glyph_out);
+s32 PS4_SYSV_ABI sceFontGetAttribute();
+s32 PS4_SYSV_ABI sceFontGetCharGlyphCode();
+s32 PS4_SYSV_ABI sceFontGetCharGlyphMetrics(OrbisFontHandle fontHandle, u32 code,
+                                            OrbisFontGlyphMetrics* metrics);
+s32 PS4_SYSV_ABI sceFontGetEffectSlant(OrbisFontHandle fontHandle, float* slantRatio);
+s32 PS4_SYSV_ABI sceFontGetEffectWeight(OrbisFontHandle fontHandle, float* weightXScale,
+                                        float* weightYScale, u32* mode);
+s32 PS4_SYSV_ABI sceFontGetFontGlyphsCount();
+s32 PS4_SYSV_ABI sceFontGetFontGlyphsOutlineProfile();
+s32 PS4_SYSV_ABI sceFontGetFontMetrics();
+s32 PS4_SYSV_ABI sceFontGetFontResolution();
+s32 PS4_SYSV_ABI sceFontGetFontStyleInformation();
+s32 PS4_SYSV_ABI sceFontGetGlyphExpandBufferState();
+s32 PS4_SYSV_ABI sceFontGetHorizontalLayout(OrbisFontHandle fontHandle,
+                                            OrbisFontHorizontalLayout* layout);
+s32 PS4_SYSV_ABI sceFontGetKerning(OrbisFontHandle fontHandle, u32 preCode, u32 code,
+                                   OrbisFontKerning* kerning);
+s32 PS4_SYSV_ABI sceFontGetLibrary(OrbisFontHandle fontHandle, OrbisFontLib* pLibrary);
+s32 PS4_SYSV_ABI sceFontGetPixelResolution();
+s32 PS4_SYSV_ABI sceFontGetRenderCharGlyphMetrics(OrbisFontHandle fontHandle, u32 codepoint,
+                                                  OrbisFontGlyphMetrics* out_metrics);
+s32 PS4_SYSV_ABI sceFontGetRenderEffectSlant(OrbisFontHandle fontHandle, float* slantRatio);
+s32 PS4_SYSV_ABI sceFontGetRenderEffectWeight(OrbisFontHandle fontHandle, float* weightXScale,
+                                              float* weightYScale, u32* mode);
+s32 PS4_SYSV_ABI sceFontGetRenderScaledKerning();
+s32 PS4_SYSV_ABI sceFontGetRenderScalePixel(OrbisFontHandle fontHandle, float* out_w, float* out_h);
+s32 PS4_SYSV_ABI sceFontGetRenderScalePoint(OrbisFontHandle fontHandle, float* out_w, float* out_h);
+s32 PS4_SYSV_ABI sceFontGetResolutionDpi();
+s32 PS4_SYSV_ABI sceFontGetScalePixel(OrbisFontHandle fontHandle, float* out_w, float* out_h);
+s32 PS4_SYSV_ABI sceFontGetScalePoint(OrbisFontHandle fontHandle, float* out_w, float* out_h);
+s32 PS4_SYSV_ABI sceFontGetScriptLanguage();
+s32 PS4_SYSV_ABI sceFontGetTypographicDesign();
+s32 PS4_SYSV_ABI sceFontGetVerticalLayout(OrbisFontHandle fontHandle,
+                                          OrbisFontVerticalLayout* layout);
+s32 PS4_SYSV_ABI sceFontGlyphDefineAttribute();
+s32 PS4_SYSV_ABI sceFontGlyphGetAttribute();
+s32 PS4_SYSV_ABI sceFontGlyphGetGlyphForm(OrbisFontGlyph fontGlyph);
+s32 PS4_SYSV_ABI sceFontGlyphGetMetricsForm(OrbisFontGlyph fontGlyph);
+s32 PS4_SYSV_ABI sceFontGlyphGetScalePixel(OrbisFontGlyph fontGlyph, float* w, float* h);
+const OrbisFontGlyphMetrics* PS4_SYSV_ABI sceFontGlyphRefersMetrics(OrbisFontGlyph fontGlyph);
+const OrbisFontGlyphMetricsHorizontal* PS4_SYSV_ABI
+sceFontGlyphRefersMetricsHorizontal(OrbisFontGlyph fontGlyph);
+const OrbisFontGlyphMetricsHorizontalAdvance* PS4_SYSV_ABI
+sceFontGlyphRefersMetricsHorizontalAdvance(OrbisFontGlyph fontGlyph);
+const OrbisFontGlyphMetricsHorizontalX* PS4_SYSV_ABI
+sceFontGlyphRefersMetricsHorizontalX(OrbisFontGlyph fontGlyph);
+OrbisFontGlyphOutline* PS4_SYSV_ABI sceFontGlyphRefersOutline(OrbisFontGlyph glyph);
+s32 PS4_SYSV_ABI sceFontGlyphRenderImage();
+s32 PS4_SYSV_ABI sceFontGlyphRenderImageHorizontal();
+s32 PS4_SYSV_ABI sceFontGlyphRenderImageVertical();
+s32 PS4_SYSV_ABI sceFontGraphicsBeginFrame();
+s32 PS4_SYSV_ABI sceFontGraphicsDrawingCancel();
+s32 PS4_SYSV_ABI sceFontGraphicsDrawingFinish();
+s32 PS4_SYSV_ABI sceFontGraphicsEndFrame();
+s32 PS4_SYSV_ABI sceFontGraphicsExchangeResource();
+s32 PS4_SYSV_ABI sceFontGraphicsFillMethodInit();
+s32 PS4_SYSV_ABI sceFontGraphicsFillPlotInit();
+s32 PS4_SYSV_ABI sceFontGraphicsFillPlotSetLayout();
+s32 PS4_SYSV_ABI sceFontGraphicsFillPlotSetMapping();
+s32 PS4_SYSV_ABI sceFontGraphicsFillRatesInit();
+s32 PS4_SYSV_ABI sceFontGraphicsFillRatesSetFillEffect();
+s32 PS4_SYSV_ABI sceFontGraphicsFillRatesSetLayout();
+s32 PS4_SYSV_ABI sceFontGraphicsFillRatesSetMapping();
+s32 PS4_SYSV_ABI sceFontGraphicsGetDeviceUsage();
+s32 PS4_SYSV_ABI sceFontGraphicsRegionInit();
+s32 PS4_SYSV_ABI sceFontGraphicsRegionInitCircular();
+s32 PS4_SYSV_ABI sceFontGraphicsRegionInitRoundish();
+s32 PS4_SYSV_ABI sceFontGraphicsRelease();
+s32 PS4_SYSV_ABI sceFontGraphicsRenderResource();
+s32 PS4_SYSV_ABI sceFontGraphicsSetFramePolicy();
+s32 PS4_SYSV_ABI sceFontGraphicsSetupClipping();
+s32 PS4_SYSV_ABI sceFontGraphicsSetupColorRates();
+s32 PS4_SYSV_ABI sceFontGraphicsSetupFillMethod();
+s32 PS4_SYSV_ABI sceFontGraphicsSetupFillRates();
+s32 PS4_SYSV_ABI sceFontGraphicsSetupGlyphFill();
+s32 PS4_SYSV_ABI sceFontGraphicsSetupGlyphFillPlot();
+s32 PS4_SYSV_ABI sceFontGraphicsSetupHandleDefault();
+s32 PS4_SYSV_ABI sceFontGraphicsSetupLocation();
+s32 PS4_SYSV_ABI sceFontGraphicsSetupPositioning();
+s32 PS4_SYSV_ABI sceFontGraphicsSetupRotation();
+s32 PS4_SYSV_ABI sceFontGraphicsSetupScaling();
+s32 PS4_SYSV_ABI sceFontGraphicsSetupShapeFill();
+s32 PS4_SYSV_ABI sceFontGraphicsSetupShapeFillPlot();
+s32 PS4_SYSV_ABI sceFontGraphicsStructureCanvas();
+s32 PS4_SYSV_ABI sceFontGraphicsStructureCanvasSequence();
+s32 PS4_SYSV_ABI sceFontGraphicsStructureDesign();
+s32 PS4_SYSV_ABI sceFontGraphicsStructureDesignResource();
+s32 PS4_SYSV_ABI sceFontGraphicsStructureSurfaceTexture();
+s32 PS4_SYSV_ABI sceFontGraphicsUpdateClipping();
+s32 PS4_SYSV_ABI sceFontGraphicsUpdateColorRates();
+s32 PS4_SYSV_ABI sceFontGraphicsUpdateFillMethod();
+s32 PS4_SYSV_ABI sceFontGraphicsUpdateFillRates();
+s32 PS4_SYSV_ABI sceFontGraphicsUpdateGlyphFill();
+s32 PS4_SYSV_ABI sceFontGraphicsUpdateGlyphFillPlot();
+s32 PS4_SYSV_ABI sceFontGraphicsUpdateLocation();
+s32 PS4_SYSV_ABI sceFontGraphicsUpdatePositioning();
+s32 PS4_SYSV_ABI sceFontGraphicsUpdateRotation();
+s32 PS4_SYSV_ABI sceFontGraphicsUpdateScaling();
+s32 PS4_SYSV_ABI sceFontGraphicsUpdateShapeFill();
+s32 PS4_SYSV_ABI sceFontGraphicsUpdateShapeFillPlot();
+s32 PS4_SYSV_ABI sceFontMemoryInit(OrbisFontMem* mem_desc, void* region_addr, u32 region_size,
+                                   const OrbisFontMemInterface* iface, void* mspace_obj,
+                                   OrbisFontMemDestroyCb destroy_cb, void* destroy_ctx);
+s32 PS4_SYSV_ABI sceFontMemoryTerm(OrbisFontMem* mem_desc);
+s32 PS4_SYSV_ABI sceFontOpenFontFile(OrbisFontLib library, const char* guest_path, u32 open_mode,
+                                     const OrbisFontOpenParams* open_detail,
+                                     OrbisFontHandle* out_handle);
+s32 PS4_SYSV_ABI sceFontOpenFontInstance(OrbisFontHandle fontHandle, OrbisFontHandle templateFont,
+                                         OrbisFontHandle* pFontHandle);
+s32 PS4_SYSV_ABI sceFontOpenFontMemory(OrbisFontLib library, const void* fontAddress, u32 fontSize,
+                                       const OrbisFontOpenParams* open_params,
+                                       OrbisFontHandle* pFontHandle);
+s32 PS4_SYSV_ABI sceFontOpenFontSet(OrbisFontLib library, u32 fontSetType, u32 openMode,
+                                    const OrbisFontOpenParams* open_params,
+                                    OrbisFontHandle* pFontHandle);
+s32 PS4_SYSV_ABI sceFontRebindRenderer(OrbisFontHandle fontHandle);
+s32 PS4_SYSV_ABI sceFontRenderCharGlyphImage(OrbisFontHandle fontHandle, u32 code,
+                                             OrbisFontRenderSurface* surf, float x, float y,
+                                             OrbisFontGlyphMetrics* metrics,
+                                             OrbisFontRenderOutput* result);
+s32 PS4_SYSV_ABI sceFontRenderCharGlyphImageHorizontal(OrbisFontHandle fontHandle, u32 code,
+                                                       OrbisFontRenderSurface* surf, float x,
+                                                       float y, OrbisFontGlyphMetrics* metrics,
+                                                       OrbisFontRenderOutput* result);
+s32 PS4_SYSV_ABI sceFontRenderCharGlyphImageVertical(OrbisFontHandle fontHandle, u32 code,
+                                                     OrbisFontRenderSurface* surf, float x, float y,
+                                                     OrbisFontGlyphMetrics* metrics,
+                                                     OrbisFontRenderOutput* result);
+s32 PS4_SYSV_ABI sceFontRendererGetOutlineBufferSize(OrbisFontRenderer fontRenderer, u32* size);
+s32 PS4_SYSV_ABI sceFontRendererResetOutlineBuffer(OrbisFontRenderer fontRenderer);
+s32 PS4_SYSV_ABI sceFontRendererSetOutlineBufferPolicy(OrbisFontRenderer fontRenderer,
+                                                       u64 bufferPolicy, u32 basalSize,
+                                                       u32 limitSize);
+void PS4_SYSV_ABI sceFontRenderSurfaceInit(OrbisFontRenderSurface* renderSurface, void* buffer,
+                                           int bufWidthByte, int pixelSizeByte, int widthPixel,
+                                           int heightPixel);
+void PS4_SYSV_ABI sceFontRenderSurfaceSetScissor(OrbisFontRenderSurface* renderSurface, int x0,
+                                                 int y0, int w, int h);
+s32 PS4_SYSV_ABI sceFontRenderSurfaceSetStyleFrame(OrbisFontRenderSurface* renderSurface,
+                                                   OrbisFontStyleFrame* styleFrame);
+s32 PS4_SYSV_ABI sceFontSetEffectSlant(OrbisFontHandle fontHandle, float slantRatio);
+s32 PS4_SYSV_ABI sceFontSetEffectWeight(OrbisFontHandle fontHandle, float weightXScale,
+                                        float weightYScale, u32 mode);
+s32 PS4_SYSV_ABI sceFontSetFontsOpenMode(OrbisFontLib library, u32 openMode);
+s32 PS4_SYSV_ABI sceFontSetResolutionDpi(OrbisFontHandle fontHandle, u32 h_dpi, u32 v_dpi);
+s32 PS4_SYSV_ABI sceFontSetScalePixel(OrbisFontHandle fontHandle, float w, float h);
+s32 PS4_SYSV_ABI sceFontSetScalePoint(OrbisFontHandle fontHandle, float w, float h);
+s32 PS4_SYSV_ABI sceFontSetScriptLanguage();
+s32 PS4_SYSV_ABI sceFontSetTypographicDesign();
+s32 PS4_SYSV_ABI sceFontSetupRenderEffectSlant(OrbisFontHandle fontHandle, float slantRatio);
+s32 PS4_SYSV_ABI sceFontSetupRenderEffectWeight(OrbisFontHandle fontHandle, float weightXScale,
+                                                float weightYScale, u32 mode);
+s32 PS4_SYSV_ABI sceFontSetupRenderScalePixel(OrbisFontHandle fontHandle, float w, float h);
+s32 PS4_SYSV_ABI sceFontSetupRenderScalePoint(OrbisFontHandle fontHandle, float w, float h);
+u32 PS4_SYSV_ABI sceFontStringGetTerminateCode(OrbisFontString fontString);
+void* PS4_SYSV_ABI sceFontStringGetTerminateOrder(OrbisFontString fontString);
+s32 PS4_SYSV_ABI sceFontStringGetWritingForm(OrbisFontString fontString);
+OrbisFontRenderCharacter PS4_SYSV_ABI sceFontStringRefersRenderCharacters(
+    OrbisFontString fontString, OrbisFontTextCharacter* startCharacter,
+    OrbisFontTextCharacter* lastCharacter, u32* characterCount);
+OrbisFontTextCharacter* PS4_SYSV_ABI sceFontStringRefersTextCharacters(OrbisFontString fontString,
+                                                                       u32* characterCount);
+s32 PS4_SYSV_ABI sceFontStyleFrameGetEffectSlant(OrbisFontStyleFrame* styleFrame,
+                                                 float* slantRatio);
+s32 PS4_SYSV_ABI sceFontStyleFrameGetEffectWeight(OrbisFontStyleFrame* fontStyleFrame,
+                                                  float* weightXScale, float* weightYScale,
+                                                  uint32_t* mode);
+s32 PS4_SYSV_ABI sceFontStyleFrameGetResolutionDpi(const OrbisFontStyleFrame* styleFrame,
+                                                   u32* h_dpi, u32* v_dpi);
+s32 PS4_SYSV_ABI sceFontStyleFrameGetScalePixel(const OrbisFontStyleFrame* styleFrame, float* w,
+                                                float* h);
+s32 PS4_SYSV_ABI sceFontStyleFrameGetScalePoint(const OrbisFontStyleFrame* styleFrame, float* w,
+                                                float* h);
+s32 PS4_SYSV_ABI sceFontStyleFrameInit(OrbisFontStyleFrame* styleFrame);
+s32 PS4_SYSV_ABI sceFontStyleFrameSetEffectSlant(OrbisFontStyleFrame* styleFrame, float slantRatio);
+s32 PS4_SYSV_ABI sceFontStyleFrameSetEffectWeight(OrbisFontStyleFrame* styleFrame,
+                                                  float weightXScale, float weightYScale, u32 mode);
+s32 PS4_SYSV_ABI sceFontStyleFrameSetResolutionDpi(OrbisFontStyleFrame* styleFrame, u32 h_dpi,
+                                                   u32 v_dpi);
+s32 PS4_SYSV_ABI sceFontStyleFrameSetScalePixel(OrbisFontStyleFrame* styleFrame, float w, float h);
+s32 PS4_SYSV_ABI sceFontStyleFrameSetScalePoint(OrbisFontStyleFrame* styleFrame, float w, float h);
+s32 PS4_SYSV_ABI sceFontStyleFrameUnsetEffectSlant(OrbisFontStyleFrame* styleFrame);
+s32 PS4_SYSV_ABI sceFontStyleFrameUnsetEffectWeight(OrbisFontStyleFrame* styleFrame);
+s32 PS4_SYSV_ABI sceFontStyleFrameUnsetScale(OrbisFontStyleFrame* styleFrame);
+s32 PS4_SYSV_ABI sceFontSupportExternalFonts(OrbisFontLib library, u32 fontMax, u32 formats);
+s32 PS4_SYSV_ABI sceFontSupportGlyphs();
+s32 PS4_SYSV_ABI sceFontSupportSystemFonts(OrbisFontLib library);
+s32 PS4_SYSV_ABI sceFontTextCodesStepBack();
+s32 PS4_SYSV_ABI sceFontTextCodesStepNext();
+s32 PS4_SYSV_ABI sceFontTextSourceInit(OrbisFontTextSource* fontTextSource, const void* textAddress,
+                                       u32 textSizeByte, OrbisFontTextParser textParser,
+                                       void* textObject);
+
+s32 PS4_SYSV_ABI sceFontTextSourceRewind(OrbisFontTextSource* fontTextSource);
+
+s32 PS4_SYSV_ABI sceFontTextSourceSetDefaultFont(OrbisFontTextSource* fontTextSource,
+                                                 OrbisFontHandle defaultFont);
+
+s32 PS4_SYSV_ABI sceFontTextSourceSetWritingForm(OrbisFontTextSource* fontTextSource,
+                                                 s32 writingForm);
+s32 PS4_SYSV_ABI sceFontUnbindRenderer(OrbisFontHandle fontHandle);
+s32 PS4_SYSV_ABI sceFontWordsFindWordCharacters();
+s32 PS4_SYSV_ABI sceFontWritingGetRenderMetrics(OrbisFontWriting* fontWriting,
+                                                OrbisFontWritingMetrics* writingMetrics);
+s32 PS4_SYSV_ABI sceFontWritingInit(OrbisFontWriting* fontWriting, OrbisFontString fontString,
+                                    OrbisFontRenderCharacter fontCharacter);
+s32 PS4_SYSV_ABI sceFontWritingLineClear();
+s32 PS4_SYSV_ABI sceFontWritingLineGetOrderingSpace();
+s32 PS4_SYSV_ABI sceFontWritingLineGetRenderMetrics();
+s32 PS4_SYSV_ABI sceFontWritingLineRefersRenderStep();
+s32 PS4_SYSV_ABI sceFontWritingLineWritesOrder();
+OrbisFontWritingRenderStep PS4_SYSV_ABI
+sceFontWritingRefersRenderStep(OrbisFontWriting* fontWriting);
+OrbisFontTextCharacter* PS4_SYSV_ABI sceFontWritingRefersRenderStepCharacter(
+    OrbisFontWriting* fontWriting, OrbisFontWritingLetterStep* pLetterStep);
+s32 PS4_SYSV_ABI sceFontWritingSetMaskInvisible(OrbisFontWriting* fontWriting, s32 mask);
+s32 PS4_SYSV_ABI Func_00F4D778F1C88CB3();
+s32 PS4_SYSV_ABI Func_03C650025FBB0DE7();
+s32 PS4_SYSV_ABI Func_07EAB8A163B27E1A();
+s32 PS4_SYSV_ABI Func_09408E88E4F97CE3();
+s32 PS4_SYSV_ABI Func_09F92905ED82A814();
+s32 PS4_SYSV_ABI Func_0D142CEE1AB21ABE();
+s32 PS4_SYSV_ABI Func_14BD2E9E119C16F2();
+s32 PS4_SYSV_ABI Func_1AC53C9EDEAE8D75();
+s32 PS4_SYSV_ABI Func_1D401185D5E24C3D();
+s32 PS4_SYSV_ABI Func_1E83CD20C2CC996F();
+s32 PS4_SYSV_ABI Func_314B1F765B9FE78A();
+s32 PS4_SYSV_ABI Func_350E6725FEDE29E1();
+s32 PS4_SYSV_ABI Func_3DB773F0A604BF39();
+s32 PS4_SYSV_ABI Func_4FF49DD21E311B1C();
+s32 PS4_SYSV_ABI Func_526287664A493981();
+s32 PS4_SYSV_ABI Func_55CA718DBC84A6E9();
+s32 PS4_SYSV_ABI Func_563FC5F0706A8B4D();
+s32 PS4_SYSV_ABI Func_569E2ECD34290F45();
+s32 PS4_SYSV_ABI Func_5A04775B6BE47685();
+s32 PS4_SYSV_ABI Func_5FD93BCAB6F79750();
+s32 PS4_SYSV_ABI Func_62B5398F864BD3B4();
+s32 PS4_SYSV_ABI Func_6F9010294D822367();
+s32 PS4_SYSV_ABI Func_7757E947423A7A67();
+s32 PS4_SYSV_ABI Func_7E06BA52077F54FA();
+s32 PS4_SYSV_ABI Func_93B36DEA021311D6();
+s32 PS4_SYSV_ABI Func_94B0891E7111598A();
+s32 PS4_SYSV_ABI Func_9785C9128C2FE7CD();
+s32 PS4_SYSV_ABI Func_97DFBC9B65FBC0E1();
+s32 PS4_SYSV_ABI Func_ACD9717405D7D3CA();
+s32 PS4_SYSV_ABI Func_B19A8AEC3FD4F16F();
+s32 PS4_SYSV_ABI Func_C10F488AD7CF103D();
+s32 PS4_SYSV_ABI Func_D0C8B5FF4A6826C7();
+s32 PS4_SYSV_ABI Func_E48D3CD01C342A33();
+s32 PS4_SYSV_ABI Func_EAC96B2186B71E14();
+s32 PS4_SYSV_ABI Func_FE4788A96EF46256();
+s32 PS4_SYSV_ABI Func_FE7E5AE95D3058F5();
+
+void RegisterLib(Core::Loader::SymbolsResolver* sym);
+} // namespace Libraries::Font
