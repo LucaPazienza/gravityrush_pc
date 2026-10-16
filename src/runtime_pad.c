@@ -217,6 +217,15 @@ static void sample_host(PadData *d) {
     if (k[SDL_SCANCODE_TAB]) touch_click(d,0);
     if ((d->buttons & BTN_TOUCHPAD) && !d->touch_count) touch_click(d,0); /* a remapped touchpad key */
     if (k[SDL_SCANCODE_BACKSPACE]) touch_click(d,1);
+    /* Left mouse button held over the window is a finger at the pointer, so dragging is a swipe. */
+    SDL_Window *mw=SDL_GetMouseFocus();
+    float mx=0, my=0;
+    int ww=0, wh=0;
+    if (mw && (SDL_GetMouseState(&mx,&my) & SDL_BUTTON_LMASK) && SDL_GetWindowSize(mw,&ww,&wh) && ww>0 && wh>0) {
+        d->buttons|=BTN_TOUCHPAD;
+        d->touch_count=1;
+        d->touches[0]=(PadTouch){.x=touch_axis(mx/ww,1919),.y=touch_axis(my/wh,942),.id=0};
+    }
     if (d->buttons & BTN_L2) d->l2=255;
     if (d->buttons & BTN_R2) d->r2=255;
     key_axis(&d->left_x,k[SDL_SCANCODE_A],k[SDL_SCANCODE_D]);
@@ -370,6 +379,21 @@ static uint32_t list_buttons(void) {
     pthread_mutex_unlock(&lock);
     return buttons;
 }
+/* Like the real pad (and shadPS4): every new finger gets a fresh id 1..127, kept while it stays
+ * down, and touch_held_time counts microseconds since the first finger went down. */
+static void assign_touch_ids(PadData *d) {
+    static uint8_t slot_id[2], next_id=1;
+    static uint64_t down_since;
+    if (d->buttons==0 && hold_after_capture) d->touch_count=0;
+    for (int i=0;i<2;++i) {
+        if (i>=d->touch_count) { slot_id[i]=0; continue; }
+        if (!slot_id[i]) { slot_id[i]=next_id; next_id=next_id==127 ? 1 : next_id+1; }
+        d->touches[i].id=slot_id[i];
+    }
+    if (!d->touch_count) down_since=0;
+    else if (!down_since) down_since=d->timestamp;
+    d->touch_held_time=down_since ? (uint32_t)(d->timestamp-down_since) : 0;
+}
 static void sample(PadData *d) {
     sample_host(d);
     if (gow3gpu_overlay_captures_input()) { hold_after_capture=1; return; }
@@ -387,6 +411,7 @@ static void sample(PadData *d) {
         if (d->buttons) d->buttons=0;
         else hold_after_capture=0;
     }
+    assign_touch_ids(d);
 }
 
 static ABI int32_t pad_init(void) {
