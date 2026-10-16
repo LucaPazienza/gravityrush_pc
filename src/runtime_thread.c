@@ -421,7 +421,8 @@ void runtime_thread_report(void) {
 }
 
 #ifdef _WIN32
-/* F12 (or GOW3_THREAD_DUMP=<seconds> once): where every live guest thread is. Each thread is
+/* The watcher thread also flushes stdout every 100 ms.
+ * F12 (or GOW3_THREAD_DUMP=<seconds> once): where every live guest thread is. Each thread is
  * suspended only to copy its registers and the top of its stack, then resumed; printing happens
  * afterwards, so a thread stopped while holding the heap or stdio lock cannot block the dump.
  * Addresses in the game image print as "eboot+<offset>", others as "<module>+<offset>"; stack
@@ -502,6 +503,9 @@ static void *dump_watcher(void *arg) {
     int was_down=0;
     for (;;) {
         Sleep(100);
+        /* stdout to a file is fully buffered: closing the window kills the process and would
+         * lose the last lines of the log. */
+        fflush(stdout);
         int down=(GetAsyncKeyState(VK_F12)&0x8000)!=0;
         if (down && !was_down) dump_threads("F12");
         was_down=down;
