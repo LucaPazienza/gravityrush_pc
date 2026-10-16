@@ -4,7 +4,7 @@ import unittest
 from paths import ROOT
 sys.path.insert(0, str(ROOT / 'launcher'))
 import button_icons  # noqa: E402
-import medievil_launcher as launcher  # noqa: E402
+import gravityrush_launcher as launcher  # noqa: E402
 
 
 class FakeCanvas:

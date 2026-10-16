@@ -114,7 +114,7 @@ void UniqueImage::Create(const vk::ImageCreateInfo& image_ci) {
     const VkImageCreateInfo image_ci_unsafe = static_cast<VkImageCreateInfo>(image_ci);
     VkImage unsafe_image{};
     VmaAllocationInfo alloc_info{};
-    // MediEvil: the driver prefers its own memory block for most render targets, and Unreal
+    // Unreal Engine 4 games: the driver prefers its own memory block for most render targets, and Unreal
     // Engine 4 reuses its memory for other targets every frame, so the texture cache created and
     // freed one per image: 16% of the draw recording thread in kernel allocation calls. Images
     // that only prefer one are placed in VMA's shared blocks. NVIDIA only by default (measured

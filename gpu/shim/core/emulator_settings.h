@@ -49,7 +49,7 @@ public:
         static const u32 value = [] {
             const long limit = Number("GOW3_FPS_LIMIT", -1);
             if (limit >= 0) return u32(limit);
-            // MediEvil: GOW3_FPS_CAP is the engine frame rate (run.py), 120 by default.
+            // Unreal Engine 4 games: GOW3_FPS_CAP is the engine frame rate (run.py), 120 by default.
             const u32 cap = u32(std::max(30L, Number("GOW3_FPS_CAP", 120)));
             return Number("GOW3_VBLANK_HZ", 60) > 0 ? 0u : std::min<u32>(Gow3DisplayRefreshHz(), cap);
         }();

@@ -1,4 +1,4 @@
-"""Unreal Engine 4 render resolution override for MediEvil (up to 4K).
+"""Unreal Engine 4 render resolution override for Unreal Engine 4 games (up to 4K).
 
 UE4 games read their config only from their paks. A small pak whose name ends in _P mounts with
 priority over them, so a changed copy of Engine/Config/PS4/PS4Engine.ini (taken from the game's
@@ -19,12 +19,12 @@ from pathlib import Path
 PAK_MAGIC = 0x5A6F12E1
 PAK_NAME = 'pakchunk99-ps4_P.pak'
 CONFIG = 'Engine/Config/PS4/PS4Engine.ini'
-# Render resolution (medievil.ini render_resolution) -> scene scale of the 1080p frame, in percent.
+# Render resolution (gravityrush.ini render_resolution) -> scene scale of the 1080p frame, in percent.
 SCREEN_PERCENTAGE = {'native': None, '480p': '44.444', '720p': '66.667', '1440p': '133.333',
                      '1800p': '166.667', '4K': '200'}
 # Native output: the game's own output size (PS4Engine.ini r.setres, 1920x1080 as shipped), shown
 # pixel for pixel on a 1440p or 4K display. 4K needs the "Native 4K framebuffer pool" patch.
-# Upscaling at native output (medievil.ini ue4_upscale): UE4's temporal upsampling renders the 3D
+# Upscaling at native output (gravityrush.ini ue4_upscale): UE4's temporal upsampling renders the 3D
 # scene at a lower scale and its temporal AA rebuilds the full output from the game's own motion
 # vectors (as FSR 2 / DLSS do, without the AI). Not with the supersampling scales above.
 TEMPORAL_UPSCALE = {'quality': '66.667', 'balanced': '58', 'performance': '50'}
@@ -147,12 +147,12 @@ def set_values(ini, values, engine=None):
 def frame_rate_range(fps):
     """UGameEngine::GetMaxTickRate on consoles: with VSync on, the game ticks at most at the upper
     bound of SmoothedFrameRateRange (BaseEngine.ini: below 62, so 60 FPS), even with
-    bSmoothFrameRate off. MediEvil keeps that default; a higher bound lifts the 60 FPS cap."""
+    bSmoothFrameRate off. The PS4 build keeps that default; a higher bound lifts the 60 FPS cap."""
     return {'SmoothedFrameRateRange': '(LowerBound=(Type="ERangeBoundTypes::Inclusive",Value=22),'
                                       f'UpperBound=(Type="ERangeBoundTypes::Exclusive",Value={fps + 2}))'}
 
 
-# Graphics quality (medievil.ini ue4_quality): console keeps the PS4 settings; medium and low trade
+# Graphics quality (gravityrush.ini ue4_quality): console keeps the PS4 settings; medium and low trade
 # effects for speed on integrated and older graphics cards.
 QUALITY = {
     'console': {},
@@ -210,7 +210,7 @@ QUALITY = {
 
 # Point and spot light shadows at one fixed size per preset, with small lights unshadowed. UE4
 # sizes them by their size on screen, so walking re-creates them constantly; those re-created
-# maps flickered on the port (shadows blinking while moving, MediEvil's outdoor levels).
+# maps flickered on the port (shadows blinking while moving, outdoor levels).
 # The second number is r.Shadow.RadiusThreshold: lights smaller than that on screen cast no shadow.
 # Every shadowed point light redraws its surroundings six times, and the port's GPU thread keeps
 # 60 FPS up to about 2000 draws a frame; busy outdoor scenes reached 4000 (30 FPS) before.
@@ -242,7 +242,7 @@ DEBUG_HUD = 'OVERBITE/Content/Blueprints/Debug/DebugHUD.uexp'
 DEBUG_HUD_EDITS = [
     # SetFrameRateLimit(60.0): EX_FloatConst 60.0 after the call to that import.
     (bytes.fromhex('1c1dffffff1e00007042'), bytes.fromhex('1c1dffffff1e00000000'), 1),
-    # 4K needs the "Native 4K framebuffer pool" patch (patches/MediEvil.xml): the PS4 pool of
+    # 4K needs the "Native 4K framebuffer pool" patch (a patch file in patches/): the PS4 pool of
     # 128 MB ran out of memory.
     (b'r.SetRes 2560x1440\0', b'r.SetRes 3840x2160\0', 1),
     (b'Cinematic Mode (1440p)\0', b'Cinematic Mode (2160p)\0', 2),

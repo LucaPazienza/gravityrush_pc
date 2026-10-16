@@ -1,10 +1,10 @@
 name: Build and release (Windows)
 
-# Every push and pull request builds the port and keeps medievil-windows.zip as an artifact.
+# Every push and pull request builds the port and keeps gravityrush-windows.zip as an artifact.
 # A tag v* (for example v1.0.0) also publishes it as a GitHub release.
 on:
   push:
-    branches: [main, medievil]
+    branches: [main]
     tags: ['v*']
   pull_request:
   workflow_dispatch:
@@ -64,24 +64,24 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: medievil-windows
-          path: dist/medievil-windows.zip
+          name: gravityrush-windows
+          path: dist/gravityrush-windows.zip
           if-no-files-found: error
 
       - name: Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/medievil-windows.zip
+          files: dist/gravityrush-windows.zip
           generate_release_notes: true
           body: |
-            **MediEvil (PS4, CUSA11227) for PC.** No game files are included: you need your own
+            **Gravity Rush Remastered (PS4, CUSA01113) for PC.** No game files are included: you need your own
             copy (unpacked folder or fake .pkg).
 
-            1. Download `medievil-windows.zip`, extract it (not inside the zip).
-            2. Open `MediEvil.exe` (unsigned: More info, Run anyway).
+            1. Download `gravityrush-windows.zip`, extract it (not inside the zip).
+            2. Open `GravityRush.exe` (unsigned: More info, Run anyway).
             3. Game page: **Choose .pkg…** to install from your package, or **Browse…** to the
                folder with `eboot.bin`.
-            4. Pick a Render resolution (up to 4K) and press **PLAY**.
+            4. Press **PLAY**.
 
             Needs Windows 10/11 64-bit and a Vulkan 1.3 GPU. See README-Windows.txt in the zip.

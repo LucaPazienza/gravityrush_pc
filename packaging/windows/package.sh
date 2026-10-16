@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Builds dist/medievil-windows/ (and dist/medievil-windows.zip): MediEvil.exe (the launcher, frozen
-# with PyInstaller so players need no Python), medievil-runtime.exe with the MSYS2 CLANG64 DLLs it needs,
+# Builds dist/gravityrush-windows/ (and dist/gravityrush-windows.zip): GravityRush.exe (the launcher, frozen
+# with PyInstaller so players need no Python), gravityrush-runtime.exe with the MSYS2 CLANG64 DLLs it needs,
 # the preparation scripts and run.py. Run from an MSYS2 CLANG64 shell after `bash build.sh`.
 # Freezing uses a Windows Python 3.10+ (python.org; WINPYTHON overrides) and a private venv in
 # out/pyenv with PyInstaller. The temporal upscalers are off, so neither the FSR 4 assets nor the
@@ -8,7 +8,7 @@
 set -euo pipefail
 cd -- "$(dirname -- "$0")/../.."
 source ./msys2-env.sh
-[[ -f out/medievil-runtime.exe && -f out/medievil-gpu-check.exe && -f out/medievil-play.exe ]] || { echo 'Build first: bash build.sh' >&2; exit 1; }
+[[ -f out/gravityrush-runtime.exe && -f out/gravityrush-gpu-check.exe && -f out/gravityrush-play.exe ]] || { echo 'Build first: bash build.sh' >&2; exit 1; }
 
 # A Windows Python (not MSYS2's) for PyInstaller.
 python=${WINPYTHON:-}
@@ -25,7 +25,7 @@ if [[ ! -x out/pyenv/Scripts/python.exe ]]; then
 fi
 # cryptography: PKG unpacking (scripts/pkg_extract.py); Pillow: cover art and icons.
 out/pyenv/Scripts/python.exe -m pip install -q --disable-pip-version-check pyinstaller cryptography pillow
-# The scripts run inside MediEvil.exe (--script): the standard modules they import come along.
+# The scripts run inside GravityRush.exe (--script): the standard modules they import come along.
 hidden=()
 for module in argparse base64 collections hashlib json re shutil struct tempfile xml.etree.ElementTree \
               urllib.request ctypes.wintypes zlib hmac pkg_extract pkg_keys game_profiles ue4_override \
@@ -34,24 +34,24 @@ for module in argparse base64 collections hashlib json re shutil struct tempfile
     hidden+=(--hidden-import "$module")
 done
 out/pyenv/Scripts/python.exe -m PyInstaller --noconfirm --clean --log-level WARN --windowed \
-    --name "MediEvil" --icon "$(cygpath -w "$PWD/launcher/medievil.ico")" --collect-submodules cryptography --distpath out/pyi-dist \
+    --name "GravityRush" --icon "$(cygpath -w "$PWD/launcher/gravityrush.ico")" --collect-submodules cryptography --distpath out/pyi-dist \
     --workpath out/pyi-work --specpath out/pyi-work --paths "$(cygpath -w "$PWD/scripts")" "${hidden[@]}" \
-    "$(cygpath -w "$PWD/launcher/medievil_launcher.py")"
+    "$(cygpath -w "$PWD/launcher/gravityrush_launcher.py")"
 
 # The package is assembled in a fresh staging folder and zipped from there; dist/gow3-windows
 # (a playable copy that may hold saves and settings) is only refreshed afterwards.
-dest=out/stage/medievil-windows
+dest=out/stage/gravityrush-windows
 rm -rf -- out/stage
 mkdir -p "$dest/bin" "$dest/launcher"
-cp -r "out/pyi-dist/MediEvil/." "$dest/"
-llvm-strip -o "$dest/Play MediEvil.exe" out/medievil-play.exe
-cp launcher/medievil.ico launcher/medievil.png "$dest/launcher/"
+cp -r "out/pyi-dist/GravityRush/." "$dest/"
+llvm-strip -o "$dest/Play Gravity Rush.exe" out/gravityrush-play.exe
+cp launcher/gravityrush.ico launcher/gravityrush.png "$dest/launcher/"
 # The executables without debug information (out/ keeps the symbols for crash reports).
-for exe in medievil-runtime.exe medievil-gpu-check.exe; do
+for exe in gravityrush-runtime.exe gravityrush-gpu-check.exe; do
     llvm-strip --strip-debug -o "$dest/bin/$exe" "out/$exe"
 done
 # Every DLL the executables load from the CLANG64 tree (SDL3, FFmpeg, Vulkan loader, ...).
-ldd "$dest/bin/medievil-runtime.exe" "$dest/bin/medievil-gpu-check.exe" |
+ldd "$dest/bin/gravityrush-runtime.exe" "$dest/bin/gravityrush-gpu-check.exe" |
     awk '/\/clang64\/bin\// {print $3}' | sort -u | while read -r dll; do
         cp -u "$dll" "$dest/bin/"
     done
@@ -61,7 +61,7 @@ find "$dest" -name __pycache__ -prune -exec rm -r {} +
 # No game files and nothing a player made (saves, shader caches built from the game's shaders,
 # settings, logs) may ship: stop when one is found.
 forbidden=$(find "$dest" \( -iname eboot.bin -o -iname sce_module -o -iname sce_sys -o -iname savedata \
-    -o -iname user -o -iname cache -o -iname '*.log' -o -iname medievil.ini -o -iname settings.json \
+    -o -iname user -o -iname cache -o -iname '*.log' -o -iname gravityrush.ini -o -iname settings.json \
     -o -iname mods.json -o -iname patches.json -o -iname fsr4_shaders -o -iname 'nvngx_dlss*.dll' \
     -o -iname '*.spv' -o -iname '*.pkg' -o -iname '*.sprx' -o -iname '*.prx' \) -print)
 if [[ -n $forbidden ]]; then
@@ -70,21 +70,21 @@ if [[ -n $forbidden ]]; then
     exit 1
 fi
 mkdir -p dist
-rm -f dist/medievil-windows.zip
+rm -f dist/gravityrush-windows.zip
 (cd out/stage && powershell -NoProfile -Command \
-    "Compress-Archive -Path medievil-windows -DestinationPath ../../dist/medievil-windows.zip")
+    "Compress-Archive -Path gravityrush-windows -DestinationPath ../../dist/gravityrush-windows.zip")
 
 # Refresh dist/gow3-windows, keeping what players create there (saves, settings, mods), and
 # only while nothing runs from it: deleting a running launcher's files breaks it.
-play=dist/medievil-windows
+play=dist/gravityrush-windows
 running=$(powershell -NoProfile -Command \
     "@(Get-Process | Where-Object { \$_.Path -like '$(cygpath -w "$PWD/$play")\\*' }).Count" | tr -d '\r')
 if [[ ${running:-0} != 0 ]]; then
-    echo "dist/medievil-windows is in use ($running processes): not refreshed; the zip is ready." >&2
+    echo "dist/gravityrush-windows is in use ($running processes): not refreshed; the zip is ready." >&2
 else
     mkdir -p "$play"
-    find "$play" -mindepth 1 -maxdepth 1 ! -name user ! -name mods ! -name medievil.ini \
+    find "$play" -mindepth 1 -maxdepth 1 ! -name user ! -name mods ! -name gravityrush.ini \
         ! -name mods.json ! -name patches.json -exec rm -rf {} +
     cp -r "$dest/." "$play/"
 fi
-du -sh "$dest" dist/medievil-windows.zip
+du -sh "$dest" dist/gravityrush-windows.zip

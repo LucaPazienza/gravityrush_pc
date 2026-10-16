@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-2.0-or-later
-"""Windows counterpart of run.sh: prepares the game image and starts medievil-runtime.exe.
+"""Windows counterpart of run.sh: prepares the game image and starts gravityrush-runtime.exe.
 
 Same environment variables as run.sh (GOW3_GAME_DIR, GOW3_DATA_DIR, GOW3_PATCHES, GOW3_MODS_*,
-GOW3_USER_DIR, ...). Extra arguments go to medievil-runtime.
+GOW3_USER_DIR, ...). Extra arguments go to gravityrush-runtime.
 The in-game "Apply and restart" runs this script again through GOW3_RESTART_COMMAND;
 `--after PID` waits for the previous game process to end first (its GPU device and memory).
 """
@@ -73,9 +73,9 @@ def main():
     data = Path(env.get('GOW3_DATA_DIR', PORT))
     out = data / 'out'
     out.mkdir(parents=True, exist_ok=True)
-    if not (data / 'medievil.ini').exists() and (data / 'gow3.ini').exists():
-        (data / 'gow3.ini').rename(data / 'medievil.ini')  # settings of builds before 1.1
-    env.setdefault('GOW3_CONFIG', str(data / 'medievil.ini'))
+    if not (data / 'gravityrush.ini').exists() and (data / 'gow3.ini').exists():
+        (data / 'gow3.ini').rename(data / 'gravityrush.ini')  # settings of builds before 1.1
+    env.setdefault('GOW3_CONFIG', str(data / 'gravityrush.ini'))
     # Values this script derived on the previous start ("Apply and restart" inherits them) are
     # derived again from the new options.
     for key in env.pop('GOW3_DERIVED', '').split(','):
@@ -90,9 +90,9 @@ def main():
     if not env.get('GOW3_FSR411_DIR') and not (PORT / 'fsr4_411').is_dir() and (data / 'fsr4_411').is_dir():
         env['GOW3_FSR411_DIR'] = str(data / 'fsr4_411')
 
-    probe = Path(env['GOW3_PROBE']) if env.get('GOW3_PROBE') else find_executable('medievil-runtime.exe')
+    probe = Path(env['GOW3_PROBE']) if env.get('GOW3_PROBE') else find_executable('gravityrush-runtime.exe')
     if not probe or not probe.is_file():
-        fail('medievil-runtime.exe not found: build it with build.sh (MSYS2 CLANG64) or use a packaged build.')
+        fail('gravityrush-runtime.exe not found: build it with build.sh (MSYS2 CLANG64) or use a packaged build.')
     # Development builds run from the MSYS2 tree: its CLANG64 DLLs (SDL3, FFmpeg, ...).
     if not (probe.parent / 'SDL3.dll').is_file():
         clang64 = Path(env.get('MSYS2_ROOT', r'C:\msys64')) / 'clang64' / 'bin'
@@ -181,7 +181,7 @@ def main():
         if patched:
             # The patch notes give the direct memory and VBlank rate the selected patches need.
             names = selected_patches(profile[1], profile[2], env.get('GOW3_PATCHES', ''), env.get('GOW3_PATCHES_ONLY') == '1')
-            # medievil.ini decides the resolution and frame rate patches (in-game menu, launcher).
+            # gravityrush.ini decides the resolution and frame rate patches (in-game menu, launcher).
             if not profile_ue4:  # God of War III's resolution / frame rate patch names
                 names = graphics_options.patch_names(names, graphics)
             env['GOW3_PATCHES'] = ';'.join(names)

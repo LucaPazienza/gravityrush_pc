@@ -1,4 +1,4 @@
-"""MediEvil look for the launcher: the game's own fonts and Gallowmere's colors.
+"""Gravity Rush look for the launcher: Hekseville's colors, from the port's icon.
 
 The fonts are read from the player's own copy of the game (its paks) the first time the launcher
 sees it, cached in the launcher's settings folder and registered for this process only. They are
@@ -10,25 +10,21 @@ Pillow at the window's DPI.
 import sys
 from pathlib import Path
 
-# Gallowmere at night: purple sky and stone, the logo's gold-to-orange, the green of souls.
-NIGHT = '#0d0a14'      # window background, sidebar
-STONE = '#16111f'      # pages
-CARD = '#211a2e'       # fields, list boxes
-EDGE = '#3a2f4a'       # borders
-BRONZE = '#6b5530'     # ornate borders
-BONE = '#efe3c2'       # text
-MIST = '#9a90a8'       # secondary text
-GOLD = '#f2b632'       # headings, selection
-EMBER = '#e0731f'      # the logo's lower half
-SOUL = '#7fe03a'       # green highlights (souls, health)
-SOUL_DARK = '#356b14'  # filled controls
+# Hekseville at dusk: night-black cat, teal sky, stone, the clock tower's gold.
+NIGHT = '#0b0f1a'      # window background, sidebar
+STONE = '#121a24'      # pages
+CARD = '#1b2633'       # fields, list boxes
+EDGE = '#2f4152'       # borders
+BRONZE = '#7a6438'     # ornate borders
+BONE = '#efe6cc'       # text
+MIST = '#93a7ae'       # secondary text
+GOLD = '#e8c063'       # headings, selection
+EMBER = '#c9893a'      # the logo's lower half
+SOUL = '#6fc3c9'       # teal highlights (the sky)
+SOUL_DARK = '#2a5f66'  # filled controls
 
-# medievil.ini-independent roles -> (pak file, family name inside the font)
-GAME_FONTS = {
-    'logo': ('UI/Fonts/MediEvil.ufont', 'MediEvil'),
-    'head': ('OVERBITE/Content/UI/Fonts/FontesqueOffcPro-Extrabold.ufont', 'Fontesque Offc Pro Extrabold'),
-    'body': ('OVERBITE/Content/UI/Fonts/FootlightMTStd-Bold.ufont', 'Footlight MT Std'),
-}
+# gravityrush.ini-independent roles -> (pak file, family name inside the font)
+GAME_FONTS = {}  # Gravity Rush ships no Unreal paks: Windows fonts (FALLBACK)
 FALLBACK = {'logo': 'Georgia', 'head': 'Georgia', 'body': 'Segoe UI'}
 
 

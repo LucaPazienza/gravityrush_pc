@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-2.0-or-later
-"""MediEvil (PS4, CUSA11227) launcher for Windows (Tkinter).
+"""Gravity Rush Remastered (PS4, CUSA01113) launcher for Windows (Tkinter).
 
 Every setting of the port in one window: the game (a folder or the .pkg, unpacked once), saves,
-medievil.ini (display, frame rate, shaders, GPU data), start-up options passed to run.py as
+gravityrush.ini (display, frame rate, shaders, GPU data), start-up options passed to run.py as
 environment variables, mods, third-party patches and controls.
-Launcher options live in %APPDATA%/medievil-launcher/settings.json.
+Launcher options live in %APPDATA%/gravityrush-launcher/settings.json.
 
-Frozen with PyInstaller the same MediEvil.exe also runs the game without the window (`--play`),
+Frozen with PyInstaller the same GravityRush.exe also runs the game without the window (`--play`),
 run.py (`--run`) and the preparation scripts (`--script`), so a packaged port needs no Python.
 """
 import ctypes
@@ -32,19 +32,19 @@ PORT_DIR = Path(sys.executable).resolve().parent if FROZEN else Path(__file__).r
 sys.path.insert(0, str(PORT_DIR / 'scripts'))
 import save_backup  # noqa: E402  (scripts/)
 DATA_DIR = Path(os.environ.get('GOW3_DATA_DIR', PORT_DIR))
-CONFIG_DIR = Path(os.environ.get('APPDATA') or os.environ.get('USERPROFILE') or PORT_DIR) / 'medievil-launcher'
+CONFIG_DIR = Path(os.environ.get('APPDATA') or os.environ.get('USERPROFILE') or PORT_DIR) / 'gravityrush-launcher'
 CONFIG_FILE = CONFIG_DIR / 'settings.json'
 MOD_PRESETS = DATA_DIR / 'mods_presets.json'
-APP_NAME = 'MediEvil'
+APP_NAME = 'Gravity Rush'
 MAX_LOG_LINES = 6000
 NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
 # This build. New versions are on the GitHub releases page (the automatic updater is off).
 VERSION = '1.3.1'
 RELEASES_API = None
-RELEASES_PAGE = 'https://github.com/bc160201983/medievil_2019_pc_port/releases'
-UPDATE_DIR = Path(tempfile.gettempdir()) / 'medievil-update'
+RELEASES_PAGE = 'https://github.com/LucaPazienza/gravityrush_pc/releases'
+UPDATE_DIR = Path(tempfile.gettempdir()) / 'gravityrush-update'
 # Never copied over an installation by an update (the package does not hold them either).
-USER_FILES = ('user', 'out', 'mods', 'medievil.ini', 'mods.json', 'mods_presets.json', 'patches.json', 'last_run.log')
+USER_FILES = ('user', 'out', 'mods', 'gravityrush.ini', 'mods.json', 'mods_presets.json', 'patches.json', 'last_run.log')
 
 
 # ---------------------------------------------------------------------------------------------
@@ -124,7 +124,7 @@ def windows_language():
 
 
 # ---------------------------------------------------------------------------------------------
-# Settings. medievil.ini keys (the game reads them, the in-game menu edits them) and the
+# Settings. gravityrush.ini keys (the game reads them, the in-game menu edits them) and the
 # launcher's own settings.json (passed to run.py as environment variables).
 
 INI_FLAGS = {'cheat_menu', 'cheat_infinite_ammo', 'cheat_double_jumps', 'cheat_very_hard', 'sharpen', 'object_motion', 'show_fps', 'vsync', 'async_shaders', 'deferred_readback',
@@ -238,9 +238,9 @@ def load_json(path, default):
 
 def ini_path():
     old = DATA_DIR / 'gow3.ini'  # settings of builds before 1.1
-    if not (DATA_DIR / 'medievil.ini').exists() and old.exists():
-        old.rename(DATA_DIR / 'medievil.ini')
-    return Path(os.environ.get('GOW3_CONFIG', DATA_DIR / 'medievil.ini'))
+    if not (DATA_DIR / 'gravityrush.ini').exists() and old.exists():
+        old.rename(DATA_DIR / 'gravityrush.ini')
+    return Path(os.environ.get('GOW3_CONFIG', DATA_DIR / 'gravityrush.ini'))
 
 
 def load_ini():
@@ -268,7 +268,7 @@ def save_ini(values, lines):
                 continue
         out.append(line)
     if not lines:
-        out.append('# MediEvil settings (in-game menu: Insert / R3+L2)')
+        out.append('# Gravity Rush settings (in-game menu: Insert / R3+L2)')
     out += [f'{key}={value}' for key, value in values.items() if key not in written]
     ini_path().write_text('\n'.join(out) + '\n', encoding='utf-8')
 
@@ -355,7 +355,7 @@ def game_environment(s):
 # ---------------------------------------------------------------------------------------------
 # The window.
 
-# MediEvil's colors (theme.py): Gallowmere's night purple and stone, bone text, the logo's gold
+# Gravity Rush colors (theme.py): Hekseville's dusk teal and stone, cream text, the clock tower's gold
 # and the green of souls.
 BG, PANEL, CARD, LINE = theme.NIGHT, theme.STONE, theme.CARD, theme.EDGE
 TEXT, MUTED, ACCENT, ACCENT_HI, GOLD = theme.BONE, theme.MIST, theme.SOUL_DARK, theme.SOUL, theme.GOLD
@@ -429,7 +429,7 @@ class Launcher:
         if sys.platform == 'win32':
             try:  # the taskbar shows this window's icon, not Python's
                 import ctypes
-                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('medievilpc.launcher')
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('gravityrushpc.launcher')
             except (AttributeError, OSError):
                 pass
         root.configure(bg=BG)
@@ -483,7 +483,7 @@ class Launcher:
             return
         except (ImportError, OSError, self.tk.TclError):
             pass
-        for icon in (game_icon, PORT_DIR / 'launcher' / 'medievil.png'):
+        for icon in (game_icon, PORT_DIR / 'launcher' / 'gravityrush.png'):
             try:
                 self.icon = self.tk.PhotoImage(file=str(icon))
                 if self.icon.width() > 128:
@@ -903,8 +903,8 @@ class Launcher:
         stays out of the menu."""
         ttk = self.ttk
         f = self.scrolled_page('graphics', _('Graphics', 'Графика'),
-                               _('Stored in medievil.ini; the in-game menu (Insert or R3+L2) changes the same values.',
-                                 'Хранится в medievil.ini; в игре меняется через меню (Insert или R3+L2).'))
+                               _('Stored in gravityrush.ini; the in-game menu (Insert or R3+L2) changes the same values.',
+                                 'Хранится в gravityrush.ini; в игре меняется через меню (Insert или R3+L2).'))
         self.section(f, _('Upscaling', 'Апскейлинг'), top=4)
         self.row(f, _('Upscaler', 'Апскейлер'), self.choice(f, 'upscaler', 'ini', UPSCALERS),
                  _("Temporal upscaling with the game's own motion vectors. FSR 4 needs its assets (below) and "
@@ -983,7 +983,7 @@ class Launcher:
         f = self.scrolled_page('performance', _('Performance'), _('Frame rate and speed options.'))
         self.section(f, _('Frame rate', 'Частота кадров'), top=4)
         self.row(f, _('Engine frame rate'), self.choice(f, 'engine_fps', 'ini', ENGINE_FPS_CHOICES),
-                 _('The highest frame rate MediEvil runs at. The PS4 game stops at 60; 120 and 240 lift '
+                 _('The highest frame rate the game runs at. The PS4 game stops at 60; 120 and 240 lift '
                    'that limit (also set Frame rate limit to Unlimited or higher). Applied at start.'),
                  restart=True)
         self.row(f, _('Frame rate limit'), self.choice(f, 'fps_limit', 'ini', FPS_LIMITS),
@@ -1036,7 +1036,7 @@ class Launcher:
         self.section(f, _('Folders'))
         self.folder(f, 'game_dir', _('Game folder', 'Папка игры'),
                     _('Choose the folder with eboot.bin', 'Выберите папку с eboot.bin'),
-                    _('Your own copy of MediEvil (CUSA11227): the folder with eboot.bin, sce_module and sce_sys. '
+                    _('Your own copy of Gravity Rush Remastered (CUSA01113): the folder with eboot.bin, sce_module and sce_sys. '
                       'Installing a .pkg (above) fills this in.'), on_change=self.game_changed)
         self.folder(f, 'user_dir', _('Saves folder', 'Папка сохранений'),
                     _('Choose the saves folder', 'Выберите папку сохранений'),
@@ -1046,14 +1046,6 @@ class Launcher:
         self.build_save_backups(f)
         self.section(f, _('Language'))
         self.row(f, _('Game language', 'Язык игры'), self.choice(f, 'language', 'app', LANGUAGES))
-        self.section(f, _('Cheats'))
-        self.check(f, 'cheat_menu', 'ini', _('Developer cheat menu (R3 in the game)'),
-                   _("MediEvil's own debug menu, left in the game by its developers: level select, complete "
-                     'level, weapons and items for the level, runes, gold, life bottles and more. Press R3 '
-                     '(click the right stick) during play. Applied at start.'))
-        self.check(f, 'cheat_infinite_ammo', 'ini', _('Unlimited ammo'),
-                   _('Daggers, crossbow and longbow bolts, lightning and the other weapons never run out, and '
-                     'weapons and shields do not wear out. Applied at start.'))
 
     def user_dir(self):
         return Path(self.var('user_dir', 'app').get() or DATA_DIR / 'user')
@@ -1067,7 +1059,7 @@ class Launcher:
         self.pkg_progress = ttk.Progressbar(holder, length=self.px(260), maximum=1000)
         self.pkg_progress.pack(side='left', padx=12)
         self.row(f, _('Game package'), holder,
-                 _('Unpacks the game once (about 32 GB for MediEvil) next to the .pkg, then plays from that folder. '
+                 _('Unpacks the game once next to the .pkg, then plays from that folder. '
                    'Fake PKGs only; an interrupted unpack continues where it stopped.'))
         self.pkg_label = ttk.Label(f, text='', style='Muted.TLabel', wraplength=self.px(640), justify='left')
         self.pkg_label.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
@@ -1098,7 +1090,7 @@ class Launcher:
             return
         free = shutil.disk_usage(target.parent).free
         if not self.messagebox.askyesno(APP_NAME, _(
-                'Unpack {} into {}?\n\nFree space on that drive: {} GB. MediEvil needs about 32 GB.').format(
+                'Unpack {} into {}?\n\nFree space on that drive: {} GB.').format(
                     pkg.name, target, free >> 30)):
             return
         self.pkg_busy = True
@@ -1174,7 +1166,7 @@ class Launcher:
 
     def build_patches(self):
         """Community patches of the selected game's built-in XML and third-party patch files.
-        Resolution and frame rate patches follow Performance (medievil.ini; run.py adds them)."""
+        Resolution and frame rate patches follow Performance (gravityrush.ini; run.py adds them)."""
         f = self.scrolled_page('patches', _('Patches', 'Патчи'), _('Changes applied to the game code at start.'))
         self.section(f, _('Game patches', 'Патчи игры'), top=4)
         self.game_patch_frame = self.ttk.Frame(f)
@@ -1223,7 +1215,7 @@ class Launcher:
 
     def store_game_patches(self):
         """The page's selection into settings (the whole list for this game, without the resolution
-        and frame rate patches: run.py adds those from medievil.ini)."""
+        and frame rate patches: run.py adds those from gravityrush.ini)."""
         if not self.game_patch_title:
             return
         self.app.setdefault('game_patches', {})[self.game_patch_title] = \
@@ -1340,7 +1332,7 @@ class Launcher:
         holder = ttk.Frame(f)
         holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(6, 0))
         ttk.Button(holder, text=_('Port folder', 'Папка порта'), command=lambda: self.open_path(DATA_DIR)).pack(side='left')
-        ttk.Button(holder, text='medievil.ini', command=lambda: self.open_path(ini_path())).pack(side='left', padx=6)
+        ttk.Button(holder, text='gravityrush.ini', command=lambda: self.open_path(ini_path())).pack(side='left', padx=6)
         holder = ttk.Frame(f)
         holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(10, 0))
         ttk.Button(holder, text=_('Clear shader cache', 'Очистить кэш шейдеров'), command=self.clear_cache).pack(side='left')
@@ -1574,7 +1566,7 @@ class Launcher:
             self.refresh_lists()
 
     def collect(self):
-        """Writes settings.json, medievil.ini, mods.json and patches.json."""
+        """Writes settings.json, gravityrush.ini, mods.json and patches.json."""
         self.store_game_patches()
         for key, var in self.vars.items():
             try:
@@ -1768,7 +1760,7 @@ class Launcher:
                 shutil.rmtree(UPDATE_DIR, ignore_errors=True)
                 UPDATE_DIR.mkdir(parents=True, exist_ok=True)
                 archive = UPDATE_DIR / 'update.zip'
-                request = urllib.request.Request(url, headers={'User-Agent': 'medievil-launcher'})
+                request = urllib.request.Request(url, headers={'User-Agent': 'gravityrush-launcher'})
                 with urllib.request.urlopen(request, timeout=60) as response, open(archive, 'wb') as out:
                     total, done, shown = int(response.headers.get('Content-Length') or 0), 0, -1
                     while chunk := response.read(1 << 20):
@@ -1781,11 +1773,11 @@ class Launcher:
                 with zipfile.ZipFile(archive) as package:
                     package.extractall(UPDATE_DIR / 'new')
                 archive.unlink()
-                new = next((p.parent for p in (UPDATE_DIR / 'new').rglob('MediEvil.exe')), None)
+                new = next((p.parent for p in (UPDATE_DIR / 'new').rglob('GravityRush.exe')), None)
                 if not new:
-                    raise OSError('MediEvil.exe is missing from the download')
+                    raise OSError('GravityRush.exe is missing from the download')
                 # The new launcher copies itself over this installation once this one has closed.
-                subprocess.Popen([str(new / 'MediEvil.exe'), '--install-update', str(PORT_DIR), str(os.getpid())],
+                subprocess.Popen([str(new / 'GravityRush.exe'), '--install-update', str(PORT_DIR), str(os.getpid())],
                                  cwd=str(new), stdin=subprocess.DEVNULL, creationflags=NO_WINDOW)
                 self.ui_calls.put(self.root.destroy)
             except (OSError, zipfile.BadZipFile) as failure:
@@ -1808,15 +1800,15 @@ class Launcher:
                                                  'минут будет подтормаживать, пока кэш собирается заново.'))
 
     def shortcut(self):
-        """MediEvil.lnk on the desktop."""
+        """Gravity Rush.lnk on the desktop."""
         if FROZEN:
             target, arguments, icon = sys.executable, '', f'{sys.executable},0'
         else:  # a source tree: the launcher script with the windowless Python
             pythonw = Path(sys.executable).with_name('pythonw.exe')
             target = str(pythonw if pythonw.exists() else sys.executable)
-            arguments, icon = Path(__file__).resolve(), PORT_DIR / 'launcher' / 'medievil.ico'
+            arguments, icon = Path(__file__).resolve(), PORT_DIR / 'launcher' / 'gravityrush.ico'
         script = ('$s=(New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath("Desktop")'
-                  '+"\\MediEvil.lnk");'
+                  '+"\\Gravity Rush.lnk");'
                   f'$s.TargetPath="{target}";$s.WorkingDirectory="{PORT_DIR}";$s.IconLocation="{icon}";'
                   + (f"$s.Arguments='\"{arguments}\"';" if arguments else '') + '$s.Save()')
         result = subprocess.run(['powershell', '-NoProfile', '-Command', script], capture_output=True,
@@ -1835,7 +1827,7 @@ class Launcher:
 
 
 class GameJob:
-    """A Windows job holding run.py and everything it starts: medievil-runtime.exe and the launches made
+    """A Windows job holding run.py and everything it starts: gravityrush-runtime.exe and the launches made
     by the in-game restart (no longer descendants of the first process)."""
 
     def __init__(self, process):
@@ -1882,7 +1874,7 @@ def version_tuple(text):
 def latest_release():
     """(version, zip URL, page URL) of the newest GitHub release."""
     request = urllib.request.Request(RELEASES_API, headers={'Accept': 'application/vnd.github+json',
-                                                            'User-Agent': 'medievil-launcher'})
+                                                            'User-Agent': 'gravityrush-launcher'})
     with urllib.request.urlopen(request, timeout=15) as response:
         release = json.load(response)
     version = '.'.join(re.findall(r'\d+', release['tag_name']))
@@ -1914,7 +1906,7 @@ def install_update(target, wait_pid):
             'Не удалось установить обновление. Скачайте его со страницы релизов.'), APP_NAME, 0x10)
         webbrowser.open(RELEASES_PAGE)
         return 1
-    subprocess.Popen([str(target / 'MediEvil.exe')], cwd=str(target))
+    subprocess.Popen([str(target / 'GravityRush.exe')], cwd=str(target))
     return 0
 
 

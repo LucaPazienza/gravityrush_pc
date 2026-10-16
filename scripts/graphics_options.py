@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-2.0-or-later
-"""Startup graphics options of medievil.ini (gpu/shim/gow3_graphics.h) for run.py.
+"""Startup graphics options of gravityrush.ini (gpu/shim/gow3_graphics.h) for run.py.
 
 The in-game menu and the launcher write them; run.py turns them into game patches and
 environment variables at every start, so "Apply and restart" uses the new values. After a
@@ -39,7 +39,7 @@ def write_keys(path, updates):
     try:
         lines = path.read_text(encoding='utf-8').splitlines()
     except OSError:
-        lines = ['# MediEvil settings (in-game menu: Insert / R3+L2)']
+        lines = ['# Gravity Rush settings (in-game menu: Insert / R3+L2)']
     done, out = set(), []
     for line in lines:
         key = line.split('=', 1)[0].strip() if '=' in line and not line.lstrip().startswith('#') else None

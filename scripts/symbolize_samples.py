@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 """Names the stacks of a GOW3_SAMPLE_FILE profile (gpu/shim/gow3_sampler.cpp).
 
-    python scripts/symbolize_samples.py <profile.txt> [--exe out/medievil-runtime.exe] [--top 40]
+    python scripts/symbolize_samples.py <profile.txt> [--exe out/gravityrush-runtime.exe] [--top 40]
 
 Prints the functions where the thread spends its time (self), the functions on the stack
 (total, callers included) and the most frequent stacks. Needs llvm-symbolizer (MSYS2 CLANG64).
@@ -39,7 +39,7 @@ def symbolize(exe, offsets):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('profile', type=Path)
-    parser.add_argument('--exe', type=Path, default=Path(__file__).resolve().parent.parent / 'out' / 'medievil-runtime.exe')
+    parser.add_argument('--exe', type=Path, default=Path(__file__).resolve().parent.parent / 'out' / 'gravityrush-runtime.exe')
     parser.add_argument('--top', type=int, default=40)
     args = parser.parse_args()
     stacks = []

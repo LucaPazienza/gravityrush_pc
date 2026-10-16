@@ -438,7 +438,7 @@ void PerformanceTab() {
         ImGui::EndTable();
     }
     if (!IsGow3()) {
-        // MediEvil: the game's own resolution, switched live (as its debug menu does). The debug
+        // Unreal Engine 4 games: the game's own resolution, switched live (as its debug menu does). The debug
         // menu's gamepad navigation needs 1080p: switch there for cheats, then back.
         ImGui::SeparatorText("Game resolution now");
         static constexpr const char* labels[] = {"1080p", "1440p", "1800p", "4K"};
@@ -455,7 +455,7 @@ void PerformanceTab() {
     }
     ImGui::SeparatorText("Applied on restart");
     if (BeginRows("##restart")) {
-        // God of War III: a resolution patch. Unreal Engine 4 games (MediEvil): the scene scale.
+        // God of War III: a resolution patch. Unreal Engine 4 games: the scene scale.
         static const char* const resolution_labels[] = {
             "Native (1080p)", "480p", "720p", "1440p", "1800p", "4K",
             "720p native output", "1440p native output", "1800p native output", "4K native output"};
@@ -567,7 +567,7 @@ void Menu() {
     // gow3: the game's own title (param.sfo), not a fixed one.
     static const std::string heading = [] {
         const std::string_view title = Common::ElfInfo::Instance().Title();
-        return std::string(title.empty() ? "MediEvil" : title) + "  (Insert / R3+L2)";
+        return std::string(title.empty() ? "Gravity Rush" : title) + "  (Insert / R3+L2)";
     }();
     if (!ImGui::Begin(heading.c_str(), &keep_open, ImGuiWindowFlags_NoCollapse)) {
         ImGui::End();
@@ -618,7 +618,7 @@ void Menu() {
 
     ImGui::Separator();
     ImGui::PushTextWrapPos(0.0f);
-    ImGui::TextDisabled("%s", footer_help ? footer_help : "L1 / R1 or Q / E: switch tabs. Settings are saved in medievil.ini.");
+    ImGui::TextDisabled("%s", footer_help ? footer_help : "L1 / R1 or Q / E: switch tabs. Settings are saved in gravityrush.ini.");
     ImGui::PopTextWrapPos();
     if (const int changes = RestartChanges()) {
         ImGui::TextColored(ImVec4(0.85f, 0.72f, 0.45f, 1.0f), "%d change%s need%s a restart (unsaved progress is lost).",

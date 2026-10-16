@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// gow3: graphics options of the in-game menu (Insert / R3+L2), kept in medievil.ini. The live ones
+// gow3: graphics options of the in-game menu (Insert / R3+L2), kept in gravityrush.ini. The live ones
 // apply on the next frame; the startup ones (patches, GPU readback modes) are read by run.py and
 // apply through "Apply and restart". The launcher reads and writes the same keys.
 #pragma once
@@ -19,7 +19,7 @@ inline constexpr std::array<const char*, DisplayModeCount> DisplayModeNames = {
 inline constexpr std::array<int, 5> FpsLimits = {30, 60, 120, 240, 0};
 
 /// Game patch suffixes ("Resolution Patch - <name>"); "native" is no resolution patch.
-/// Unreal Engine 4 (MediEvil): the scene scale; the *_native ones change the game's output size.
+/// Unreal Engine 4 games: the scene scale; the *_native ones change the game's output size.
 inline constexpr std::array<std::string_view, 10> Resolutions = {
     "native", "480p", "720p", "1440p", "1800p", "4K",
     "720p_native", "1440p_native", "1800p_native", "4K_native"};

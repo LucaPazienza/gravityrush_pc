@@ -131,7 +131,7 @@ void BufferCache::SmallGuestCopy(const Gow3Copy::Item& item) {
     // Only the recording thread may Record() or use its copy batch. A draw preparation worker
     // obtaining a buffer copies at once, before the buffer is returned: recording from a worker
     // while the GPU thread handed its chunk to the recorder wrote into a null chunk (crash in
-    // SmallGuestCopy, MediEvil), and a worker's thread-local copy batch could stay unflushed.
+    // SmallGuestCopy, Unreal Engine 4), and a worker's thread-local copy batch could stay unflushed.
     if (!scheduler.OwnsRecording() && scheduler.IsRecordingDeferred()) {
         item.run(item);
         return;
@@ -641,12 +641,12 @@ bool BufferCache::SynchronizeMemoryFromImage(const Buffer* arena, VAddr device_a
                        return fill;
                    }()) {
             // gow3: color images are always fully expanded on the host, so every 4-bit CMask
-            // tile code reads as 0xF (uncompressed: the color in memory is valid). MediEvil reads
+            // tile code reads as 0xF (uncompressed: the color in memory is valid). Unreal Engine 4 reads
             // CMask through buffers; leaving it stale made it treat tiles as fast-cleared.
             runtime.FillBuffer(arena, arena->Offset(device_addr), size, 0xFFFFFFFFu);
             return true;
         } else {
-            // Once per type: MediEvil reads CMask through buffers every frame.
+            // Once per type: Unreal Engine 4 reads CMask through buffers every frame.
             static std::atomic<u32> warned{0};
             const u32 bit = 1u << static_cast<u32>(*type);
             if (!(warned.fetch_or(bit) & bit)) {

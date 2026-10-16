@@ -6,15 +6,10 @@ env:     run.py defaults for that game (the user's own environment still wins).
 from pathlib import Path
 
 PROFILES = {
-    # MediEvil (2019, Unreal Engine 4). NpToolkit2 is the game's own PSN toolkit; the runtime
-    # answers its system calls as an offline console. GoW3's temporal upscaler hooks and image
-    # readback mode do not fit this renderer: off and linear (otherwise surfaces turn black).
-    'CUSA11227': {
-        'name': 'MediEvil',
-        'modules': ('libc.prx', 'libSceFios2.prx', 'libSceNpToolkit2.prx'),
-        'env': {'GOW3_UPSCALER': 'none', 'GOW3_READBACK_LINEAR': '1', 'GOW3_VBLANK_HZ': '60'},
-        # Render resolution through a UE4 config override pak (ue4_override.py), up to 4K.
-        'ue4_render_scale': True,
+    'CUSA01113': {
+        'name': 'Gravity Rush Remastered',
+        'modules': ('libc.prx', 'libSceFios2.prx'),
+        'env': {},
     },
     'CUSA01623': {
         'name': 'God of War III',

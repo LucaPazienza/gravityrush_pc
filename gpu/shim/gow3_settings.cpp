@@ -18,7 +18,7 @@ namespace {
 
 const char* Path() {
     const char* env = std::getenv("GOW3_CONFIG");
-    return env && env[0] ? env : "medievil.ini";
+    return env && env[0] ? env : "gravityrush.ini";
 }
 
 float Clamp(float v, float lo, float hi) {
@@ -291,7 +291,7 @@ std::vector<std::string> ReadLines(const char* path) {
 
 void Save() {
     const auto& v = Get();
-    // medievil.ini also holds the launcher's keys (graphics quality, cheats, upscaling): they are
+    // gravityrush.ini also holds the launcher's keys (graphics quality, cheats, upscaling): they are
     // kept as they are (rewriting only this menu's keys dropped them).
     const std::vector<std::string> previous = ReadLines(Path());
     FILE* file = std::fopen(Path(), "w");

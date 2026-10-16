@@ -1,6 +1,6 @@
 /* SSE4a (AMD only: EXTRQ, INSERTQ) on CPUs without it, such as every Intel CPU.
  *
- * The PS4's Jaguar CPU has SSE4a and MediEvil uses INSERTQ in eight places (Unreal Engine 4 code);
+ * The PS4's Jaguar CPU has SSE4a and an Unreal Engine 4 game uses INSERTQ in eight places (Unreal Engine 4 code);
  * the port runs that code natively, so an Intel CPU stopped there with an illegal instruction
  * (issue #1). At load each known site, checked byte for byte, becomes a jump to a trampoline doing
  * the same with SSE2 (PEXTRW + PINSRW through RAX, saved below the red zone; flags untouched;
@@ -24,7 +24,7 @@ static int sse4a_missing(void) {
     return !(c & (1u << 6));
 }
 
-/* MediEvil 01.00 (CUSA11227): INSERTQ xmmD, xmmS, 16, idx (decoded at these image offsets). */
+/* CUSA11227 01.00 (Unreal Engine 4): INSERTQ xmmD, xmmS, 16, idx (decoded at these image offsets). */
 static const struct { uint32_t offset; unsigned char bytes[7]; unsigned char size; } known[] = {
     {0x233d40e, {0xf2, 0x0f, 0x78, 0xfd, 0x10, 0x10}, 6},       /* insertq xmm7, xmm5, 16, 16 */
     {0x233d438, {0xf2, 0x44, 0x0f, 0x78, 0xcd, 0x10, 0x10}, 7}, /* insertq xmm9, xmm5, 16, 16 */

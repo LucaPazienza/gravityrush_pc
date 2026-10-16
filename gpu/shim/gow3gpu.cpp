@@ -222,7 +222,7 @@ extern "C" int gow3gpu_init(const Gow3GpuConfig* config) {
     if (config->user_dir) setenv("GOW3_GPU_USER_DIR", config->user_dir, 0);
 #endif
     Core::Emulator::FillElfInfo(*config);
-    const std::string title = config->title ? config->title : "MediEvil";
+    const std::string title = config->title ? config->title : "Gravity Rush";
     const s32 width = config->width, height = config->height;
     g_window_thread = std::thread([title, width, height] {
         Common::SetCurrentThreadName("gow3:window");

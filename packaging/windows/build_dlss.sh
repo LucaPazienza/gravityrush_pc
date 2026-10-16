@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Builds gow3_dlss.dll (gpu/dlss_bridge, the only code that uses the NVIDIA DLSS SDK) with
-# MSVC and puts it with NVIDIA's nvngx_dlss.dll next to out/medievil-runtime.exe; package.sh ships both.
+# MSVC and puts it with NVIDIA's nvngx_dlss.dll next to out/gravityrush-runtime.exe; package.sh ships both.
 # Needs Visual Studio 2022 (Build Tools) and a checkout of https://github.com/NVIDIA/DLSS:
 #   DLSS_SDK_ROOT=F:/sdk/DLSS bash packaging/windows/build_dlss.sh
 set -euo pipefail

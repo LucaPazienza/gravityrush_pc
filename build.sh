@@ -3,7 +3,7 @@ set -euo pipefail
 cd -- "$(dirname -- "$0")"
 mkdir -p out
 # Windows: MSYS2 CLANG64 (packages in packaging/windows/README.md). The GPU library is static
-# there and CMake links medievil-runtime.exe as well; no PGO (GCC-only flags), LTO off by default.
+# there and CMake links gravityrush-runtime.exe as well; no PGO (GCC-only flags), LTO off by default.
 case $(uname -s) in
 MINGW*|MSYS*)
     # shellcheck source=msys2-env.sh
@@ -23,12 +23,12 @@ MINGW*|MSYS*)
     cmake -S gpu -B out/gpu -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DGOW3_PGO=off \
         -DGOW3_LTO="${GOW3_LTO:-OFF}" -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ >/dev/null
     echo "GPU library and loader: LTO ${GOW3_LTO:-OFF}"
-    if ! ninja -C out/gpu medievil-runtime medievil-gpu-check medievil-play > out/gpu-build.log 2>&1; then
+    if ! ninja -C out/gpu gravityrush-runtime gravityrush-gpu-check gravityrush-play > out/gpu-build.log 2>&1; then
         grep -v '^\[' out/gpu-build.log | tail -40 >&2
         echo 'Build failed (full log: out/gpu-build.log)' >&2; exit 1
     fi
-    cp out/gpu/medievil-runtime.exe out/gpu/medievil-gpu-check.exe out/gpu/medievil-play.exe out/
-    echo "Built $PWD/out/medievil-runtime.exe"
+    cp out/gpu/gravityrush-runtime.exe out/gpu/gravityrush-gpu-check.exe out/gpu/gravityrush-play.exe out/
+    echo "Built $PWD/out/gravityrush-runtime.exe"
     exit 0
     ;;
 esac
@@ -87,10 +87,10 @@ if [[ ! -f out/libatrac9.a || -n $(find third_party/LibAtrac9/C/src -newer out/l
     for source in "${atrac9[@]}"; do "$CC" -std=c99 -O2 -g -w -c "$source" -o "out/atrac9/$(basename "${source%.c}").o"; done
     ar rcs out/libatrac9.a out/atrac9/*.o
 fi
-"$CC" -std=c11 -O2 -g -Wall -Wextra -Werror -pthread -no-pie "${includes[@]}" -I. -Isrc src/probe.c "${runtime[@]}" src/vulkan_smoke.c out/libatrac9.a -lm "${gpu[@]}" "${libraries[@]}" -o out/medievil-runtime
-echo "Built $PWD/out/medievil-runtime"
+"$CC" -std=c11 -O2 -g -Wall -Wextra -Werror -pthread -no-pie "${includes[@]}" -I. -Isrc src/probe.c "${runtime[@]}" src/vulkan_smoke.c out/libatrac9.a -lm "${gpu[@]}" "${libraries[@]}" -o out/gravityrush-runtime
+echo "Built $PWD/out/gravityrush-runtime"
 # GPU check for run.sh (live_resolution=auto): links only the Vulkan loader.
-"$CC" -std=c11 -O2 -Wall -Wextra -Werror tools/gpu_capabilities.c "${libraries[@]}" -o out/medievil-gpu-check
+"$CC" -std=c11 -O2 -Wall -Wextra -Werror tools/gpu_capabilities.c "${libraries[@]}" -o out/gravityrush-gpu-check
 if [[ ${1:-} == --test ]]; then
     "$CC" -std=c11 -O2 -g -Wall -Wextra -Werror -pthread "${includes[@]}" -I. -Isrc tests/test_pad.c "${libraries[@]}" -o out/pad-test
     out/pad-test

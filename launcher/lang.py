@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 """Translations of the Windows launcher. KEYS holds the English texts; every language lists its
-texts in the same order. Russian lives next to the English text in medievil_launcher.py.
+texts in the same order. Russian lives next to the English text in gravityrush_launcher.py.
 Missing or empty entries fall back to English."""
 
 KEYS = [

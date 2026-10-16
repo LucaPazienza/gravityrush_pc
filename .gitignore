@@ -2,7 +2,7 @@ out/
 __pycache__/
 user/
 *.mp4
-medievil.ini
+gravityrush.ini
 fsr4_shaders/
 pgo/
 *.png
@@ -23,7 +23,8 @@ perf.data
 mods.json
 patches.json
 !launcher/gow3.png
-!launcher/medievil.png
-gr_run*.txt
-build_log.txt
+!launcher/gravityrush.png
+!packaging/windows/icon_source.png
+# Local logs of builds and test runs (build.sh, run.py output)
+logs/
 .vscode/

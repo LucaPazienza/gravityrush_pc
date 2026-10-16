@@ -69,8 +69,7 @@ PATCHES_DIR=Path(__file__).resolve().parent.parent/'patches'
 # Built-in patch file per game, the app version its addresses are for and, when known, the
 # sha256 of the only eboot.bin they were checked against (another build of the same version has
 # its code elsewhere: byte writes there corrupt it).
-GAMES=[({'CUSA11227'},PATCHES_DIR/'MediEvil.xml','01.00',
-        'a7e976d13b9649c5cd1ccb617b02f4a27b95c45b9f5331470b90a1f014c3b828')]
+GAMES=[]
 DMEM_RETAIL_MB=5056  # runtime_memory.c POOL_SIZE default
 
 

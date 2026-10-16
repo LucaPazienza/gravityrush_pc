@@ -1,40 +1,36 @@
-MediEvil (PS4) for PC (medievil_pc)
-===================================
+Gravity Rush Remastered (PS4) for PC (gravityrush_pc)
+=====================================================
 
-No game files are included. You need your own copy of MediEvil (PS4, 2019): CUSA11227, either as
-an unpacked folder (eboot.bin, sce_module, sce_sys) or as a fake package (.pkg).
+Work in progress: the game boots but does not get past the opening scene yet, and has no audio.
+
+No game files are included. You need your own copy of Gravity Rush Remastered (PS4): CUSA01113,
+either as an unpacked folder (eboot.bin, sce_module, sce_sys) or as a fake package (.pkg).
 
 You need
 - Windows 10 (1903 or newer) or Windows 11, 64-bit.
 - A graphics card with Vulkan 1.3 and a current driver.
-- About 32 GB free if you install from a .pkg.
 
 Start
-1. Extract this folder anywhere, for example C:\Games\medievil-windows (not inside the zip).
-2. Open "MediEvil.exe". If Windows shows "Windows protected your PC", click More info, then
+1. Extract this folder anywhere, for example C:\Games\gravityrush-windows (not inside the zip).
+2. Open "GravityRush.exe". If Windows shows "Windows protected your PC", click More info, then
    Run anyway (the program is not signed).
 3. Game page:
    - Install from PKG: "Choose .pkg..." unpacks the game once next to the .pkg (progress bar;
      an interrupted unpack continues where it stopped), or
    - Game folder: Browse... to the folder with eboot.bin.
-4. Home shows the cover and "CUSA11227 · version 01.00". Choose Render resolution (up to 4K)
-   and display mode, then press PLAY.
+4. Press PLAY.
 
 While playing
 - Insert on the keyboard, or R3 + L2 on the controller, opens the port's menu (image,
   performance, overlay).
 - Controller (DualSense, Xbox and others) and keyboard work; remap them on the Controls page.
-
-Render resolution
-- 4K draws the 3D scene at 3840 x 2160 and scales it to the game's 1080p picture (much sharper).
-  It writes a small override file into the game folder:
-  overbite\content\paks\pakchunk99-ps4_P.pak (removed again when you choose Native).
-- MediEvil runs at up to 60 FPS (the game's own limit).
+- Touchpad: Tab (left side), Backspace (right side), the controller's View button, or hold the
+  left mouse button over the window and drag.
 
 Next time
-- "Play MediEvil.exe" starts the game straight away with the saved settings (shortcut, Steam).
-- Saves, shader cache and the log: user\ next to MediEvil.exe (keep it when updating).
-- Settings: medievil.ini next to MediEvil.exe; launcher options in %APPDATA%\medievil-launcher.
+- "Play Gravity Rush.exe" starts the game straight away with the saved settings (shortcut, Steam).
+- Saves, shader cache and the log: user\ next to GravityRush.exe (keep it when updating).
+- Settings: gravityrush.ini next to GravityRush.exe; launcher options in %APPDATA%\gravityrush-launcher.
 
 If something goes wrong
 - Black screen at start: Advanced > Clear shader cache, then start again.
@@ -42,5 +38,6 @@ If something goes wrong
 
 Online features (PSN) are not available: the game runs as a console that is not signed in.
 
-This project is not affiliated with Sony Interactive Entertainment or Other Ocean.
-MediEvil is a trademark of Sony Interactive Entertainment. Based on gow3_pc (GPL-2.0-or-later).
+This project is not affiliated with Sony Interactive Entertainment.
+Gravity Rush is a trademark of Sony Interactive Entertainment.
+Based on medievil_2019_pc_port and gow3_pc (GPL-2.0-or-later).
