@@ -166,10 +166,14 @@ def main():
         profile = game_profile(game_title_id(game))
         patched = bool(profile) and ((game_app_version(game) == profile[2] and eboot_matches(game, profile))
                                      or bool(env.get('GOW3_FORCE_PATCHES')))
-        # The window shows the game's icon (BMP: the format SDL loads without extra libraries).
+        # The window shows the port's icon, else the game's (BMP: the format SDL loads without
+        # extra libraries).
         try:
             from PIL import Image
-            with Image.open(game / 'sce_sys' / 'icon0.png') as icon:
+            source = PORT / 'launcher' / 'gravityrush.png'
+            if not source.is_file():
+                source = game / 'sce_sys' / 'icon0.png'
+            with Image.open(source) as icon:
                 icon.convert('RGBA').resize((64, 64), Image.LANCZOS).save(out / 'window_icon.bmp')
             env.setdefault('GOW3_WINDOW_ICON', str(out / 'window_icon.bmp'))
         except (ImportError, OSError):
