@@ -194,7 +194,10 @@ static void sample_motion(SDL_Gamepad *g, PadData *d) {
     if (motion.accel && SDL_GetGamepadSensorData(g,SDL_SENSOR_ACCEL,v,3))
         for (int i=0;i<3;++i) d->acceleration[i]=v[i]*0.098f;
     if (motion.gyro && SDL_GetGamepadSensorData(g,SDL_SENSOR_GYRO,v,3)) {
-        for (int i=0;i<3;++i) d->angular_velocity[i]=v[i];
+        /* GOW3_GYRO_SENS: gyro sensitivity (default 1.4: the player found 1.0 a little slow). */
+        static float sens=-1.0f;
+        if (sens<0.0f) { const char *e=getenv("GOW3_GYRO_SENS"); sens=e && atof(e)>0.0 ? (float)atof(e) : 1.4f; }
+        for (int i=0;i<3;++i) { v[i]*=sens; d->angular_velocity[i]=v[i]; }
         uint64_t now=d->timestamp;
         float dt=motion.last_us && now>motion.last_us ? (float)(now-motion.last_us)/1e6f : 0.0f;
         motion.last_us=now;
