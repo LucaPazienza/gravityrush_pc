@@ -757,6 +757,9 @@ public:
             func(current_cmdbuf);
             return;
         }
+        if (!record_chunk) {
+            record_chunk = AcquireChunk(); // gow3: never record into a moved-out chunk
+        }
         if (!record_chunk->Push(std::forward<Func>(func))) {
             full_chunks.push_back(std::move(record_chunk));
             record_chunk = AcquireChunk();
@@ -779,6 +782,9 @@ public:
         }
         if (bytes + 1024 > RecordChunk::Capacity) {
             bytes = 0; // RecordData() places it out of line; keep room for the command
+        }
+        if (!record_chunk) {
+            record_chunk = AcquireChunk(); // gow3: never record into a moved-out chunk
         }
         if (RecordChunk::Capacity - record_chunk->Size() < bytes + 1024) {
             full_chunks.push_back(std::move(record_chunk));

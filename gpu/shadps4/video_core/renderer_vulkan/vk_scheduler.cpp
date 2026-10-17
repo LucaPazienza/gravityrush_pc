@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <unordered_map>
+#include <utility>
 #ifndef _WIN32
 #include <dlfcn.h>
 #endif
@@ -241,13 +242,17 @@ void Scheduler::KickRecording(bool force) {
         return;
     }
     bool wake;
+    // gow3: the replacement chunk is taken before the lock (AcquireChunk locks recorder_mutex)
+    // and swapped in at once, so record_chunk is never null in between: a command recorded on
+    // another thread in that window crashed in ReserveRecordData (seen in Gravity Rush).
+    std::unique_ptr<RecordChunk> fresh = record_chunk->Empty() ? nullptr : AcquireChunk();
     {
         std::scoped_lock lk{recorder_mutex};
         for (auto& chunk : full_chunks) {
             recorder_queue.push_back(std::move(chunk));
         }
-        if (!record_chunk->Empty()) {
-            recorder_queue.push_back(std::move(record_chunk));
+        if (fresh) {
+            recorder_queue.push_back(std::exchange(record_chunk, std::move(fresh)));
         }
         wake = recorder_sleeping;
         queued_chunks.store(recorder_queue.size(), std::memory_order_release);
