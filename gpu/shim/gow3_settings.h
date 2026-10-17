@@ -59,7 +59,7 @@ struct Values {
     std::atomic<bool> enemy_health_bar{false};
     std::atomic<bool> actor_watch_supported{false};
     // Graphics (gow3_graphics.h). Live: applied on the next frame.
-    std::atomic<int> display_mode{0};
+    std::atomic<int> display_mode{1}; // borderless by default
     std::atomic<bool> vsync{true};
     std::atomic<int> fps_limit{0};
     std::atomic<bool> async_shaders{true};
