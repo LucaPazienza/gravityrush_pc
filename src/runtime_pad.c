@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <pthread.h>
 #include <time.h>
 #include <SDL3/SDL.h>
@@ -175,6 +176,39 @@ static void load_button_maps(void) {
 static void key_axis(uint8_t *axis, bool negative, bool positive) {
     if (negative || positive) *axis=(uint8_t)(128-(negative ? 128 : 0)+(positive ? 127 : 0));
 }
+/* Motion sensors (DualSense / DualShock 4 through SDL, as shadPS4 does): angular velocity in
+ * rad/s on the PS4's axes, acceleration in g (SDL's m/s^2 x 0.098), and an orientation
+ * quaternion integrated from the angular velocity (scePadResetOrientation brings it back to
+ * identity). Sensors are switched on again whenever the gamepad changes (hot-plugging). */
+static struct { SDL_Gamepad *pad; int gyro, accel; float q[4]; uint64_t last_us; } motion={NULL,0,0,{0,0,0,1},0};
+static void motion_reset(void) { motion.q[0]=motion.q[1]=motion.q[2]=0.0f; motion.q[3]=1.0f; motion.last_us=0; }
+static void sample_motion(SDL_Gamepad *g, PadData *d) {
+    if (g!=motion.pad) {
+        motion.pad=g;
+        motion.gyro=SDL_GamepadHasSensor(g,SDL_SENSOR_GYRO) && SDL_SetGamepadSensorEnabled(g,SDL_SENSOR_GYRO,true);
+        motion.accel=SDL_GamepadHasSensor(g,SDL_SENSOR_ACCEL) && SDL_SetGamepadSensorEnabled(g,SDL_SENSOR_ACCEL,true);
+        motion_reset();
+        printf("Runtime: gamepad motion sensors: gyro %s, accelerometer %s\n",motion.gyro ? "on" : "none",motion.accel ? "on" : "none");
+    }
+    float v[3];
+    if (motion.accel && SDL_GetGamepadSensorData(g,SDL_SENSOR_ACCEL,v,3))
+        for (int i=0;i<3;++i) d->acceleration[i]=v[i]*0.098f;
+    if (motion.gyro && SDL_GetGamepadSensorData(g,SDL_SENSOR_GYRO,v,3)) {
+        for (int i=0;i<3;++i) d->angular_velocity[i]=v[i];
+        uint64_t now=d->timestamp;
+        float dt=motion.last_us && now>motion.last_us ? (float)(now-motion.last_us)/1e6f : 0.0f;
+        motion.last_us=now;
+        if (dt>0.0f && dt<1.0f) {
+            float *q=motion.q, w[3]={v[0],v[1],v[2]};
+            float dq[4]={q[3]*w[0]+q[1]*w[2]-q[2]*w[1], q[3]*w[1]+q[2]*w[0]-q[0]*w[2],
+                         q[3]*w[2]+q[0]*w[1]-q[1]*w[0], -q[0]*w[0]-q[1]*w[1]-q[2]*w[2]};
+            for (int i=0;i<4;++i) q[i]+=0.5f*dq[i]*dt;
+            float n=sqrtf(q[0]*q[0]+q[1]*q[1]+q[2]*q[2]+q[3]*q[3]);
+            if (n>0.0f) for (int i=0;i<4;++i) q[i]/=n;
+        }
+    }
+    memcpy(d->orientation,motion.q,sizeof(motion.q));
+}
 static void sample_host(PadData *d) {
     memset(d,0,sizeof(*d));
     d->left_x=d->left_y=d->right_x=d->right_y=128;
@@ -196,6 +230,7 @@ static void sample_host(PadData *d) {
         if (d->r2>30) d->buttons|=BTN_R2;
         if (mapped & BTN_L2) d->l2=255;
         if (mapped & BTN_R2) d->r2=255;
+        sample_motion(g,d);
         if (SDL_GetNumGamepadTouchpads(g)>0) {
             const int fingers=SDL_GetNumGamepadTouchpadFingers(g,0);
             for (int finger=0;finger<fingers && d->touch_count<2;++finger) {
@@ -476,6 +511,11 @@ static ABI int32_t pad_vibration(int32_t handle, const uint8_t *param) {
 }
 static ABI int32_t pad_ok_handle(int32_t handle) { return handle==PAD_HANDLE && opened ? 0 : ERR_INVALID_HANDLE; }
 static ABI int32_t pad_ok_handle_flag(int32_t handle, uint8_t flag) { (void)flag; return pad_ok_handle(handle); }
+static ABI int32_t pad_reset_orientation(int32_t handle) {
+    int32_t r=pad_ok_handle(handle);
+    if (!r) { pthread_mutex_lock(&lock); motion_reset(); pthread_mutex_unlock(&lock); }
+    return r;
+}
 
 static ABI int32_t pad_light_bar(int32_t handle, const uint8_t *rgb) {
     if (handle!=PAD_HANDLE || !opened) return ERR_INVALID_HANDLE;
@@ -493,7 +533,7 @@ static const RuntimeExport exports[]={
     {"scePadInit",pad_init}, {"scePadOpen",pad_open}, {"scePadClose",pad_close},
     {"scePadReadState",pad_read_state}, {"scePadRead",pad_read},
     {"scePadGetControllerInformation",pad_info}, {"scePadSetVibration",pad_vibration},
-    {"scePadResetOrientation",pad_ok_handle},
+    {"scePadResetOrientation",pad_reset_orientation},
     {"scePadSetAngularVelocityDeadbandState",pad_ok_handle_flag}, {"scePadSetTiltCorrectionState",pad_ok_handle_flag},
     {"scePadSetMotionSensorState",pad_ok_handle_flag},
 };
