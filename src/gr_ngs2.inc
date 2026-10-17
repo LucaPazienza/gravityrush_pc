@@ -26,8 +26,9 @@ static ABI int32_t gr_ngs2_system_create(const void *option, const GrNgs2BufferI
     return 0;
 }
 static ABI int32_t gr_ngs2_rack_create(uintptr_t system, uint32_t rack_id, const void *option, const GrNgs2BufferInfo *info, uintptr_t *out) {
-    (void)system; (void)rack_id; (void)option; (void)info;
+    (void)system; (void)option; (void)info;
     if (!out) return GR_NGS2_ERR_OUT;
     *out = ngs2_token();
+    ngs2_rack_register(*out, rack_id);
     return 0;
 }

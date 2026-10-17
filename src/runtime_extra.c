@@ -314,6 +314,12 @@ static uintptr_t ngs2_token(void) {
     pthread_mutex_unlock(&ngs2_lock);
     return t;
 }
+/* Rack id of each rack handle (0x1000 sampler, 0x2000 submixer, 0x3000 mastering). A voice handle
+ * is (rack << 16) + (index + 1) * 0x10: unique across racks (rack handles are only 0x10 apart, so
+ * rack + index * 0x10 made one rack's voices collide with another's), and it leads back to its rack. */
+static uint32_t ngs2_rack_ids[4096];
+static void ngs2_rack_register(uintptr_t rack, uint32_t id) { ngs2_rack_ids[(rack>>4)&4095]=id; }
+static uint32_t ngs2_voice_rack_id(uintptr_t voice) { return ngs2_rack_ids[((voice>>16)>>4)&4095]; }
 static ABI int32_t ngs2_system_create(const void *option, const void *allocator, uintptr_t *out) {
     (void)option; (void)allocator;
     if (!out) return (int32_t)0x804A0003;
@@ -326,7 +332,7 @@ static ABI int32_t ngs2_system_create(const void *option, const void *allocator,
 static long ngs2_n_state, ngs2_n_flags, ngs2_n_control;
 static int ngs2_trace_left(void) {
     static int left=-1;
-    if (left<0) { const char *e=getenv("GOW3_AUDIO_TRACE"); left=e && e[0]=='1' ? 3000 : 0; }
+    if (left<0) { const char *e=getenv("GOW3_AUDIO_TRACE"); left=e && e[0]=='1' ? 20000 : 0; }
     return left>0 ? left-- : 0;
 }
 void runtime_ngs2_report(void) {
@@ -338,6 +344,7 @@ static ABI int32_t ngs2_rack_create(uintptr_t system, uint32_t rack, const void 
     (void)system; (void)option; (void)allocator;
     if (!out) return (int32_t)0x804A0003;
     *out=ngs2_token();
+    ngs2_rack_register(*out,rack);
     if (ngs2_trace_left()) printf("Runtime: NGS2 rack id 0x%x -> 0x%llx\n",rack,(unsigned long long)*out);
     return 0;
 }
@@ -367,7 +374,8 @@ static ABI int32_t ngs2_voice_control(uintptr_t voice, const Ngs2ParamHeader *pa
 }
 static ABI int32_t ngs2_voice_handle(uintptr_t rack, uint32_t index, uintptr_t *out) {
     if (!out) return (int32_t)0x804A0003;
-    *out=rack+0x100000+(uintptr_t)index*0x10; return 0;
+    if (index>=4095) return (int32_t)0x804A0300; /* invalid voice index */
+    *out=(rack<<16)+((uintptr_t)index+1)*0x10; return 0;
 }
 static ABI int32_t ngs2_voice_state(uintptr_t voice, void *state, uint64_t size) {
     __atomic_add_fetch(&ngs2_n_state,1,__ATOMIC_RELAXED);
