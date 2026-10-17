@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <algorithm>
+#include <cstdio>
+#include <cstdlib>
 #include "video_core/renderer_vulkan/liverpool_to_vk.h"
 #include "video_core/renderer_vulkan/vk_instance.h"
 #include "video_core/texture_cache/sampler.h"
@@ -9,14 +11,28 @@
 namespace VideoCore {
 
 Sampler::Sampler(const Vulkan::Instance& instance, const AmdGpu::Sampler& sampler,
-                 const AmdGpu::BorderColorBuffer border_color_base, const bool is_depth, float extra_lod_bias) {
+                 const AmdGpu::BorderColorBuffer border_color_base, const bool is_depth, float extra_lod_bias,
+                 int forced_anisotropy) {
     using namespace Vulkan;
+    // gow3: forced anisotropic filtering, for mipmapped textures with a linear minification
+    // filter only (render targets read by post effects have no mipmaps and stay as they are).
+    const bool forced = forced_anisotropy > 1 && !is_depth && sampler.MaxLod() > 0.0f &&
+                        sampler.mip_filter != AmdGpu::MipFilter::None &&
+                        (sampler.xy_min_filter == AmdGpu::Filter::Bilinear ||
+                         sampler.xy_min_filter == AmdGpu::Filter::AnisoLinear);
     const bool anisotropy_enable = instance.IsAnisotropicFilteringSupported() &&
-                                   (AmdGpu::IsAnisoFilter(sampler.xy_mag_filter) ||
+                                   (forced || AmdGpu::IsAnisoFilter(sampler.xy_mag_filter) ||
                                     AmdGpu::IsAnisoFilter(sampler.xy_min_filter));
+    const float wanted = forced ? std::max(float(forced_anisotropy), sampler.MaxAniso()) : sampler.MaxAniso();
     const float max_anisotropy =
-        anisotropy_enable ? std::clamp(sampler.MaxAniso(), 1.0f, instance.MaxSamplerAnisotropy())
-                          : 1.0f;
+        anisotropy_enable ? std::clamp(wanted, 1.0f, instance.MaxSamplerAnisotropy()) : 1.0f;
+    static const bool trace = std::getenv("GOW3_SAMPLER_TRACE") != nullptr;
+    if (trace) {
+        std::printf("Sampler: min %u mag %u mip %u lod %.2f-%.2f game aniso %.0f -> %.0f%s\n",
+                    u32(sampler.xy_min_filter.Value()), u32(sampler.xy_mag_filter.Value()),
+                    u32(sampler.mip_filter.Value()), sampler.MinLod(), sampler.MaxLod(),
+                    sampler.MaxAniso(), max_anisotropy, forced ? " (forced)" : "");
+    }
     auto border_color = LiverpoolToVK::BorderColor(sampler.border_color_type);
     if (border_color == vk::BorderColor::eFloatCustomEXT &&
         !instance.IsCustomBorderColorSupported()) {

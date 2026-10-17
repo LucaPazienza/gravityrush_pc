@@ -5,6 +5,7 @@
 #include "video_core/amdgpu/liverpool.h"
 
 #include "gow3_toggles.h"
+#include "gow3_settings.h"
 #include "common/assert.h"
 #include "common/debug.h"
 #include "common/div_ceil.h"
@@ -1210,13 +1211,16 @@ void TextureCache::RefreshImage(Image& image) {
 vk::Sampler TextureCache::GetSampler(const AmdGpu::Sampler& sampler,
                                      AmdGpu::BorderColorBuffer border_color_base,
                                      const bool is_depth, float extra_lod_bias) {
-    // Compare and plain uses of one S# need separate samplers; so do extra LOD biases.
-    const u64 hash = HashCombine(HashCombine(XXH3_64bits(&sampler, sizeof(sampler)), is_depth),
-                                 u64(std::bit_cast<u32>(extra_lod_bias)));
+    // Compare and plain uses of one S# need separate samplers; so do extra LOD biases and the
+    // forced anisotropy (in-game menu: a new level makes new samplers on the next draw).
+    const int anisotropy = Gow3Settings::Get().anisotropy.load(std::memory_order_relaxed);
+    const u64 hash = HashCombine(HashCombine(HashCombine(XXH3_64bits(&sampler, sizeof(sampler)), is_depth),
+                                             u64(std::bit_cast<u32>(extra_lod_bias))),
+                                 u64(anisotropy));
 
     std::scoped_lock lock{samplers_mutex};
     const auto [it, new_sampler] = samplers.try_emplace(hash, instance, sampler, border_color_base,
-                                                        is_depth, extra_lod_bias);
+                                                        is_depth, extra_lod_bias, anisotropy);
     if (new_sampler) {
         samplers.at(hash).lru_id = sampler_lru_cache.Insert(hash, gc_tick);
     } else {

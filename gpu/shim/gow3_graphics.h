@@ -50,6 +50,12 @@ inline int ParseEngineFps(int value) {
     return IndexOf(EngineFps, value, -1) >= 0 ? value : 60;
 }
 
+/// Anisotropic filtering levels; 0 keeps each texture's own setting.
+inline constexpr std::array<int, 5> AnisotropyLevels = {0, 2, 4, 8, 16};
+inline int ParseAnisotropy(int value) {
+    return IndexOf(AnisotropyLevels, value, -1) >= 0 ? value : 16;
+}
+
 /// Frames the GPU command thread may queue ahead of the GPU; 0 = unbounded.
 inline constexpr std::array<int, 3> FramesQueued = {1, 2, 0};
 inline int ParseFramesQueued(int value) {

@@ -103,6 +103,19 @@ _ROWS = [
     ('FPS limit', 'Limite FPS', 'Limite d\'IPS', 'FPS-Limit', 'Límite de FPS'),
     ('Unlimited', 'Libero', 'Illimité', 'Unbegrenzt', 'Sin límite'),
     ('IMAGE', 'IMMAGINE', 'IMAGE', 'BILD', 'IMAGEN'),
+    ('Anisotropic filtering', 'Filtro anisotropico', 'Filtrage anisotrope', 'Anisotrope Filterung',
+     'Filtrado anisotrópico'),
+    ("Game's own", 'Del gioco', 'Celui du jeu', 'Wie im Spiel', 'El del juego'),
+    ('Sharper textures seen at an angle. The game already uses 16x on its world textures; this raises the '
+     'ones that use less.',
+     'Texture più nitide viste di sbieco. Il gioco usa già 16x sulle texture del mondo; questo alza quelle '
+     'che ne usano meno.',
+     'Textures plus nettes vues de biais. Le jeu utilise déjà 16x sur ses textures du monde ; ceci relève '
+     'celles qui en utilisent moins.',
+     'Schärfere Texturen bei schrägem Blick. Das Spiel nutzt für seine Welttexturen bereits 16x; dies hebt '
+     'die an, die weniger nutzen.',
+     'Texturas más nítidas vistas en ángulo. El juego ya usa 16x en sus texturas del mundo; esto sube las '
+     'que usan menos.'),
     ('Render resolution', 'Risoluzione di rendering', 'Résolution de rendu', 'Render-Auflösung',
      'Resolución de renderizado'),
     ('Native (1080p)', 'Nativa (1080p)', 'Native (1080p)', 'Nativ (1080p)', 'Nativa (1080p)'),
@@ -266,6 +279,7 @@ FPS_CHOICES = [('30', '30'), ('60', '60'), ('120', '120'), ('0', 'Unlimited')]
 # Render resolution patches (patches/CUSA01113.xml, scripts/gr_resolution_patch.py).
 RESOLUTION_CHOICES = [('native', 'Native (1080p)'), ('720p', '720p (faster)'), ('1440p', '1440p'),
                       ('1800p', '1800p'), ('4K', '4K (sharpest)')]
+ANISOTROPY_CHOICES = [('0', "Game's own"), ('2', '2x'), ('4', '4x'), ('8', '8x'), ('16', '16x')]
 
 
 # ---------------------------------------------------------------------------------------------
@@ -1375,8 +1389,14 @@ class LauncherWindow:
                                        lambda v: self.set_ini('render_resolution', v), 16).pack(side='right'),
                  'The size the game draws at. Above your screen it works as anti-aliasing: 4K on a 1440p screen is '
                  'the cleanest image.')
+        aniso = self.ini.get('anisotropy', '16')
+        self.row(body, 'Anisotropic filtering',
+                 lambda c: self.choice(c, ANISOTROPY_CHOICES, aniso if aniso in dict(ANISOTROPY_CHOICES) else '16',
+                                       lambda v: self.set_ini('anisotropy', v), 16).pack(side='right'),
+                 'Sharper textures seen at an angle. The game already uses 16x on its world textures; this raises the '
+                 'ones that use less.')
         self.footer(foot, [('Reset', lambda: self.reset({'display_mode': 'borderless', 'vsync': '1', 'fps_limit': '0',
-                                                         'render_resolution': 'native'}), False),
+                                                         'render_resolution': 'native', 'anisotropy': '16'}), False),
                            ('Apply', self.apply, True)])
 
     def page_controls(self, body, foot):

@@ -401,6 +401,9 @@ void ImageTab() {
         ImGui::BeginDisabled(!s.rcas || rcas_blocked);
         SliderRow("Sharpening strength", s.rcas_strength, 0, 100, "%d%%", "How strong the sharpening is.");
         ImGui::EndDisabled();
+        static const char* const aniso_labels[] = {"Game's own", "2x", "4x", "8x", "16x"};
+        ChoiceRow("Anisotropic filtering", s.anisotropy, aniso_labels, G::AnisotropyLevels.data(),
+                  int(G::AnisotropyLevels.size()), "Sharper textures seen at an angle (ground, walls).");
         ImGui::EndTable();
     }
     ImGui::SeparatorText("Information");
