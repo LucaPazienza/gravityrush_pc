@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Builds GravityRush.exe (the Inkfall launcher, one file) in the port folder itself: it plays from
+# Builds the two executables in the port folder itself: "Gravity Rush Launcher.exe" (the launcher,
+# one file) and "Gravity Rush.exe" (packaging/windows/play.c: plays with the saved settings). They play from
 # this tree (out/gravityrush-runtime.exe, your saves in user/, gravityrush.ini) and reads its font and
 # background from launcher/. For the shareable package use packaging/windows/package.sh.
 # Run from MSYS2 CLANG64 in the port folder: bash scripts/gr_build_launcher.sh
@@ -32,12 +33,16 @@ for module in argparse base64 collections hashlib json re shutil struct tempfile
               urllib.request ctypes.wintypes zlib hmac pkg_extract pkg_keys game_profiles ue4_override \
               graphics_options prepare link_libc link_modules mods patches save_backup \
               cryptography.hazmat.primitives.ciphers PIL.Image PIL.ImageTk PIL.ImageDraw PIL.ImageFont \
-              PIL.ImageFilter theme inkfall; do
+              PIL.ImageFilter theme launcher_ui; do
     hidden+=(--hidden-import "$module")
 done
 out/pyenv/Scripts/python.exe -m PyInstaller --noconfirm --clean --log-level WARN --windowed --onefile \
-    --name "GravityRush" --icon "$(cygpath -w "$PWD/launcher/gravityrush.ico")" --collect-submodules cryptography \
+    --name "Gravity Rush Launcher" --icon "$(cygpath -w "$PWD/launcher/gravityrush.ico")" --collect-submodules cryptography \
     --distpath "$(cygpath -w "$PWD")" --workpath out/pyi-work --specpath out/pyi-work \
     --paths "$(cygpath -w "$PWD/scripts")" --paths "$(cygpath -w "$PWD/launcher")" "${hidden[@]}" \
     "$(cygpath -w "$PWD/launcher/gravityrush_launcher.py")"
-echo "Built $PWD/GravityRush.exe"
+# Gravity Rush.exe: a small native program that runs the launcher with --play.
+(cd packaging/windows && windres play.rc -O coff -o ../../out/play.res)
+clang -O2 -municode -mwindows packaging/windows/play.c out/play.res -o "Gravity Rush.exe"
+rm -f GravityRush.exe  # the old single executable
+echo "Built $PWD/Gravity Rush Launcher.exe and $PWD/Gravity Rush.exe"

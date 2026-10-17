@@ -12,7 +12,7 @@ You need
 
 Start
 1. Extract this folder anywhere, for example C:\Games\gravityrush-windows (not inside the zip).
-2. Open "GravityRush.exe". If Windows shows "Windows protected your PC", click More info, then
+2. Open "Gravity Rush Launcher.exe". If Windows shows "Windows protected your PC", click More info, then
    Run anyway (the program is not signed).
 3. Game page:
    - Install from PKG: "Choose .pkg..." unpacks the game once next to the .pkg (progress bar;
@@ -28,9 +28,9 @@ While playing
   left mouse button over the window and drag.
 
 Next time
-- "Play Gravity Rush.exe" starts the game straight away with the saved settings (shortcut, Steam).
-- Saves, shader cache and the log: user\ next to GravityRush.exe (keep it when updating).
-- Settings: gravityrush.ini next to GravityRush.exe; launcher options in %APPDATA%\gravityrush-launcher.
+- "Gravity Rush.exe" starts the game straight away with the saved settings (shortcut, Steam).
+- Saves, shader cache and the log: user\ next to the executables (keep it when updating).
+- Settings: gravityrush.ini next to the executables; launcher options in %APPDATA%\gravityrush-launcher.
 
 If something goes wrong
 - Black screen at start: Advanced > Clear shader cache, then start again.

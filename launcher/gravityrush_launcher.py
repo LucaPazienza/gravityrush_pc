@@ -7,8 +7,9 @@ gravityrush.ini (display, frame rate, shaders, GPU data), start-up options passe
 environment variables, mods, third-party patches and controls.
 Launcher options live in %APPDATA%/gravityrush-launcher/settings.json.
 
-Frozen with PyInstaller the same GravityRush.exe also runs the game without the window (`--play`),
-run.py (`--run`) and the preparation scripts (`--script`), so a packaged port needs no Python.
+Frozen with PyInstaller, "Gravity Rush Launcher.exe" also runs the game without the window (`--play`,
+which "Gravity Rush.exe" uses), run.py (`--run`) and the preparation scripts (`--script`), so a
+packaged port needs no Python.
 """
 import ctypes
 import json
@@ -28,6 +29,8 @@ import webbrowser
 import zipfile
 
 FROZEN = getattr(sys, 'frozen', False)
+LAUNCHER_EXE = 'Gravity Rush Launcher.exe'  # this program, frozen
+GAME_EXE = 'Gravity Rush.exe'               # packaging/windows/play.c: plays with the saved settings
 PORT_DIR = Path(sys.executable).resolve().parent if FROZEN else Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PORT_DIR / 'scripts'))
 import save_backup  # noqa: E402  (scripts/)
@@ -1775,11 +1778,11 @@ class Launcher:
                 with zipfile.ZipFile(archive) as package:
                     package.extractall(UPDATE_DIR / 'new')
                 archive.unlink()
-                new = next((p.parent for p in (UPDATE_DIR / 'new').rglob('GravityRush.exe')), None)
+                new = next((p.parent for p in (UPDATE_DIR / 'new').rglob(LAUNCHER_EXE)), None)
                 if not new:
-                    raise OSError('GravityRush.exe is missing from the download')
+                    raise OSError(f'{LAUNCHER_EXE} is missing from the download')
                 # The new launcher copies itself over this installation once this one has closed.
-                subprocess.Popen([str(new / 'GravityRush.exe'), '--install-update', str(PORT_DIR), str(os.getpid())],
+                subprocess.Popen([str(new / LAUNCHER_EXE), '--install-update', str(PORT_DIR), str(os.getpid())],
                                  cwd=str(new), stdin=subprocess.DEVNULL, creationflags=NO_WINDOW)
                 self.ui_calls.put(self.root.destroy)
             except (OSError, zipfile.BadZipFile) as failure:
@@ -1908,7 +1911,7 @@ def install_update(target, wait_pid):
             'Не удалось установить обновление. Скачайте его со страницы релизов.'), APP_NAME, 0x10)
         webbrowser.open(RELEASES_PAGE)
         return 1
-    subprocess.Popen([str(target / 'GravityRush.exe')], cwd=str(target))
+    subprocess.Popen([str(target / LAUNCHER_EXE)], cwd=str(target))
     return 0
 
 
@@ -1923,11 +1926,9 @@ def main():
         sys.exit(install_update(args[1], args[2]))
     if FROZEN and UPDATE_DIR not in PORT_DIR.parents:
         shutil.rmtree(UPDATE_DIR, ignore_errors=True)  # what a finished update left behind
-    # Without a usable game folder there is nothing to play yet: open the launcher instead.
-    # "Start without opening the launcher" (Inkfall) plays at once unless Shift is held.
-    shift = bool(ctypes.windll.user32.GetAsyncKeyState(0x10) & 0x8000)
-    if ('--play' in args or (settings.get('skip_launcher') and not shift)) and \
-            (Path(settings['game_dir'] or '.') / 'eboot.bin').is_file():
+    # --play (Gravity Rush.exe): the game at once. Without a usable game folder there is nothing to
+    # play yet: open the launcher instead.
+    if '--play' in args and (Path(settings['game_dir'] or '.') / 'eboot.bin').is_file():
         sys.exit(play_without_window(settings))
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(1)  # sharp text on scaled displays
@@ -1940,8 +1941,8 @@ def main():
         Launcher(root, tk, ttk, filedialog, messagebox)
         root.mainloop()
         return
-    import inkfall
-    inkfall.run(sys.modules[__name__], tk, filedialog)
+    import launcher_ui
+    launcher_ui.run(sys.modules[__name__], tk, filedialog)
 
 
 if __name__ == '__main__':

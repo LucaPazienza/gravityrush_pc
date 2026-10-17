@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
-"""Inkfall: the Gravity Rush launcher window (Tkinter), after the design in DESIGN-launcher.md.
+"""The Gravity Rush launcher window (Tkinter), after the design in DESIGN-launcher.md.
 
 Comic-book look: the background picture fills the window, the menu is a column of ink-outlined
 capsules with a point on the right, pages open in a paper panel with a hard shadow and a tilted
@@ -23,7 +23,7 @@ import time
 
 from PIL import Image, ImageDraw, ImageFont, ImageTk
 
-# Frozen (GravityRush.exe), the code runs from PyInstaller's temporary folder: the files live in
+# Frozen (Gravity Rush Launcher.exe), the code runs from PyInstaller's temporary folder: the files live in
 # the launcher folder beside the executable.
 HERE = Path(sys.executable).resolve().parent / 'launcher' if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
 FONT_FILE = HERE / 'fonts' / 'Cabin.ttf'
@@ -67,15 +67,13 @@ _ROWS = [
     ('Browse…', 'Sfoglia…', 'Parcourir…', 'Durchsuchen…', 'Examinar…'),
     ('Open', 'Apri', 'Ouvrir', 'Öffnen', 'Abrir'),
     ('SHORTCUTS', 'COLLEGAMENTI', 'RACCOURCIS', 'VERKNÜPFUNGEN', 'ACCESOS DIRECTOS'),
-    ('Start without opening the launcher', 'Avvia senza aprire il launcher', 'Lancer sans ouvrir le lanceur',
-     'Ohne Launcher starten', 'Iniciar sin abrir el lanzador'),
-    ('The game starts at once with the saved settings. Hold Shift to open the launcher again.',
-     'Il gioco parte subito con le impostazioni salvate. Per riaprire il launcher tieni premuto Maiusc.',
-     'Le jeu démarre aussitôt avec les réglages enregistrés. Maintenez Maj pour rouvrir le lanceur.',
-     'Das Spiel startet sofort mit den gespeicherten Einstellungen. Halte Umschalt, um den Launcher zu öffnen.',
-     'El juego se inicia al momento con los ajustes guardados. Mantén Mayús para volver a abrir el lanzador.'),
-    ('Create desktop shortcut', 'Crea collegamento sul desktop', 'Créer un raccourci sur le bureau',
-     'Desktop-Verknüpfung erstellen', 'Crear acceso directo en el escritorio'),
+    ('Create desktop shortcuts', 'Crea collegamenti sul desktop', 'Créer les raccourcis sur le bureau',
+     'Desktop-Verknüpfungen erstellen', 'Crear accesos directos en el escritorio'),
+    ('Gravity Rush starts the game with the saved settings, Gravity Rush Launcher opens this window.',
+     'Gravity Rush avvia il gioco con le impostazioni salvate, Gravity Rush Launcher apre questa finestra.',
+     'Gravity Rush lance le jeu avec les réglages enregistrés, Gravity Rush Launcher ouvre cette fenêtre.',
+     'Gravity Rush startet das Spiel mit den gespeicherten Einstellungen, Gravity Rush Launcher öffnet dieses Fenster.',
+     'Gravity Rush inicia el juego con los ajustes guardados, Gravity Rush Launcher abre esta ventana.'),
     ('SAVES', 'SALVATAGGI', 'SAUVEGARDES', 'SPIELSTÄNDE', 'PARTIDAS GUARDADAS'),
     ('Save backups', 'Backup dei salvataggi', 'Copies des sauvegardes', 'Spielstand-Backups', 'Copias de seguridad'),
     ('Restore', 'Ripristina', 'Restaurer', 'Wiederherstellen', 'Restaurar'),
@@ -171,7 +169,8 @@ _ROWS = [
     ('Defaults restored', 'Valori predefiniti ripristinati', 'Valeurs par défaut rétablies', 'Standardwerte wiederhergestellt',
      'Valores predeterminados restablecidos'),
     ('Quit?', 'Uscire?', 'Quitter ?', 'Beenden?', '¿Salir?'),
-    ('Close Inkfall?', 'Vuoi chiudere Inkfall?', 'Fermer Inkfall ?', 'Inkfall schließen?', '¿Cerrar Inkfall?'),
+    ('Close the launcher?', 'Vuoi chiudere il launcher?', 'Fermer le lanceur ?', 'Launcher schließen?',
+     '¿Cerrar el lanzador?'),
     ('Cancel', 'Annulla', 'Annuler', 'Abbrechen', 'Cancelar'),
     ('The game keeps running.', 'Il gioco resta aperto.', 'Le jeu reste ouvert.', 'Das Spiel läuft weiter.',
      'El juego sigue abierto.'),
@@ -867,11 +866,11 @@ NAV = [('game', 'Game'), ('video', 'Video'), ('controls', 'Controls'), ('advance
 PANEL_X, PANEL_Y, PANEL_W, PANEL_H = 290, 100, 552, 508
 
 
-class Inkfall:
+class LauncherWindow:
     def __init__(self, root, tk, filedialog, logic):
         global LANG
         self.root, self.tk, self.filedialog, self.logic = root, tk, filedialog, logic
-        self.app = {**logic.APP_DEFAULTS, 'skip_launcher': False, 'gyro_sens': 1.4,
+        self.app = {**logic.APP_DEFAULTS, 'gyro_sens': 1.4,
                     **logic.load_json(logic.CONFIG_FILE, {})}
         self.ini, self.ini_lines = logic.load_ini()
         LANG = pick_language(self.app.get('ui_language'), logic.windows_language())
@@ -924,7 +923,7 @@ class Inkfall:
     # ---- window ----------------------------------------------------------------------------
     def build_window(self):
         root, tk = self.root, self.tk
-        root.title('Inkfall · Gravity Rush')
+        root.title('Gravity Rush Launcher')
         root.configure(bg='#2b3a36')
         width, height = self.px(W), self.px(H)
         x = (root.winfo_screenwidth() - width) // 2
@@ -979,10 +978,14 @@ class Inkfall:
         self.par = [0.0, 0.0, 0.0, 0.0]   # current x, y and target x, y
         self.bg = cv.create_image(0, 0, anchor='nw', image=self.bg_image)
         self.place_background()
-        # Title bar: name on the left, window buttons on a dark pill.
-        self.photos['bar'] = ImageTk.PhotoImage(paint.label('INKFALL', 12, PAPER, spacing=.3))
-        cv.create_polygon(self.diamond(26, 20, 5), fill=GD, outline=INK, width=self.px(2))
-        cv.create_image(self.px(38), self.px(20), anchor='w', image=self.photos['bar'])
+        # Title bar: the port's icon (the black cat) on the left, window buttons on a dark pill.
+        try:
+            size = self.px(28)
+            self.photos['bar'] = ImageTk.PhotoImage(
+                Image.open(HERE / 'gravityrush.png').convert('RGBA').resize((size, size), Image.LANCZOS))
+            cv.create_image(self.px(14), self.px(20), anchor='w', image=self.photos['bar'])
+        except OSError:
+            pass
         self.win_images = [ImageTk.PhotoImage(paint.window_buttons(i)) for i in (None, 0, 1)]
         self.win = cv.create_image(self.px(W - 8), self.px(4), anchor='ne', image=self.win_images[0])
         cv.tag_bind(self.win, '<Motion>', self.window_hover)
@@ -1315,10 +1318,8 @@ class Inkfall:
         self.folder_row(body, 'Game folder', 'game_dir', 'Your game dump (eboot.bin, sce_module, sce_sys).')
         self.folder_row(body, 'Saves folder', 'user_dir', 'Empty: the launcher data folder (it also holds the shader cache).')
         self.sec(body, 'SHORTCUTS')
-        self.toggle_row(body, 'Start without opening the launcher', self.app.get('skip_launcher', False),
-                        lambda v: self.set_app('skip_launcher', v),
-                        'The game starts at once with the saved settings. Hold Shift to open the launcher again.')
-        self.buttons(body, [('Create desktop shortcut', self.shortcut)])
+        self.hint(body, 'Gravity Rush starts the game with the saved settings, Gravity Rush Launcher opens this window.')
+        self.buttons(body, [('Create desktop shortcuts', self.shortcut)])
         self.sec(body, 'SAVES')
         names = logic.save_backup.list_backups(self.user_dir())
         self.backup_choice = names[0] if names else ''
@@ -1521,18 +1522,25 @@ class Inkfall:
         return 'break'
 
     def shortcut(self):
+        """Gravity Rush.lnk (plays with the saved settings) and Gravity Rush Launcher.lnk on the desktop."""
         logic = self.logic
         if logic.FROZEN:
-            target, arguments, icon = sys.executable, '', f'{sys.executable},0'
-        else:
+            game = logic.PORT_DIR / logic.GAME_EXE
+            links = [('Gravity Rush', game if game.is_file() else Path(sys.executable), '--play' if not game.is_file() else ''),
+                     ('Gravity Rush Launcher', Path(sys.executable), '')]
+            icon = HERE / 'gravityrush.ico'
+        else:  # a source tree: the launcher script with the windowless Python
             pythonw = Path(sys.executable).with_name('pythonw.exe')
-            target = str(pythonw if pythonw.exists() else sys.executable)
-            arguments, icon = str(HERE / 'gravityrush_launcher.py'), HERE / 'gravityrush.ico'
-        script = ('$s=(New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath("Desktop")'
-                  '+"\\Gravity Rush.lnk");'
-                  f'$s.TargetPath="{target}";$s.WorkingDirectory="{logic.PORT_DIR}";$s.IconLocation="{icon}";'
-                  + (f"$s.Arguments='\"{arguments}\"';" if arguments else '') + '$s.Save()')
-        result = subprocess.run(['powershell', '-NoProfile', '-Command', script], capture_output=True,
+            python = pythonw if pythonw.exists() else Path(sys.executable)
+            script = HERE / 'gravityrush_launcher.py'
+            links = [('Gravity Rush', python, f'"{script}" --play'), ('Gravity Rush Launcher', python, f'"{script}"')]
+            icon = HERE / 'gravityrush.ico'
+        command = ''
+        for name, target, arguments in links:
+            command += ('$s=(New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath("Desktop")'
+                        f'+"\\{name}.lnk");$s.TargetPath="{target}";$s.WorkingDirectory="{logic.PORT_DIR}";'
+                        f'$s.IconLocation="{icon}";' + (f"$s.Arguments='{arguments}';" if arguments else '') + '$s.Save();')
+        result = subprocess.run(['powershell', '-NoProfile', '-Command', command], capture_output=True,
                                 creationflags=logic.NO_WINDOW)
         self.toast(t('Shortcut created on the desktop') if result.returncode == 0 else
                    t('Could not: {}').format(result.stderr.decode(errors='replace')[:80]))
@@ -1565,7 +1573,7 @@ class Inkfall:
         self.open_page('advanced')
 
     def export_settings(self):
-        path = self.filedialog.asksaveasfilename(defaultextension='.json', initialfile='inkfall-settings.json',
+        path = self.filedialog.asksaveasfilename(defaultextension='.json', initialfile='gravityrush-launcher-settings.json',
                                                  filetypes=[('JSON', '*.json')])
         if path:
             Path(path).write_text(json.dumps({'app': self.app, 'ini': self.ini}, indent=2, ensure_ascii=False), encoding='utf-8')
@@ -1675,7 +1683,7 @@ class Inkfall:
     def ask_quit(self):
         if self.modal_items:
             return
-        self.modal(t('Quit?'), t('Close Inkfall?') + ('\n' + t('The game keeps running.') if self.process else ''),
+        self.modal(t('Quit?'), t('Close the launcher?') + ('\n' + t('The game keeps running.') if self.process else ''),
                    [('Cancel', self.close_modal, False), ('Quit', self.quit, True)])
 
     def quit(self):
@@ -1813,15 +1821,15 @@ class Inkfall:
 def run(logic, tk, filedialog):
     """Opens the launcher window (Tk is created here)."""
     try:  # its own taskbar button and icon, not Python's
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('LucaPazienza.GravityRush.Inkfall')
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('LucaPazienza.GravityRush.Launcher')
     except (AttributeError, OSError):
         pass
     root = tk.Tk()
     try:
         icon = ImageTk.PhotoImage(Image.open(HERE / 'gravityrush.png'))
         root.iconphoto(True, icon)
-        root._inkfall_icon = icon
+        root._launcher_icon = icon
     except (OSError, tk.TclError):
         pass
-    Inkfall(root, tk, filedialog, logic)
+    LauncherWindow(root, tk, filedialog, logic)
     root.mainloop()

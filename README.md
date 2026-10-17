@@ -38,8 +38,8 @@ What works today:
 - **Input:** controllers through SDL3 (Xbox, DualSense and others), keyboard and mouse.
   The touchpad works with real touch ids; the mouse acts as a finger (hold and drag for swipes).
   The **DualSense gyro** steers the gravity camera like on the PS4 (adjustable sensitivity).
-- **Launcher (Inkfall):** a comic-book styled window with the game, video, controls, advanced and
-  log pages, in English, Italian, French, German and Spanish. It can start the game directly.
+- **Launcher:** a comic-book styled window with the game, video, controls, advanced and
+  log pages, in English, Italian, French, German and Spanish. `Gravity Rush.exe` starts the game directly with the saved settings.
 - **In-game menu** (Insert, or R3+L2): image options, performance and an FPS overlay.
 
 Not done yet / known gaps:
@@ -81,8 +81,8 @@ Not done yet / known gaps:
    CXXFLAGS="-include cstdlib -include cstdio -include cwchar -include cmath -include new" bash build.sh
    ```
 
-3. Run the game (or start the launcher with `Gravity Rush Launcher.cmd`, or build a one-file
-   `GravityRush.exe` with `bash scripts/gr_build_launcher.sh`):
+3. Run the game (or start the launcher with `Gravity Rush Launcher.cmd`, or build
+   `Gravity Rush Launcher.exe` and `Gravity Rush.exe` with `bash scripts/gr_build_launcher.sh`):
 
    ```powershell
    $env:GOW3_GAME_DIR = 'D:\path\CUSA01113'   # or the .pkg
@@ -97,7 +97,7 @@ The loader stops at the first PS4 system function the runtime does not implement
 | Runtime | `src/runtime_*.c`, `src/gr_*.inc` | PS4 system functions |
 | GPU and libraries | `gpu/shadps4/` | shadPS4 video core (Vulkan), font library and AvPlayer |
 | Preparation | `scripts/` | Reads `eboot.bin`, links the game's `libc` and `libSceFios2` |
-| Launcher | `launcher/gravityrush_launcher.py`, `launcher/inkfall.py` | Settings, PKG install, mods, controls and the play button |
+| Launcher | `launcher/gravityrush_launcher.py`, `launcher/launcher_ui.py` | Settings, PKG install, mods, controls and the play button |
 
 Please do not add proprietary game files, disc images, executables, firmware, or other copyrighted
 game data to this repository.

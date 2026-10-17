@@ -1,5 +1,5 @@
-/* Play Gravity Rush.exe: starts the game with the settings saved by the launcher, without opening
- * the launcher (it runs `GravityRush.exe --play` from its own folder and waits for it, so Steam
+/* Gravity Rush.exe: starts the game with the settings saved by the launcher, without opening
+ * the launcher (it runs `"Gravity Rush Launcher.exe" --play` from its own folder and waits for it, so Steam
  * and other front ends see the game running). Extra arguments are passed on. */
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -15,14 +15,14 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous, PWSTR arguments, int
     wchar_t *slash = wcsrchr(dir, L'\\');
     if (slash)
         *slash = 0;
-    swprintf(exe, 32768, L"%ls\\GravityRush.exe", dir);
+    swprintf(exe, 32768, L"%ls\\Gravity Rush Launcher.exe", dir);
     swprintf(line, 32768, L"\"%ls\" --play%ls%ls", exe, arguments && *arguments ? L" " : L"",
              arguments ? arguments : L"");
 
     STARTUPINFOW startup = {.cb = sizeof(startup)};
     PROCESS_INFORMATION process;
     if (!CreateProcessW(exe, line, NULL, NULL, FALSE, 0, NULL, dir, &startup, &process)) {
-        MessageBoxW(NULL, L"GravityRush.exe was not found next to this file.", L"Gravity Rush",
+        MessageBoxW(NULL, L"Gravity Rush Launcher.exe was not found next to this file.", L"Gravity Rush",
                     MB_OK | MB_ICONERROR);
         return 1;
     }

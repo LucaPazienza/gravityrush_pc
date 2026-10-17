@@ -32,3 +32,5 @@ logs/
 launcher/assets/
 # The launcher built in the port folder (scripts/gr_build_launcher.sh)
 /GravityRush.exe
+/Gravity Rush.exe
+/Gravity Rush Launcher.exe
