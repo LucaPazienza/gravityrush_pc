@@ -296,7 +296,23 @@ static ABI int32_t save_open(const unsigned char *p) {
             if (dirs[i*32]) memcpy(save_dialog.dirs[save_dialog.dir_count++],dirs+i*32,31);
         save_dialog.has_new=new_item!=NULL;
     }
-    if (save_dialog.mode!=SAVE_MODE_LIST) return dialog_open_mode(2,p,52,5);
+    if (save_dialog.mode!=SAVE_MODE_LIST) {
+        /* What the game asks (modes: 2 user message, 3 system message, 4 error code, 5 progress). */
+        uint32_t disp; memcpy(&disp,p+56,4);
+        const unsigned char *user_msg, *sys_msg, *error_param;
+        memcpy(&user_msg,p+80,8); memcpy(&sys_msg,p+88,8); memcpy(&error_param,p+96,8);
+        uint32_t a=0, b=0; const char *text=NULL;
+        if (save_dialog.mode==2 && user_msg) { memcpy(&a,user_msg,4); memcpy(&b,user_msg+4,4); memcpy(&text,user_msg+8,8); }
+        if (save_dialog.mode==3 && sys_msg) { memcpy(&a,sys_msg,4); memcpy(&b,sys_msg+4,4); }
+        if (save_dialog.mode==4 && error_param) memcpy(&a,error_param,4);
+        printf("Runtime: SaveDataDialog mode %u (type %u): values 0x%x 0x%x%s%.80s%s, %d saves listed\n",save_dialog.mode,disp,a,b,
+               text ? " \"" : "",text ? text : "",text ? "\"" : "",save_dialog.dir_count);
+        /* A system message of type PROGRESS (5, "Loading..."/"Saving...") stays up while the game
+         * mounts and reads or writes, until it closes it: finishing it at once read as the player
+         * closing it, and the game gave up the load before mounting the save. */
+        if (save_dialog.mode==3 && a==5) return dialog_open_progress(2);
+        return dialog_open_mode(2,p,52,5);
+    }
     const char *labels[33], *icons[33]; int n=0;
     if (save_dialog.has_new) { snprintf(save_labels[n],sizeof(save_labels[n]),"New save"); labels[n]=save_labels[n]; icons[n]=NULL; ++n; }
     for (int i=0;i<save_dialog.dir_count;++i) {
@@ -353,6 +369,9 @@ static ABI int32_t save_result(unsigned char *out) {
     if (dir) { memset(dir,0,32); memcpy(dir,name,strnlen(name,31)); }
     if (param && name[0]) runtime_savedata_param(USER_ID,name,param);
     memcpy(out+32,&save_dialog.user_data,8);
+    uint32_t button; memcpy(&button,out+8,4);
+    printf("Runtime: SaveDataDialog result: mode %u result %u button %u dir '%s' (dir buffer %s, param buffer %s)\n",
+           save_dialog.mode,save_dialog.result,button,name,dir ? "given" : "none",param ? "given" : "none");
     return 0;
 }
 static ABI int32_t save_ready(void) { return 1; }
