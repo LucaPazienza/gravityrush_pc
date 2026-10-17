@@ -1,84 +1,65 @@
-# Gravity Rush — Native PC Port
+# Gravity Rush Remastered — Native PC Port
 
 <p align="center">
-  <img src="https://picfiles.alphacoders.com/229/229663.png" alt="Kat and Dusty overlooking the floating city in Gravity Rush" width="800">
+  <img src="launcher/gravityrush.png" alt="Gravity Rush PC port icon" width="160">
 </p>
 
 <p align="center">
-  <em>A community project exploring a native PC port of Gravity Rush.</em>
+  <em>The PS4 game running natively on Windows: no emulator.</em>
 </p>
 
 ## About
 
-This project aims to bring **Gravity Rush Remastered** (PS4, CUSA01113) to PC as a native port,
-using the God of War native-port project as its technical starting point. The goal is to
-investigate what is needed to adapt the game's code and platform-specific systems for a native PC
-environment while preserving its distinctive gravity-based gameplay and comic-inspired art direction.
+This project brings **Gravity Rush Remastered** (PS4, CUSA01113, tested with the European release
+EP9000-CUSA01113_00) to PC as a native port.
 
 There is no emulator: the game's original x86-64 executable runs directly on the PC's processor,
 a runtime written for this port replaces the PS4 system libraries, and the graphics run on the
 [shadPS4](https://github.com/shadps4-emu/shadPS4) video core, which translates the PS4 GPU commands
 and shaders to Vulkan.
 
-This is an early-stage community project. Features, compatibility, performance, and build
-instructions will be documented as development progresses.
-
-## Screenshots
-
-<p align="center">
-  <img src="https://picfiles.alphacoders.com/229/229602.jpg" alt="Kat and Dusty in a market in Gravity Rush" width="48%">
-  <img src="https://images.pushsquare.com/screenshots/33344/900x.jpg" alt="Kat using her gravity powers in Gravity Rush" width="48%">
-</p>
-
-<p align="center">
-  <img src="https://www.gamerclick.it/images/Anime_big/GravityRushRemastered/GravityRushRemastered5.jpg" alt="Kat overlooking the city in Gravity Rush Remastered" width="48%">
-  <img src="https://images.pushsquare.com/screenshots/71727/large.jpg" alt="An industrial district in Gravity Rush Remastered" width="48%">
-</p>
-
-Images are hosted by their respective third-party websites and are included here as visual
-references. All game assets and trademarks belong to their respective owners.
-
-## Project Goals
-
-- Explore a native PC implementation based on the existing God of War porting foundation.
-- Investigate and implement the platform-specific systems required by Gravity Rush.
-- Preserve the original gameplay, especially gravity shifting, traversal, and combat.
-- Document technical findings, compatibility, and progress as the project develops.
-
-These are project goals, not a statement that the features are already implemented.
-
 ## Current Status
 
-**Status: Early Development — the game boots, but is not playable yet.**
+**Status: playable in development builds — the opening, the first episode and the city work,
+with sound and saves. Not every part of the game has been tested yet.**
 
-What works today (tested on Windows 11 with an RTX 5070 Ti):
+Tested on Windows 11 with an NVIDIA RTX 5070 Ti, an Xbox One controller and a DualSense.
 
-- The game boots, completes its initialization and runs the title flow (EULA, save data check).
-- It draws in Vulkan and shows readable text (shadPS4 font library with FreeType).
-- Controller (DualSense, Xbox and others, through SDL3) and keyboard. The touchpad is simulated:
-  Tab (left side), Backspace (right side), the controller's View/Back button, or the left mouse
-  button held over the window (drag for a swipe).
-- Saving and loading; save backups before every start.
-- In-game menu (Insert, or R3+L2): image, performance and the FPS overlay.
+What works today:
 
-Known problems:
+- **Boot and story:** title flow, the opening apple scene, the opening movie, episode 1 and the
+  city of Hekseville; dialogue, menus and trophies.
+- **Audio:** movies (AvPlayer) and the game's own sound engine on top of a real NGS2 sampler:
+  PCM effects, ATRAC9 streamed music and ambience (wind, city), voice volume, pitch and panning,
+  pause and resume, a mastering limiter, and a 7.1-to-stereo downmix for stereo devices.
+- **Saves:** the save dialog, autosave, loading and manual saves; backups before every start.
+- **Graphics:** Vulkan through the shadPS4 video core, readable text (font library with FreeType),
+  borderless window by default (windowed and fullscreen in the settings).
+- **Input:** controllers through SDL3 (Xbox, DualSense and others), keyboard and mouse.
+  The touchpad works with real touch ids; the mouse acts as a finger (hold and drag for swipes).
+  The **DualSense gyro** steers the gravity camera like on the PS4 (adjustable sensitivity).
+- **Launcher (Inkfall):** a comic-book styled window with the game, video, controls, advanced and
+  log pages, in English, Italian, French, German and Spanish. It can start the game directly.
+- **In-game menu** (Insert, or R3+L2): image options, performance and an FPS overlay.
 
-- The opening scene stops after the apple is tapped: the next cutscene never starts.
-- No audio yet: the NGS2 sound library is a silent stand-in.
-- Movies (AvPlayer) are untested.
+Not done yet / known gaps:
+
+- Audio effects that the game routes through NGS2 submixers (reverb sends, filters, envelopes)
+  are not modelled: the dry sound plays.
+- No systematic testing of later episodes, stability over long sessions, or performance.
 
 ### Roadmap
 
-- [x] Initial research and project setup
-- [x] Analyze the existing porting framework
-- [x] Investigate Gravity Rush's engine and platform-specific systems
-- [x] Establish a working native runtime (boot, title flow, graphics, text)
-- [ ] Get past the opening scene
-- [ ] Implement and test core game functionality
-- [ ] Improve graphics, audio, input, and performance
-- [ ] Document compatibility
-
-Please do not assume the game is currently playable. This section will be updated as milestones are tested.
+- [x] Native runtime: boot, title flow, graphics, text
+- [x] Get past the opening scene
+- [x] Audio: movies, effects, streamed music and ambience
+- [x] Saves: load, autosave, manual save
+- [x] Controller, touchpad and DualSense gyro
+- [x] Launcher
+- [ ] Play through the whole story and fix what breaks
+- [ ] NGS2 effects (reverb, filters)
+- [ ] Performance and stability work
+- [ ] Release packages
 
 ## Requirements
 
@@ -100,7 +81,8 @@ Please do not assume the game is currently playable. This section will be update
    CXXFLAGS="-include cstdlib -include cstdio -include cwchar -include cmath -include new" bash build.sh
    ```
 
-3. Run the game (or start the launcher with `Gravity Rush Launcher.cmd`):
+3. Run the game (or start the launcher with `Gravity Rush Launcher.cmd`, or build a one-file
+   `GravityRush.exe` with `bash scripts/gr_build_launcher.sh`):
 
    ```powershell
    $env:GOW3_GAME_DIR = 'D:\path\CUSA01113'   # or the .pkg
@@ -115,7 +97,7 @@ The loader stops at the first PS4 system function the runtime does not implement
 | Runtime | `src/runtime_*.c`, `src/gr_*.inc` | PS4 system functions |
 | GPU and libraries | `gpu/shadps4/` | shadPS4 video core (Vulkan), font library and AvPlayer |
 | Preparation | `scripts/` | Reads `eboot.bin`, links the game's `libc` and `libSceFios2` |
-| Launcher | `launcher/gravityrush_launcher.py` | Settings, PKG install, mods, controls and the play button |
+| Launcher | `launcher/gravityrush_launcher.py`, `launcher/inkfall.py` | Settings, PKG install, mods, controls and the play button |
 
 Please do not add proprietary game files, disc images, executables, firmware, or other copyrighted
 game data to this repository.
@@ -139,10 +121,10 @@ Before opening an issue or pull request:
 - **MediEvil PC port** — the fork this project grew from: [bc160201983/medievil_2019_pc_port](https://github.com/bc160201983/medievil_2019_pc_port).
 - **shadPS4 team** — the video core, font and AvPlayer libraries, PKG format code and the NID
   name list.
+- Launcher font: Cabin (SIL Open Font License).
 - Also used: LibAtrac9, FFmpeg, FreeType, SDL3, Dear ImGui, sirit, magic_enum, miniz, xbyak,
   Vulkan Memory Allocator, FSR-Vulkan, MSYS2, LLVM, Pillow and cryptography.
 - **Gravity Rush** — developed by Japan Studio and published by Sony Interactive Entertainment.
-- Screenshot sources: Alpha Coders, Push Square, and GamerClick.
 
 The inclusion of a project in this section does not imply endorsement or affiliation.
 
