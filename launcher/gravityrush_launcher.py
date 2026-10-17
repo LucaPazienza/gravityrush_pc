@@ -39,7 +39,7 @@ APP_NAME = 'Gravity Rush'
 MAX_LOG_LINES = 6000
 NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
 # This build. New versions are on the GitHub releases page (the automatic updater is off).
-VERSION = '1.3.1'
+VERSION = '0.1.0'
 RELEASES_API = None
 RELEASES_PAGE = 'https://github.com/LucaPazienza/gravityrush_pc/releases'
 UPDATE_DIR = Path(tempfile.gettempdir()) / 'gravityrush-update'
@@ -328,6 +328,8 @@ def game_environment(s):
     for kind, name in (('key', 'GOW3_KEY_MAP'), ('pad', 'GOW3_PAD_MAP')):
         if value := control_map(s.get('controls', {}), kind):
             env[name] = value
+    if s.get('gyro_sens'):
+        env['GOW3_GYRO_SENS'] = str(s['gyro_sens'])
     env.setdefault('GOW3_FPS_LOG', '1')  # FPS and worst frame every 5 s in the log (diagnostics)
     env.setdefault('GOW3_FRAME_STATS', '1')  # draws, compiles and stalls every 5 s (diagnostics)
     # F12 in the game (or creating the trigger file) saves the next frame here, for bug reports.
@@ -1922,7 +1924,10 @@ def main():
     if FROZEN and UPDATE_DIR not in PORT_DIR.parents:
         shutil.rmtree(UPDATE_DIR, ignore_errors=True)  # what a finished update left behind
     # Without a usable game folder there is nothing to play yet: open the launcher instead.
-    if '--play' in args and (Path(settings['game_dir'] or '.') / 'eboot.bin').is_file():
+    # "Start without opening the launcher" (Inkfall) plays at once unless Shift is held.
+    shift = bool(ctypes.windll.user32.GetAsyncKeyState(0x10) & 0x8000)
+    if ('--play' in args or (settings.get('skip_launcher') and not shift)) and \
+            (Path(settings['game_dir'] or '.') / 'eboot.bin').is_file():
         sys.exit(play_without_window(settings))
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(1)  # sharp text on scaled displays
@@ -1930,9 +1935,13 @@ def main():
         pass
     import tkinter as tk
     from tkinter import filedialog, messagebox, ttk
-    root = tk.Tk()
-    Launcher(root, tk, ttk, filedialog, messagebox)
-    root.mainloop()
+    if os.environ.get('GR_CLASSIC_LAUNCHER') == '1':  # the previous launcher window
+        root = tk.Tk()
+        Launcher(root, tk, ttk, filedialog, messagebox)
+        root.mainloop()
+        return
+    import inkfall
+    inkfall.run(sys.modules[__name__], tk, filedialog)
 
 
 if __name__ == '__main__':

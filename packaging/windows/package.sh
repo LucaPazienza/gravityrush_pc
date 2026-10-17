@@ -46,6 +46,9 @@ mkdir -p "$dest/bin" "$dest/launcher"
 cp -r "out/pyi-dist/GravityRush/." "$dest/"
 llvm-strip -o "$dest/Play Gravity Rush.exe" out/gravityrush-play.exe
 cp launcher/gravityrush.ico launcher/gravityrush.png launcher/gravityrush.bmp "$dest/launcher/"
+# Inkfall: its font (OFL). The background picture is the player's own: put it in launcher/assets.
+mkdir -p "$dest/launcher/fonts" "$dest/launcher/assets"
+cp launcher/fonts/Cabin.ttf launcher/fonts/OFL-Cabin.txt "$dest/launcher/fonts/"
 # The executables without debug information (out/ keeps the symbols for crash reports).
 for exe in gravityrush-runtime.exe gravityrush-gpu-check.exe; do
     llvm-strip --strip-debug -o "$dest/bin/$exe" "out/$exe"

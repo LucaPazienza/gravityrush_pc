@@ -28,3 +28,5 @@ patches.json
 # Local logs of builds and test runs (build.sh, run.py output)
 logs/
 .vscode/
+# Launcher background: the player's own picture (it shows the game's characters)
+launcher/assets/
