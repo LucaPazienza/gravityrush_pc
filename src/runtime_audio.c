@@ -66,6 +66,10 @@ static int sdl_audio(void) {
         const char *mode=getenv("GOW3_AUDIO");
         sdl_ready = (!mode || strcmp(mode,"none")) && SDL_InitSubSystem(SDL_INIT_AUDIO);
         printf("Runtime: audio backend %s\n", sdl_ready ? SDL_GetCurrentAudioDriver() : "timer (silent)");
+        SDL_AudioSpec device;
+        int frames=0;
+        if (sdl_ready && SDL_GetAudioDeviceFormat(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,&device,&frames))
+            printf("Runtime: audio device: %d channels, %d Hz, %d frames\n",device.channels,device.freq,frames);
     }
     return sdl_ready;
 }
@@ -162,9 +166,15 @@ static int32_t output_port(int32_t handle, const void *data, int pace) {
         /* GOW3_AUDIO_TRACE=1: every ~2 s per port, the buffer the game sends, its peak and volume. */
         static int trace=-1;
         if (trace<0) { const char *e=getenv("GOW3_AUDIO_TRACE"); trace=e && e[0]=='1'; }
-        if (trace && p->is_float && ++p->trace_count%((unsigned)(96000/p->frames))==1) {
+        if (trace && ++p->trace_count%((unsigned)(96000/p->frames))==1) {
             float peak=0;
-            for (size_t i=0;i<samples;++i) { float v; memcpy(&v,(const char *)data+i*4,4); if (v<0) v=-v; if (v>peak) peak=v; }
+            for (size_t i=0;i<samples;++i) {
+                float v;
+                if (p->is_float) memcpy(&v,(const char *)data+i*4,4);
+                else { int16_t s; memcpy(&s,(const char *)data+i*2,2); v=(float)s/32768.0f; }
+                if (v<0) v=-v;
+                if (v>peak) peak=v;
+            }
             printf("Audio trace: port %d data=%p peak=%.4f volume[0]=%d volume[1]=%d\n",(int)(p-ports),data,peak,
                    (int)p->volume[0],(int)p->volume[1]);
         }

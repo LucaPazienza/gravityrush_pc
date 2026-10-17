@@ -171,6 +171,9 @@ bool WindowSDL::PollEvents() {
         }
         case SDL_EVENT_QUIT:
         case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+            // The process ends right after this (gow3gpu.cpp): say why, the log has nothing else.
+            std::printf("Window: %s event, closing\n",
+                        event.type == SDL_EVENT_QUIT ? "SDL quit" : "window close requested");
             is_open = false;
             break;
         default:

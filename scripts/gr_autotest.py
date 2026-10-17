@@ -4,6 +4,7 @@ touchpad through the apple scene once its first cutscene ended, lets the game ru
 
 Usage (MSYS2 CLANG64, from the port folder):
   GOW3_GAME_DIR=... python scripts/gr_autotest.py logs/gr_autoN.txt [seconds after the taps, default 60]
+  --plain: no apple scene expected (a save is loaded, ...): run that many seconds in all, then stop.
 Extra environment (GOW3_AUDIO_TRACE=1, ...) goes through to the game.
 """
 import os
@@ -16,8 +17,10 @@ PORT = Path(__file__).resolve().parent.parent
 
 
 def main():
-    log = Path(sys.argv[1])
-    after = float(sys.argv[2]) if len(sys.argv) > 2 else 60.0
+    plain = '--plain' in sys.argv   # just run for the given seconds (no apple scene expected)
+    argv = [a for a in sys.argv if a != '--plain']
+    log = Path(argv[1])
+    after = float(argv[2]) if len(argv) > 2 else 60.0
     log.parent.mkdir(parents=True, exist_ok=True)
     pad = PORT / 'logs' / 'autotest_pad.txt'
     pad.write_text('')
@@ -28,22 +31,25 @@ def main():
     started = time.time()
     stopped = False
     try:
-        # Wait for the end of the first cutscene (the apple then takes taps), at most 4 minutes.
-        while game.poll() is None and b'DEMO END' not in log.read_bytes():
-            if time.time() - started > 240:
-                print('autotest: no "DEMO END" within 4 minutes')
-                return 1
-            time.sleep(0.5)
-        time.sleep(3)
-        # Separate taps: press and release, the file size tells the edits apart.
-        for _ in range(30):
-            if game.poll() is not None or b'touchCounter = 2' in log.read_bytes():
-                break
-            pad.write_text('touchpad_left')
-            time.sleep(0.25)
-            pad.write_text('')
-            time.sleep(0.6)
-        deadline = time.time() + after
+        if plain:
+            deadline = started + after
+        else:
+            # Wait for the end of the first cutscene (the apple then takes taps), at most 4 minutes.
+            while game.poll() is None and b'DEMO END' not in log.read_bytes():
+                if time.time() - started > 240:
+                    print('autotest: no "DEMO END" within 4 minutes')
+                    break
+                time.sleep(0.5)
+            time.sleep(3)
+            # Separate taps: press and release, the file size tells the edits apart.
+            for _ in range(30):
+                if game.poll() is not None or b'touchCounter = 2' in log.read_bytes():
+                    break
+                pad.write_text('touchpad_left')
+                time.sleep(0.25)
+                pad.write_text('')
+                time.sleep(0.6)
+            deadline = time.time() + after
         while game.poll() is None and time.time() < deadline:
             time.sleep(1)
     finally:

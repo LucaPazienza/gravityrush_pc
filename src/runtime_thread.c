@@ -496,8 +496,38 @@ static void dump_threads(const char *why) {
     free(e);
 }
 
+/* GOW3_POKE (diagnostics): writes into the game image, again every 100 ms (the game may reset
+ * them): "0x237bd58=1" stores a 32-bit value, "0x16c4412|=4" ORs a byte; comma-separated.
+ * Used to switch on the game's own debug logs. */
+/* "@log" as a value stores (64-bit) the address of a guest-callable printer of (level, text):
+ * the game's sndx library calls such a per-channel hook with each formatted debug line. */
+static ABI void guest_log_hook(uint32_t level, const char *text) {
+    printf("Game log [%x]: %s\n",level,text ? text : "(null)");
+}
+static void apply_pokes(const char *spec) {
+    unsigned char *image=runtime_image_base();
+    if (!image || !spec) return;
+    for (const char *p=spec;*p;) {
+        char *end;
+        unsigned long long offset=strtoull(p,&end,0);
+        int or_byte=end[0]=='|' && end[1]=='=';
+        if (!(or_byte || end[0]=='=') || offset>=GUEST_SPAN) return;
+        if (!or_byte && !strncmp(end+1,"@log",4)) {
+            uint64_t hook=(uint64_t)(uintptr_t)guest_log_hook;
+            memcpy(image+offset,&hook,8);
+            end+=5; p=*end==',' ? end+1 : end;
+            continue;
+        }
+        unsigned long long value=strtoull(end+(or_byte ? 2 : 1),&end,0);
+        if (or_byte) image[offset]|=(unsigned char)value;
+        else { uint32_t v=(uint32_t)value; memcpy(image+offset,&v,4); }
+        p=*end==',' ? end+1 : end;
+        if (*end && *end!=',') return;
+    }
+}
 static void *dump_watcher(void *arg) {
     (void)arg;
+    const char *pokes=getenv("GOW3_POKE");
     const char *env=getenv("GOW3_THREAD_DUMP");
     ULONGLONG auto_at=env && atoi(env)>0 ? GetTickCount64()+(ULONGLONG)atoi(env)*1000 : 0;
     int was_down=0;
@@ -506,6 +536,7 @@ static void *dump_watcher(void *arg) {
         /* stdout to a file is fully buffered: closing the window kills the process and would
          * lose the last lines of the log. */
         fflush(stdout);
+        if (pokes) apply_pokes(pokes);
         int down=(GetAsyncKeyState(VK_F12)&0x8000)!=0;
         if (down && !was_down) dump_threads("F12");
         was_down=down;
@@ -513,7 +544,32 @@ static void *dump_watcher(void *arg) {
     }
     return NULL;
 }
+/* An exit nobody announced (no "Runtime:" line before it): who called it. */
+static void exit_report(void) {
+    void *frames[48];
+    USHORT n=RtlCaptureStackBackTrace(0,48,frames,NULL);
+    GuestThread *t=current;
+    printf("Runtime: process exiting from thread '%s' (tid %lu); call stack:\n",t ? t->name : "?",GetCurrentThreadId());
+    for (USHORT i=0;i<n;++i) {
+        char label[160];
+        if (!code_label((uint64_t)(uintptr_t)frames[i],label,sizeof(label))) snprintf(label,sizeof(label),"%p",frames[i]);
+        printf("    #%u %s\n",i,label);
+    }
+    /* The guest's frames are not on the host unwinder's chain: scan this stack too. */
+    uint64_t *sp=(uint64_t *)__builtin_frame_address(0);
+    MEMORY_BASIC_INFORMATION mi;
+    if (VirtualQuery(sp,&mi,sizeof(mi))) {
+        uint64_t *end=(uint64_t *)((char *)mi.BaseAddress+mi.RegionSize);
+        int shown=0;
+        for (uint64_t *p=sp;p<end && shown<32;++p) {
+            char label[160];
+            if (*p-(uintptr_t)runtime_image_base()<GUEST_SPAN && code_label(*p,label,sizeof(label))) { printf("    [stack] %s\n",label); ++shown; }
+        }
+    }
+    fflush(stdout);
+}
 static void start_dump_watcher_once(void) {
+    atexit(exit_report);
     pthread_t watcher;
     if (!pthread_create(&watcher,NULL,dump_watcher,NULL)) pthread_detach(watcher);
 }
