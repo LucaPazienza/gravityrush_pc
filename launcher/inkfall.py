@@ -40,87 +40,204 @@ SHADOW = (10, 14, 13, 153)
 DASH = '#b8b5a0'      # the dashed row line: ink at 28 % over paper
 
 # ---------------------------------------------------------------------------------------------
-# Texts: English with the Italian next to it (the launcher follows the Windows language).
+# Texts in the European set (EFIGS: English, French, Italian, German, Spanish). Each row: English,
+# Italian, French, German, Spanish. The launcher follows Windows unless a language is chosen.
 
-TEXTS = {
-    'Play': 'Avvia', 'Game': 'Gioco', 'Video': 'Video', 'Controls': 'Controlli', 'Advanced': 'Avanzate',
-    'Log & diagnostics': 'Log e diagnostica', 'Quit': 'Esci', 'VERSION {}': 'VERSIONE {}',
-    'FOLDERS': 'CARTELLE', 'Game folder': 'Cartella del gioco',
-    'Your game dump (eboot.bin, sce_module, sce_sys).': 'Il tuo dump del gioco (eboot.bin, sce_module, sce_sys).',
-    'Saves folder': 'Cartella dei salvataggi',
-    'Empty: the launcher data folder (it also holds the shader cache).':
-        'Se vuota usa la cartella dei dati del launcher (contiene anche la cache degli shader).',
-    'Browse…': 'Sfoglia…', 'Open': 'Apri', 'SHORTCUTS': 'COLLEGAMENTI',
-    'Start without opening the launcher': 'Avvia senza aprire il launcher',
-    'The game starts at once with the saved settings. Hold Shift to open the launcher again.':
-        'Il gioco parte subito con le impostazioni salvate. Per riaprire il launcher tieni premuto Maiusc.',
-    'Create desktop shortcut': 'Crea collegamento sul desktop', 'SAVES': 'SALVATAGGI',
-    'Save backups': 'Backup dei salvataggi', 'Restore': 'Ripristina', 'Refresh': 'Aggiorna',
-    'Made before every start, newest first: the last {} are kept. Restoring backs up the current saves first.':
-        'Creati prima di ogni avvio, dal più recente: ne restano {}. Il ripristino salva prima i dati attuali.',
-    'LANGUAGE': 'LINGUA', 'Game language': 'Lingua del gioco',
-    'English': 'Inglese', 'Italian': 'Italiano', 'French': 'Francese', 'German': 'Tedesco',
-    'Spanish': 'Spagnolo', 'Japanese': 'Giapponese',
-    'SCREEN': 'SCHERMO', 'Window mode': 'Modalità finestra', 'Windowed': 'Finestra',
-    'Fullscreen': 'Schermo intero', 'Borderless': 'Senza bordi', 'Vertical sync': 'Sincronia verticale',
-    'FPS limit': 'Limite FPS', 'Unlimited': 'Libero',
-    'The game is made for 60 FPS; other values can change physics and animations.':
-        'Il gioco è pensato per 60 FPS: valori diversi possono alterare fisica e animazioni.',
-    'Reset': 'Ripristina', 'Apply': 'Applica', 'Reset all': 'Ripristina tutto',
-    'COMMAND': 'COMANDO', 'CONTROLLER': 'CONTROLLER', 'KEYBOARD': 'TASTIERA', 'BUTTONS': 'TASTI',
-    'D-PAD': 'CROCE DIREZIONALE', 'GYROSCOPE': 'GIROSCOPIO', 'Sensitivity': 'Sensibilità',
-    'Aiming by moving a DualSense or DualShock 4.': 'Per mirare muovendo un DualSense o un DualShock 4.',
-    'Click a key, then press the new one (Esc cancels).': 'Clicca un tasto, poi premi quello nuovo (Esc annulla).',
-    'Press a key…': 'Premi un tasto…',
-    'LAUNCHER': 'LAUNCHER', 'Launcher language': 'Lingua del launcher', 'System': 'Sistema',
-    'IN GAME': 'IN GIOCO', 'Performance overlay': 'Overlay prestazioni',
-    'Shows the FPS while you play.': 'Mostra gli FPS mentre giochi.',
-    'In-game menu': 'Menu in gioco',
-    'Opens the settings while you play: Ins on the keyboard, or R3 + L2 on the controller.':
-        'Apre le impostazioni durante la partita: Ins sulla tastiera, oppure R3 + L2 sul controller.',
-    'PERFORMANCE': 'PRESTAZIONI', 'Shader cache': 'Cache degli shader', 'Clear': 'Svuota',
-    'DEVELOPMENT': 'SVILUPPO', 'Validation layer': 'Strato di validazione',
-    'Vulkan checks for bug reports; slower.': 'Controlli di Vulkan per le segnalazioni di errori; più lento.',
-    'DATA': 'DATI', 'Launcher data folder': 'Cartella dei dati del launcher',
-    'Export settings': 'Esporta configurazione', 'Import settings': 'Importa configurazione',
-    'Copy log': 'Copia log', 'Open log folder': 'Apri cartella log',
-    'Game messages': 'Messaggi del gioco', 'No game started yet.': 'Nessuna partita avviata finora.',
-    'Game found · all ready': 'Gioco rilevato · tutto pronto', 'Choose the game folder': 'Scegli la cartella del gioco',
-    'Last save · {}': 'Ultimo salvataggio · {}', 'No saves yet': 'Nessun salvataggio',
-    'VSync': 'VSync', 'Limit {} FPS': 'Limite {} FPS', 'Unlimited FPS': 'FPS libero',
-    'Settings applied': 'Impostazioni applicate', 'Defaults restored': 'Valori predefiniti ripristinati',
-    'Quit?': 'Uscire?', 'Close Inkfall?': 'Vuoi chiudere Inkfall?', 'Cancel': 'Annulla',
-    'The game keeps running.': 'Il gioco resta aperto.',
-    'Starting…': 'Avvio in corso…', 'Preparing the game': 'Preparazione del gioco',
-    'The game is starting': 'Il gioco si sta aprendo', 'In game': 'In gioco',
-    'The game is running in its own window.': 'Il gioco è aperto nella sua finestra.',
-    'Stop the game': 'Chiudi il gioco', 'Close the launcher': 'Chiudi il launcher',
-    'The game exited.': 'Il gioco si è chiuso.',
-    'Choose the game folder first.': 'Prima scegli la cartella del gioco.',
-    'Restore saves?': 'Ripristinare?', 'The current saves are backed up first.': 'Prima verranno salvati i dati attuali.',
-    'Saves restored': 'Salvataggi ripristinati', 'Close the game first.': 'Prima chiudi il gioco.',
-    'Shortcut created on the desktop': 'Collegamento creato sul desktop',
-    'Shader cache cleared': 'Cache degli shader svuotata', 'Log copied': 'Log copiato',
-    'Settings exported': 'Configurazione esportata', 'Settings imported': 'Configurazione importata',
-    'Could not: {}': 'Non riuscito: {}', 'empty': 'vuota', 'Minimize': 'Riduci a icona', 'Close': 'Chiudi',
-}
+LANGUAGES = [('it', 'Italiano'), ('en', 'English'), ('fr', 'Français'), ('de', 'Deutsch'), ('es', 'Español')]
+_ROWS = [
+    ('Play', 'Avvia', 'Jouer', 'Spielen', 'Jugar'),
+    ('Game', 'Gioco', 'Jeu', 'Spiel', 'Juego'),
+    ('Video', 'Video', 'Vidéo', 'Video', 'Vídeo'),
+    ('Controls', 'Controlli', 'Commandes', 'Steuerung', 'Controles'),
+    ('Advanced', 'Avanzate', 'Avancé', 'Erweitert', 'Avanzado'),
+    ('Log & diagnostics', 'Log e diagnostica', 'Journal et diagnostic', 'Protokoll & Diagnose', 'Registro y diagnóstico'),
+    ('Quit', 'Esci', 'Quitter', 'Beenden', 'Salir'),
+    ('VERSION {}', 'VERSIONE {}', 'VERSION {}', 'VERSION {}', 'VERSIÓN {}'),
+    ('FOLDERS', 'CARTELLE', 'DOSSIERS', 'ORDNER', 'CARPETAS'),
+    ('Game folder', 'Cartella del gioco', 'Dossier du jeu', 'Spielordner', 'Carpeta del juego'),
+    ('Your game dump (eboot.bin, sce_module, sce_sys).', 'Il tuo dump del gioco (eboot.bin, sce_module, sce_sys).',
+     'Votre copie du jeu (eboot.bin, sce_module, sce_sys).', 'Dein Spiel-Dump (eboot.bin, sce_module, sce_sys).',
+     'Tu copia del juego (eboot.bin, sce_module, sce_sys).'),
+    ('Saves folder', 'Cartella dei salvataggi', 'Dossier des sauvegardes', 'Speicherordner', 'Carpeta de partidas'),
+    ('Empty: the launcher data folder (it also holds the shader cache).',
+     'Se vuota usa la cartella dei dati del launcher (contiene anche la cache degli shader).',
+     'Vide : le dossier de données du lanceur (il contient aussi le cache des shaders).',
+     'Leer: der Datenordner des Launchers (er enthält auch den Shader-Cache).',
+     'Vacía: la carpeta de datos del lanzador (también guarda la caché de shaders).'),
+    ('Browse…', 'Sfoglia…', 'Parcourir…', 'Durchsuchen…', 'Examinar…'),
+    ('Open', 'Apri', 'Ouvrir', 'Öffnen', 'Abrir'),
+    ('SHORTCUTS', 'COLLEGAMENTI', 'RACCOURCIS', 'VERKNÜPFUNGEN', 'ACCESOS DIRECTOS'),
+    ('Start without opening the launcher', 'Avvia senza aprire il launcher', 'Lancer sans ouvrir le lanceur',
+     'Ohne Launcher starten', 'Iniciar sin abrir el lanzador'),
+    ('The game starts at once with the saved settings. Hold Shift to open the launcher again.',
+     'Il gioco parte subito con le impostazioni salvate. Per riaprire il launcher tieni premuto Maiusc.',
+     'Le jeu démarre aussitôt avec les réglages enregistrés. Maintenez Maj pour rouvrir le lanceur.',
+     'Das Spiel startet sofort mit den gespeicherten Einstellungen. Halte Umschalt, um den Launcher zu öffnen.',
+     'El juego se inicia al momento con los ajustes guardados. Mantén Mayús para volver a abrir el lanzador.'),
+    ('Create desktop shortcut', 'Crea collegamento sul desktop', 'Créer un raccourci sur le bureau',
+     'Desktop-Verknüpfung erstellen', 'Crear acceso directo en el escritorio'),
+    ('SAVES', 'SALVATAGGI', 'SAUVEGARDES', 'SPIELSTÄNDE', 'PARTIDAS GUARDADAS'),
+    ('Save backups', 'Backup dei salvataggi', 'Copies des sauvegardes', 'Spielstand-Backups', 'Copias de seguridad'),
+    ('Restore', 'Ripristina', 'Restaurer', 'Wiederherstellen', 'Restaurar'),
+    ('Refresh', 'Aggiorna', 'Actualiser', 'Aktualisieren', 'Actualizar'),
+    ('Made before every start, newest first: the last {} are kept. Restoring backs up the current saves first.',
+     'Creati prima di ogni avvio, dal più recente: ne restano {}. Il ripristino salva prima i dati attuali.',
+     'Créées avant chaque lancement, les plus récentes d\'abord : les {} dernières sont gardées. La restauration '
+     'sauvegarde d\'abord les données actuelles.',
+     'Vor jedem Start erstellt, neueste zuerst: die letzten {} bleiben. Beim Wiederherstellen werden die aktuellen '
+     'Spielstände zuerst gesichert.',
+     'Se crean antes de cada inicio, de la más reciente a la más antigua: se guardan las últimas {}. Al restaurar se '
+     'guardan antes los datos actuales.'),
+    ('LANGUAGE', 'LINGUA', 'LANGUE', 'SPRACHE', 'IDIOMA'),
+    ('Game language', 'Lingua del gioco', 'Langue du jeu', 'Spielsprache', 'Idioma del juego'),
+    ('English', 'Inglese', 'Anglais', 'Englisch', 'Inglés'),
+    ('Italian', 'Italiano', 'Italien', 'Italienisch', 'Italiano'),
+    ('French', 'Francese', 'Français', 'Französisch', 'Francés'),
+    ('German', 'Tedesco', 'Allemand', 'Deutsch', 'Alemán'),
+    ('Spanish', 'Spagnolo', 'Espagnol', 'Spanisch', 'Español'),
+    ('Japanese', 'Giapponese', 'Japonais', 'Japanisch', 'Japonés'),
+    ('SCREEN', 'SCHERMO', 'ÉCRAN', 'BILDSCHIRM', 'PANTALLA'),
+    ('Window mode', 'Modalità finestra', 'Mode d\'affichage', 'Fenstermodus', 'Modo de ventana'),
+    ('Windowed', 'Finestra', 'Fenêtré', 'Fenster', 'Ventana'),
+    ('Fullscreen', 'Schermo intero', 'Plein écran', 'Vollbild', 'Pantalla completa'),
+    ('Borderless', 'Senza bordi', 'Sans bordure', 'Rahmenlos', 'Sin bordes'),
+    ('Vertical sync', 'Sincronia verticale', 'Synchro verticale', 'Vertikale Synchronisation', 'Sincronización vertical'),
+    ('FPS limit', 'Limite FPS', 'Limite d\'IPS', 'FPS-Limit', 'Límite de FPS'),
+    ('Unlimited', 'Libero', 'Illimité', 'Unbegrenzt', 'Sin límite'),
+    ('The game is made for 60 FPS; other values can change physics and animations.',
+     'Il gioco è pensato per 60 FPS: valori diversi possono alterare fisica e animazioni.',
+     'Le jeu est prévu pour 60 IPS : d\'autres valeurs peuvent modifier la physique et les animations.',
+     'Das Spiel ist für 60 FPS gemacht; andere Werte können Physik und Animationen verändern.',
+     'El juego está pensado para 60 FPS; otros valores pueden alterar la física y las animaciones.'),
+    ('Reset', 'Ripristina', 'Réinitialiser', 'Zurücksetzen', 'Restablecer'),
+    ('Apply', 'Applica', 'Appliquer', 'Übernehmen', 'Aplicar'),
+    ('Reset all', 'Ripristina tutto', 'Tout réinitialiser', 'Alles zurücksetzen', 'Restablecer todo'),
+    ('COMMAND', 'COMANDO', 'COMMANDE', 'BEFEHL', 'COMANDO'),
+    ('CONTROLLER', 'CONTROLLER', 'MANETTE', 'CONTROLLER', 'MANDO'),
+    ('KEYBOARD', 'TASTIERA', 'CLAVIER', 'TASTATUR', 'TECLADO'),
+    ('BUTTONS', 'TASTI', 'TOUCHES', 'TASTEN', 'BOTONES'),
+    ('D-PAD', 'CROCE DIREZIONALE', 'CROIX DIRECTIONNELLE', 'STEUERKREUZ', 'CRUCETA'),
+    ('GYROSCOPE', 'GIROSCOPIO', 'GYROSCOPE', 'GYROSKOP', 'GIROSCOPIO'),
+    ('Sensitivity', 'Sensibilità', 'Sensibilité', 'Empfindlichkeit', 'Sensibilidad'),
+    ('Aiming by moving a DualSense or DualShock 4.', 'Per mirare muovendo un DualSense o un DualShock 4.',
+     'Pour viser en bougeant une DualSense ou une DualShock 4.', 'Zum Zielen durch Bewegen eines DualSense oder DualShock 4.',
+     'Para apuntar moviendo un DualSense o un DualShock 4.'),
+    ('Click a key, then press the new one (Esc cancels).', 'Clicca un tasto, poi premi quello nuovo (Esc annulla).',
+     'Cliquez sur une touche, puis appuyez sur la nouvelle (Échap annule).',
+     'Klicke auf eine Taste und drücke dann die neue (Esc bricht ab).',
+     'Haz clic en una tecla y pulsa la nueva (Esc cancela).'),
+    ('Press a key…', 'Premi un tasto…', 'Appuyez sur une touche…', 'Taste drücken…', 'Pulsa una tecla…'),
+    ('LAUNCHER', 'LAUNCHER', 'LANCEUR', 'LAUNCHER', 'LANZADOR'),
+    ('Launcher language', 'Lingua del launcher', 'Langue du lanceur', 'Sprache des Launchers', 'Idioma del lanzador'),
+    ('System', 'Sistema', 'Système', 'System', 'Sistema'),
+    ('IN GAME', 'IN GIOCO', 'EN JEU', 'IM SPIEL', 'EN EL JUEGO'),
+    ('Performance overlay', 'Overlay prestazioni', 'Affichage des performances', 'Leistungsanzeige', 'Indicador de rendimiento'),
+    ('Shows the FPS while you play.', 'Mostra gli FPS mentre giochi.', 'Affiche les IPS pendant la partie.',
+     'Zeigt die FPS beim Spielen.', 'Muestra los FPS mientras juegas.'),
+    ('In-game menu', 'Menu in gioco', 'Menu en jeu', 'Menü im Spiel', 'Menú en el juego'),
+    ('Opens the settings while you play: Ins on the keyboard, or R3 + L2 on the controller.',
+     'Apre le impostazioni durante la partita: Ins sulla tastiera, oppure R3 + L2 sul controller.',
+     'Ouvre les réglages pendant la partie : Inser au clavier, ou R3 + L2 sur la manette.',
+     'Öffnet die Einstellungen im Spiel: Einfg auf der Tastatur oder R3 + L2 am Controller.',
+     'Abre los ajustes durante la partida: Insert en el teclado o R3 + L2 en el mando.'),
+    ('PERFORMANCE', 'PRESTAZIONI', 'PERFORMANCES', 'LEISTUNG', 'RENDIMIENTO'),
+    ('Shader cache', 'Cache degli shader', 'Cache des shaders', 'Shader-Cache', 'Caché de shaders'),
+    ('Clear', 'Svuota', 'Vider', 'Leeren', 'Vaciar'),
+    ('DEVELOPMENT', 'SVILUPPO', 'DÉVELOPPEMENT', 'ENTWICKLUNG', 'DESARROLLO'),
+    ('Validation layer', 'Strato di validazione', 'Couche de validation', 'Validierungsebene', 'Capa de validación'),
+    ('Vulkan checks for bug reports; slower.', 'Controlli di Vulkan per le segnalazioni di errori; più lento.',
+     'Vérifications Vulkan pour signaler les bugs ; plus lent.', 'Vulkan-Prüfungen für Fehlerberichte; langsamer.',
+     'Comprobaciones de Vulkan para informar de errores; más lento.'),
+    ('DATA', 'DATI', 'DONNÉES', 'DATEN', 'DATOS'),
+    ('Launcher data folder', 'Cartella dei dati del launcher', 'Dossier de données du lanceur', 'Datenordner des Launchers',
+     'Carpeta de datos del lanzador'),
+    ('Export settings', 'Esporta configurazione', 'Exporter les réglages', 'Einstellungen exportieren', 'Exportar ajustes'),
+    ('Import settings', 'Importa configurazione', 'Importer les réglages', 'Einstellungen importieren', 'Importar ajustes'),
+    ('Copy log', 'Copia log', 'Copier le journal', 'Protokoll kopieren', 'Copiar registro'),
+    ('Open log folder', 'Apri cartella log', 'Ouvrir le dossier', 'Ordner öffnen', 'Abrir carpeta'),
+    ('Game messages', 'Messaggi del gioco', 'Messages du jeu', 'Meldungen des Spiels', 'Mensajes del juego'),
+    ('No game started yet.', 'Nessuna partita avviata finora.', 'Aucune partie lancée pour l\'instant.',
+     'Noch kein Spiel gestartet.', 'Aún no se ha iniciado ninguna partida.'),
+    ('Game found · all ready', 'Gioco rilevato · tutto pronto', 'Jeu détecté · tout est prêt', 'Spiel gefunden · alles bereit',
+     'Juego detectado · todo listo'),
+    ('Choose the game folder', 'Scegli la cartella del gioco', 'Choisissez le dossier du jeu', 'Spielordner wählen',
+     'Elige la carpeta del juego'),
+    ('Last save · {}', 'Ultimo salvataggio · {}', 'Dernière sauvegarde · {}', 'Letzter Spielstand · {}', 'Última partida · {}'),
+    ('No saves yet', 'Nessun salvataggio', 'Aucune sauvegarde', 'Noch keine Spielstände', 'Sin partidas guardadas'),
+    ('VSync', 'VSync', 'VSync', 'VSync', 'VSync'),
+    ('Limit {} FPS', 'Limite {} FPS', 'Limite {} IPS', 'Limit {} FPS', 'Límite {} FPS'),
+    ('Unlimited FPS', 'FPS libero', 'IPS illimitées', 'FPS unbegrenzt', 'FPS sin límite'),
+    ('Settings applied', 'Impostazioni applicate', 'Réglages appliqués', 'Einstellungen übernommen', 'Ajustes aplicados'),
+    ('Defaults restored', 'Valori predefiniti ripristinati', 'Valeurs par défaut rétablies', 'Standardwerte wiederhergestellt',
+     'Valores predeterminados restablecidos'),
+    ('Quit?', 'Uscire?', 'Quitter ?', 'Beenden?', '¿Salir?'),
+    ('Close Inkfall?', 'Vuoi chiudere Inkfall?', 'Fermer Inkfall ?', 'Inkfall schließen?', '¿Cerrar Inkfall?'),
+    ('Cancel', 'Annulla', 'Annuler', 'Abbrechen', 'Cancelar'),
+    ('The game keeps running.', 'Il gioco resta aperto.', 'Le jeu reste ouvert.', 'Das Spiel läuft weiter.',
+     'El juego sigue abierto.'),
+    ('Starting…', 'Avvio in corso…', 'Lancement…', 'Wird gestartet…', 'Iniciando…'),
+    ('Preparing the game', 'Preparazione del gioco', 'Préparation du jeu', 'Spiel wird vorbereitet', 'Preparando el juego'),
+    ('The game is starting', 'Il gioco si sta aprendo', 'Le jeu s\'ouvre', 'Das Spiel öffnet sich', 'El juego se está abriendo'),
+    ('In game', 'In gioco', 'En jeu', 'Im Spiel', 'Jugando'),
+    ('The game is running in its own window.', 'Il gioco è aperto nella sua finestra.',
+     'Le jeu tourne dans sa propre fenêtre.', 'Das Spiel läuft in seinem eigenen Fenster.',
+     'El juego está abierto en su propia ventana.'),
+    ('Stop the game', 'Chiudi il gioco', 'Fermer le jeu', 'Spiel beenden', 'Cerrar el juego'),
+    ('Close the launcher', 'Chiudi il launcher', 'Fermer le lanceur', 'Launcher schließen', 'Cerrar el lanzador'),
+    ('The game exited.', 'Il gioco si è chiuso.', 'Le jeu s\'est fermé.', 'Das Spiel wurde beendet.', 'El juego se ha cerrado.'),
+    ('Choose the game folder first.', 'Prima scegli la cartella del gioco.', 'Choisissez d\'abord le dossier du jeu.',
+     'Wähle zuerst den Spielordner.', 'Primero elige la carpeta del juego.'),
+    ('Restore saves?', 'Ripristinare?', 'Restaurer ?', 'Wiederherstellen?', '¿Restaurar?'),
+    ('The current saves are backed up first.', 'Prima verranno salvati i dati attuali.',
+     'Les données actuelles seront sauvegardées d\'abord.', 'Die aktuellen Spielstände werden zuerst gesichert.',
+     'Antes se guardarán los datos actuales.'),
+    ('Saves restored', 'Salvataggi ripristinati', 'Sauvegardes restaurées', 'Spielstände wiederhergestellt',
+     'Partidas restauradas'),
+    ('Close the game first.', 'Prima chiudi il gioco.', 'Fermez d\'abord le jeu.', 'Beende zuerst das Spiel.',
+     'Primero cierra el juego.'),
+    ('Shortcut created on the desktop', 'Collegamento creato sul desktop', 'Raccourci créé sur le bureau',
+     'Verknüpfung auf dem Desktop erstellt', 'Acceso directo creado en el escritorio'),
+    ('Shader cache cleared', 'Cache degli shader svuotata', 'Cache des shaders vidé', 'Shader-Cache geleert',
+     'Caché de shaders vaciada'),
+    ('Log copied', 'Log copiato', 'Journal copié', 'Protokoll kopiert', 'Registro copiado'),
+    ('Settings exported', 'Configurazione esportata', 'Réglages exportés', 'Einstellungen exportiert', 'Ajustes exportados'),
+    ('Settings imported', 'Configurazione importata', 'Réglages importés', 'Einstellungen importiert', 'Ajustes importados'),
+    ('Could not: {}', 'Non riuscito: {}', 'Échec : {}', 'Fehlgeschlagen: {}', 'No se pudo: {}'),
+    ('empty', 'vuota', 'vide', 'leer', 'vacía'),
+    # PlayStation buttons (names as each country's manuals call them).
+    ('Cross', 'Croce', 'Croix', 'Kreuz', 'Equis'),
+    ('Circle', 'Cerchio', 'Rond', 'Kreis', 'Círculo'),
+    ('Square', 'Quadrato', 'Carré', 'Quadrat', 'Cuadrado'),
+    ('Triangle', 'Triangolo', 'Triangle', 'Dreieck', 'Triángulo'),
+    ('Up', 'Su', 'Haut', 'Oben', 'Arriba'),
+    ('Down', 'Giù', 'Bas', 'Unten', 'Abajo'),
+    ('Left', 'Sinistra', 'Gauche', 'Links', 'Izquierda'),
+    ('Right', 'Destra', 'Droite', 'Rechts', 'Derecha'),
+    ('Trigger', 'Grilletto', 'Gâchette', 'Trigger', 'Gatillo'),
+    ('D-pad up', 'Croce su', 'Croix haut', 'Steuerkreuz oben', 'Cruceta arriba'),
+    ('D-pad down', 'Croce giù', 'Croix bas', 'Steuerkreuz unten', 'Cruceta abajo'),
+    ('D-pad left', 'Croce sinistra', 'Croix gauche', 'Steuerkreuz links', 'Cruceta izquierda'),
+    ('D-pad right', 'Croce destra', 'Croix droite', 'Steuerkreuz rechts', 'Cruceta derecha'),
+    ('Touchpad click', 'Clic touchpad', 'Clic du pavé tactile', 'Touchpad-Klick', 'Clic del panel táctil'),
+]
+TRANSLATIONS = {code: {row[0]: row[i] for row in _ROWS} for i, code in enumerate(('it', 'fr', 'de', 'es'), 1)}
 LANG = 'en'
 
 
 def t(text):
-    return TEXTS.get(text, text) if LANG == 'it' else text
+    return TRANSLATIONS.get(LANG, {}).get(text, text)
 
 
-# PS4 button names, per row of the logic's CONTROLS.
-BUTTON_NAMES = {'cross': ('Cross', 'Croce'), 'circle': ('Circle', 'Cerchio'), 'square': ('Square', 'Quadrato'),
-                'triangle': ('Triangle', 'Triangolo'), 'l1': ('L1',), 'r1': ('R1',), 'l2': ('L2',), 'r2': ('R2',),
-                'l3': ('L3',), 'r3': ('R3',), 'options': ('Options',), 'touchpad': ('Touchpad',),
-                'up': ('Up', 'Su'), 'down': ('Down', 'Giù'), 'left': ('Left', 'Sinistra'), 'right': ('Right', 'Destra')}
-# Controller button names in Italian (the logic's PAD_STYLES are English).
-PAD_NAMES = {'Cross': 'Croce', 'Circle': 'Cerchio', 'Square': 'Quadrato', 'Triangle': 'Triangolo',
-             'Share / Create': 'Share / Create', 'Touchpad click': 'Clic touchpad', 'D-pad up': 'Croce su',
-             'D-pad down': 'Croce giù', 'D-pad left': 'Croce sinistra', 'D-pad right': 'Croce destra',
-             'Trigger': 'Grilletto'}
+def pick_language(choice, windows):
+    """The launcher language: the chosen one, else Windows', else English."""
+    codes = {code for code, _name in LANGUAGES}
+    return choice if choice in codes else windows if windows in codes else 'en'
+
+
+# PS4 button names, per row of the logic's CONTROLS (translated with t()).
+BUTTON_NAMES = {'cross': 'Cross', 'circle': 'Circle', 'square': 'Square', 'triangle': 'Triangle', 'l1': 'L1', 'r1': 'R1',
+                'l2': 'L2', 'r2': 'R2', 'l3': 'L3', 'r3': 'R3', 'options': 'Options', 'touchpad': 'Touchpad',
+                'up': 'Up', 'down': 'Down', 'left': 'Left', 'right': 'Right'}
 # Tk key names -> the SDL key names the runtime's key map uses (src/runtime_pad.c).
 TK_KEYS = {'space': 'Space', 'Shift_L': 'Left Shift', 'Shift_R': 'Right Shift', 'Control_L': 'Left Ctrl',
            'Control_R': 'Right Ctrl', 'Alt_L': 'Left Alt', 'Alt_R': 'Right Alt', 'Return': 'Return', 'Tab': 'Tab',
@@ -177,6 +294,29 @@ def text_top(font, height):
 
 def capsule(w, h, point):
     return [(0, 0), (w - point, 0), (w, h / 2), (w - point, h), (0, h)]
+
+
+def draw_icon(img, kind, x0, y0, size):
+    """The mock-up's 16x16 icons: green crystal ("ok"), red crystal ("warn"), blue cube."""
+    u = size / 16
+    d = ImageDraw.Draw(img)
+
+    def pts(*coords):
+        return [(x0 + x * u, y0 + y * u) for x, y in coords]
+    if kind in ('ok', 'warn'):
+        d.polygon(pts((8, 1.5), (13, 6), (8, 14.5), (3, 6)), fill=rgba(GR if kind == 'ok' else OR), outline=rgba(INK),
+                  width=max(1, round(1.6 * u)))
+        facets = Image.new('RGBA', img.size, (0, 0, 0, 0))
+        fd = ImageDraw.Draw(facets)
+        fd.line(pts((3, 6), (13, 6)), fill=rgba(INK, 115), width=max(1, round(u)))
+        fd.line(pts((8, 1.5), (8, 14.5)), fill=rgba(INK, 115), width=max(1, round(u)))
+        img.alpha_composite(facets)
+    else:
+        d.polygon(pts((8, 1.5), (13.5, 4.5), (13.5, 11.5), (8, 14.5), (2.5, 11.5), (2.5, 4.5)), fill=rgba(CUBE),
+                  outline=rgba(INK), width=max(1, round(1.6 * u)))
+        width = max(1, round(1.1 * u))
+        for end in ((13.5, 4.5), (8, 14.5), (2.5, 4.5)):
+            d.line(pts((8, 8), end), fill=rgba(INK), width=width)
 
 
 class Painter:
@@ -329,6 +469,31 @@ class Painter:
                   font, color, spacing)
         return self.done(img)
 
+    def field(self, text, width, hover=False):
+        """A select's face: white field, 8 px corners, ink border, the text and a chevron."""
+        k = self.s * 2
+        h = 38
+        img = self.canvas(width, h)
+        d = ImageDraw.Draw(img)
+        d.rounded_rectangle((k, k, (width - 1) * k, (h - 1) * k), 8 * k, fill=rgba(PAPER2 if hover else '#ffffff'),
+                            outline=rgba(INK), width=round(2.5 * k))
+        font = pil_font(14.5 * k, 600)
+        limit = (width - 44) * k
+        while text and text_width(text, font, 0) > limit:
+            text = text[:-2] + '…'
+        draw_text(d, 12 * k, text_top(font, h * k), text, font, rgba(TX))
+        cx, cy = (width - 18) * k, h / 2 * k
+        d.line([(cx - 5 * k, cy - 2.5 * k), (cx, cy + 2.5 * k), (cx + 5 * k, cy - 2.5 * k)], fill=rgba(INK),
+               width=round(2.2 * k), joint='curve')
+        return self.done(img)
+
+    def entry_frame(self, width, height=38):
+        k = self.s * 2
+        img = self.canvas(width, height)
+        ImageDraw.Draw(img).rounded_rectangle((k, k, (width - 1) * k, (height - 1) * k), 8 * k, fill=rgba('#ffffff'),
+                                              outline=rgba(INK), width=round(2.5 * k))
+        return self.done(img)
+
     def label(self, text, size, color, weight=700, spacing=0.0, upper=False, shadow=None):
         k = self.s * 2
         text = text.upper() if upper else text
@@ -367,20 +532,7 @@ class Painter:
         d.rounded_rectangle((0, 0, w * k, h * k), h / 2 * k, fill=(27, 29, 30, 230))
         d.rounded_rectangle((1.5 * k, 1.5 * k, (w - 1.5) * k, (h - 1.5) * k), (h / 2 - 1.5) * k,
                             outline=(244, 239, 213, 56), width=round(1.5 * k))
-        cx, cy = (9 + 8.5) * k, h / 2 * k
-        if icon == 'ok':
-            pts = [(cx, cy - 7 * k), (cx + 5.5 * k, cy - 2 * k), (cx, cy + 7 * k), (cx - 5.5 * k, cy - 2 * k)]
-            d.polygon(pts, fill=rgba(GR), outline=rgba(INK), width=round(1.6 * k))
-        elif icon == 'warn':
-            d.polygon([(cx, cy - 7 * k), (cx + 7 * k, cy + 6 * k), (cx - 7 * k, cy + 6 * k)], fill=rgba(OR),
-                      outline=rgba(INK), width=round(1.6 * k))
-        else:  # the blue cube
-            top = [(cx, cy - 7 * k), (cx + 6 * k, cy - 3.5 * k), (cx, cy), (cx - 6 * k, cy - 3.5 * k)]
-            d.polygon([(cx, cy - 7 * k), (cx + 6 * k, cy - 3.5 * k), (cx + 6 * k, cy + 3.5 * k), (cx, cy + 7 * k),
-                       (cx - 6 * k, cy + 3.5 * k), (cx - 6 * k, cy - 3.5 * k)], fill=rgba(CUBE), outline=rgba(INK),
-                      width=round(1.6 * k))
-            d.line(top + [top[0]], fill=rgba(INK), width=round(1.1 * k))
-            d.line([(cx, cy), (cx, cy + 7 * k)], fill=rgba(INK), width=round(1.1 * k))
+        draw_icon(img, icon, 9 * k, (h - 17) / 2 * k, 17 * k)
         draw_text(d, (9 + 17 + 8) * k, text_top(font, h * k), text, font, rgba(PAPER))
         return self.done(img)
 
@@ -476,7 +628,7 @@ class Animator:
         self.items.append([time.perf_counter() + delay_ms / 1000, duration_ms / 1000, update, ease, done])
         if not self.running:
             self.running = True
-            self.root.after(16, self.tick)
+            self.root.after(10, self.tick)
 
     def tick(self):
         now = time.perf_counter()
@@ -491,7 +643,7 @@ class Animator:
                 if done:
                     done()
         if self.items:
-            self.root.after(16, self.tick)
+            self.root.after(10, self.tick)
         else:
             self.running = False
 
@@ -578,6 +730,56 @@ class Segments:
         self.value = key
         self.refresh()
         self.on_change(key)
+
+
+class Select:
+    """A select: our own field (Tk's OptionMenu draws Windows' indicator), the options in a menu."""
+
+    def __init__(self, app, parent, options, names, value, on_change, width):
+        self.app, self.options, self.names, self.on_change, self.width = app, options, names, on_change, width
+        self.index = next((i for i, (key, _t) in enumerate(options) if key == value), 0)
+        self.widget = app.tk.Label(parent, bd=0, bg=PAPER, cursor='hand2')
+        self.menu = app.tk.Menu(self.widget, tearoff=False, font=app.font(14, 'normal', 'Cabin'), bg='#ffffff', fg=TX,
+                                activebackground=BL, activeforeground=PAPER, bd=0, relief='flat')
+        for i, name in enumerate(names):
+            self.menu.add_command(label=name, command=lambda i=i: self.choose(i))
+        self.widget.bind('<Enter>', lambda e: self.render(True))
+        self.widget.bind('<Leave>', lambda e: self.render(False))
+        self.widget.bind('<Button-1>', self.open)
+        self.render(False)
+
+    def render(self, hover):
+        self.photo = ImageTk.PhotoImage(self.app.paint.field(self.names[self.index], self.width, hover))
+        self.widget.configure(image=self.photo)
+
+    def open(self, _event=None):
+        w = self.widget
+        self.menu.tk_popup(w.winfo_rootx(), w.winfo_rooty() + w.winfo_height())
+
+    def choose(self, index):
+        self.index = index
+        self.render(False)
+        self.on_change(self.options[index][0])
+
+
+class RoundEntry:
+    """A text field with rounded corners: an Entry inside a drawn white frame that follows its width."""
+
+    def __init__(self, app, parent, var):
+        self.app = app
+        self.widget = app.tk.Canvas(parent, width=app.px(60), height=app.px(38), bg=PAPER, highlightthickness=0, bd=0)
+        self.entry = app.tk.Entry(self.widget, textvariable=var, font=app.font(14, 'normal', 'Cabin SemiBold'),
+                                  bg='#ffffff', fg=TX, relief='flat', bd=0, highlightthickness=0, insertbackground=INK)
+        self.window = self.widget.create_window(app.px(12), app.px(19), anchor='w', window=self.entry)
+        self.frame = self.widget.create_image(0, 0, anchor='nw')
+        self.widget.tag_lower(self.frame)
+        self.widget.bind('<Configure>', self.layout)
+
+    def layout(self, event):
+        width = event.width / self.app.s
+        self.photo = ImageTk.PhotoImage(self.app.paint.entry_frame(max(40, width)))
+        self.widget.itemconfigure(self.frame, image=self.photo)
+        self.widget.itemconfigure(self.window, width=max(10, event.width - self.app.px(24)))
 
 
 class Slider:
@@ -672,14 +874,20 @@ class Inkfall:
         self.app = {**logic.APP_DEFAULTS, 'skip_launcher': False, 'gyro_sens': 1.4,
                     **logic.load_json(logic.CONFIG_FILE, {})}
         self.ini, self.ini_lines = logic.load_ini()
-        ui = self.app.get('ui_language') or logic.windows_language()
-        LANG = 'it' if ui == 'it' else 'en'
+        LANG = pick_language(self.app.get('ui_language'), logic.windows_language())
         self.process = self.job = None
         self.output, self.log_lines = queue.Queue(), []
         self.page = None
         self.capture = None   # (button, chip) while waiting for a key
         self.lifted = []      # the interface is up (gravity shift): hover and levitation pause
         self.register_font()
+        # Windows' timer ticks every 15.6 ms by default: Tk's after() then lands unevenly and the
+        # animations stutter. 1 ms while the launcher is open (released when it closes).
+        try:
+            ctypes.windll.winmm.timeBeginPeriod(1)
+            root.bind('<Destroy>', lambda e: e.widget is root and ctypes.windll.winmm.timeEndPeriod(1))
+        except (AttributeError, OSError):
+            pass
         # Scale: the screen's DPI, kept inside 92 % of the work area.
         dpi = root.winfo_fpixels('1i') / 96
         fit = min(root.winfo_screenwidth() * .92 / W, root.winfo_screenheight() * .92 / H)
@@ -689,7 +897,6 @@ class Inkfall:
         self.build_window()
         self.build_scene()
         self.root.after(100, self.drain)
-        self.root.after(30, self.levitate)
 
     # ---- basics ----------------------------------------------------------------------------
     def px(self, v):
@@ -733,7 +940,6 @@ class Inkfall:
         root.bind('<Map>', self.restore_frameless)
         self.cv = tk.Canvas(root, width=width, height=height, highlightthickness=0, bd=0, bg='#2b3a36')
         self.cv.pack()
-        self.cv.bind('<Motion>', self.parallax)
         self.cv.bind('<Button-1>', self.click_background)
         root.bind('<Escape>', self.escape)
         root.bind_all('<MouseWheel>', self.wheel)
@@ -814,23 +1020,6 @@ class Inkfall:
         x = -18 + -self.bg_excess * self.bg_pos + self.par[0]
         y = -18 + self.par[1]
         self.cv.coords(self.bg, self.px(x) if x >= 0 else -self.px(-x), self.px(y) if y >= 0 else -self.px(-y))
-
-    def parallax(self, event):
-        if not self.anim.enabled:
-            return
-        self.par[2] = -(event.x / self.px(W) - .5) * 18
-        self.par[3] = -(event.y / self.px(H) - .5) * 10
-
-    def levitate(self):
-        """Title levitation (6 px, 5.5 s) and the background easing toward the pointer."""
-        if self.anim.enabled and not self.lifted:
-            phase = (time.perf_counter() % 5.5) / 5.5
-            lift = -6 * (0.5 - 0.5 * math.cos(phase * 2 * math.pi))
-            self.cv.coords(self.brand, self.px(56), self.px(self.brand_y + lift))
-            self.par[0] += (self.par[2] - self.par[0]) * .08
-            self.par[1] += (self.par[3] - self.par[1]) * .08
-            self.place_background()
-        self.root.after(30, self.levitate)
 
     def window_hover(self, event):
         part = 0 if event.x < self.px(W - 8 - 44) else 1
@@ -1005,7 +1194,8 @@ class Inkfall:
         inner_w, inner_h = PANEL_W - 6 - 56, PANEL_H - 6 - 34 - 20
         frame = self.panel_frame = tk.Frame(cv, bg=PAPER, width=self.px(inner_w), height=self.px(inner_h))
         frame.pack_propagate(False)
-        window = cv.create_window(self.px(PANEL_X + 3 + 28), self.px(PANEL_Y + 3 + 34), anchor='nw', window=frame)
+        window = cv.create_window(self.px(PANEL_X + 3 + 28), self.px(PANEL_Y + 3 + 34), anchor='nw', window=frame,
+                                  state='hidden')
         self.panel_items = [shell, window]
         # Scrolling body and the footer.
         foot = tk.Frame(frame, bg=PAPER)
@@ -1023,13 +1213,16 @@ class Inkfall:
         bar.widget.pack(side='right', fill='y')
         self.body_canvas = body_cv
         getattr(self, f'page_{key}')(body, foot)
-        # Entrance: from the right, with a small overshoot.
+        # Entrance: the frame (one picture) slides in from the right with a small overshoot; the
+        # controls, slow to move in Tk, appear when it lands.
         def update(v):
-            dx = 70 * (1 - v)
-            cv.coords(shell, self.px(PANEL_X + dx), self.px(PANEL_Y - 24))
-            cv.coords(window, self.px(PANEL_X + 3 + 28 + dx), self.px(PANEL_Y + 3 + 34))
+            cv.coords(shell, self.px(PANEL_X + 60 * (1 - v)), self.px(PANEL_Y - 24))
+
+        def landed():
+            if window in self.panel_items:
+                cv.itemconfigure(window, state='normal')
         update(0.0)
-        self.anim.add(500, update, ease_out_back)
+        self.anim.add(320, update, ease_out_back, done=landed)
 
     def wheel(self, event):
         if self.page and hasattr(self, 'body_canvas'):
@@ -1055,7 +1248,7 @@ class Inkfall:
         inner = tk.Frame(line, bg=PAPER, height=self.px(46))
         inner.pack(fill='x')
         label = tk.Label(inner, text=t(title), bg=PAPER, fg=SD, font=self.font(15.5, 'normal', 'Cabin SemiBold'),
-                         anchor='w', width=0)
+                         anchor='w', width=0, justify='left', wraplength=self.px(200))
         label.pack(side='left', fill='y', pady=self.px(8))
         control = tk.Frame(inner, bg=PAPER)
         control.pack(side='right', fill='x' if wide else None, expand=bool(wide), pady=self.px(6))
@@ -1074,10 +1267,7 @@ class Inkfall:
         fields = tk.Frame(line, bg=PAPER)
         fields.pack(fill='x')
         var = tk.StringVar(value=self.app.get(key, ''))
-        entry = tk.Entry(fields, textvariable=var, font=self.font(14, 'normal', 'Cabin SemiBold'), bg='#ffffff', fg=TX,
-                         relief='flat', highlightthickness=self.px(2.5), highlightbackground=INK, highlightcolor=BL2,
-                         insertbackground=INK)
-        entry.pack(side='left', fill='x', expand=True, ipady=self.px(7))
+        RoundEntry(self, fields, var).widget.pack(side='left', fill='x', expand=True)
 
         def changed(*_):
             self.app[key] = var.get().strip()
@@ -1099,18 +1289,10 @@ class Inkfall:
     def toggle_row(self, parent, title, value, on_change, hint=None):
         self.row(parent, title, lambda c: Toggle(self, c, value, on_change).widget.pack(side='right'), hint)
 
-    def choice(self, parent, options, value, on_change, width=22):
-        """A select: the chosen text on a white field with a menu of the options."""
-        tk = self.tk
-        names = [t(text) for _key, text in options]
-        var = tk.StringVar(value=next((t(text) for key, text in options if key == value), names[0]))
-        menu = tk.OptionMenu(parent, var, *names, command=lambda name: on_change(options[names.index(name)][0]))
-        menu.configure(font=self.font(14.5, 'normal', 'Cabin SemiBold'), bg='#ffffff', fg=TX, activebackground=PAPER2,
-                       activeforeground=TX, relief='flat', highlightthickness=self.px(2.5), highlightbackground=INK,
-                       bd=0, width=width, anchor='w', indicatoron=True, padx=self.px(8), pady=self.px(4))
-        menu['menu'].configure(font=self.font(14, 'normal', 'Cabin'), bg='#ffffff', fg=TX, activebackground=BL,
-                               activeforeground=PAPER, bd=0)
-        return menu
+    def choice(self, parent, options, value, on_change, width=22, translate=True):
+        """A select (width in characters, about 11 px each)."""
+        names = [t(text) if translate else text for _key, text in options]
+        return Select(self, parent, options, names, value, on_change, 24 + width * 11).widget
 
     def buttons(self, parent, entries):
         holder = self.tk.Frame(parent, bg=PAPER)
@@ -1187,20 +1369,19 @@ class Inkfall:
             self.sec(body, group)
             if group == 'BUTTONS':
                 self.hint(body, 'Click a key, then press the new one (Esc cancels).')
-                head = tk.Frame(body, bg=PAPER)
+                head = tk.Frame(body, bg=PAPER, height=self.px(26))
                 head.pack(fill='x', pady=(self.px(4), 0))
-                for text, width in (('COMMAND', 168), ('CONTROLLER', 150), ('KEYBOARD', 120)):
-                    tk.Label(head, text=t(text), bg=PAPER, fg=MU, font=self.font(12, 'bold'), anchor='w',
-                             width=0).pack(side='left', ipadx=0, padx=(0, self.px(max(0, width - 70))))
+                head.pack_propagate(False)
+                for text, x in (('COMMAND', 0), ('CONTROLLER', 168), ('KEYBOARD', 318)):  # the rows' columns
+                    tk.Label(head, text=t(text), bg=PAPER, fg=MU, font=self.font(12, 'bold')).place(
+                        x=self.px(x), rely=.5, anchor='w')
             for button, default_key, pad in members:
                 line = tk.Frame(body, bg=PAPER, height=self.px(36))
                 line.pack(fill='x')
                 line.pack_propagate(False)
-                name = BUTTON_NAMES[button]
-                tk.Label(line, text=name[1] if LANG == 'it' and len(name) > 1 else name[0], bg=PAPER, fg=SD,
+                tk.Label(line, text=t(BUTTON_NAMES[button]), bg=PAPER, fg=SD,
                          font=self.font(13.5, 'normal', 'Cabin SemiBold'), width=0, anchor='w').place(x=0, rely=.5, anchor='w')
-                pad_label = pads.get(pad, pad) if pad else 'Trigger'
-                pad_label = t(PAD_NAMES.get(pad_label, pad_label)) if LANG == 'it' else pad_label
+                pad_label = t(pads.get(pad, pad) if pad else 'Trigger')
                 tk.Label(line, text=pad_label, bg=PAPER, fg=SD,
                          font=self.font(13.5, 'normal', 'Cabin SemiBold')).place(x=self.px(168), rely=.5, anchor='w')
                 chip = ImageButton(self, line, keys.get(button) or default_key, None, 'chip')
@@ -1210,9 +1391,9 @@ class Inkfall:
 
     def page_advanced(self, body, foot):
         self.sec(body, 'LAUNCHER', first=True)
-        self.row(body, 'Launcher language', lambda c: self.choice(c, [('', 'System'), ('it', 'Italian'), ('en', 'English')],
-                                                                 self.app.get('ui_language', ''),
-                                                                 lambda v: self.set_app('ui_language', v), 14).pack(side='right'))
+        self.row(body, 'Launcher language', lambda c: self.choice(c, [('', t('System'))] + LANGUAGES,
+                                                                 self.app.get('ui_language', ''), self.set_language,
+                                                                 14, translate=False).pack(side='right'))
         self.sec(body, 'IN GAME')
         self.toggle_row(body, 'Performance overlay', self.ini.get('show_fps', '1') == '1',
                         lambda v: self.set_ini('show_fps', '1' if v else '0'), 'Shows the FPS while you play.')
@@ -1270,6 +1451,19 @@ class Inkfall:
         self.ini[key] = value
         self.save()
         self.refresh_status()
+
+    def set_language(self, code):
+        """Switches the launcher's language at once ("" follows Windows)."""
+        global LANG
+        self.app['ui_language'] = code
+        self.save()
+        LANG = pick_language(code, self.logic.windows_language())
+        self.render_nav()
+        self.photos['ver'] = ImageTk.PhotoImage(self.paint.label(t('VERSION {}').format(self.logic.VERSION), 12, PAPER,
+                                                                spacing=.3, shadow=INK))
+        self.cv.itemconfigure(self.ver, image=self.photos['ver'])
+        self.refresh_status()
+        self.open_page(self.page)
 
     def apply(self):
         self.save()
@@ -1508,6 +1702,8 @@ class Inkfall:
         if self.capture:
             self.capture[1].set_text(self.capture[2])
             self.capture = None
+        if self.page:
+            self.open_page(None)
         # Gravity shift: the interface tilts away upward, 45 ms apart, then the gauge.
         items = self.gravity_items()
         self.lifted = []
@@ -1616,6 +1812,16 @@ class Inkfall:
 
 def run(logic, tk, filedialog):
     """Opens the launcher window (Tk is created here)."""
+    try:  # its own taskbar button and icon, not Python's
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('LucaPazienza.GravityRush.Inkfall')
+    except (AttributeError, OSError):
+        pass
     root = tk.Tk()
+    try:
+        icon = ImageTk.PhotoImage(Image.open(HERE / 'gravityrush.png'))
+        root.iconphoto(True, icon)
+        root._inkfall_icon = icon
+    except (OSError, tk.TclError):
+        pass
     Inkfall(root, tk, filedialog, logic)
     root.mainloop()

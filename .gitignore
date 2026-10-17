@@ -30,3 +30,5 @@ logs/
 .vscode/
 # Launcher background: the player's own picture (it shows the game's characters)
 launcher/assets/
+# The launcher built in the port folder (scripts/gr_build_launcher.sh)
+/GravityRush.exe
