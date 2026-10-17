@@ -189,7 +189,9 @@ def main():
             names = selected_patches(profile[1], profile[2], env.get('GOW3_PATCHES', ''), env.get('GOW3_PATCHES_ONLY') == '1')
             # gravityrush.ini decides the resolution and frame rate patches (in-game menu, launcher).
             if not profile_ue4:  # God of War III's resolution / frame rate patch names
-                names = graphics_options.patch_names(names, graphics)
+                import xml.etree.ElementTree as ET
+                known = {m.get('Name') for m in ET.parse(profile[1]).getroot().iter('Metadata')}
+                names = graphics_options.patch_names(names, graphics, graphics_options.TEXTURE_FIX in known)
             env['GOW3_PATCHES'] = ';'.join(names)
             env['GOW3_PATCHES_ONLY'] = '1'
             dmem, vblank = patch_requirements(profile[1], names, profile[2])

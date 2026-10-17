@@ -459,10 +459,18 @@ void PerformanceTab() {
         static const char* const resolution_labels[] = {
             "Native (1080p)", "480p", "720p", "1440p", "1800p", "4K",
             "720p native output", "1440p native output", "1800p native output", "4K native output"};
-        ChoiceRow("Render resolution", s.render_resolution, resolution_labels, nullptr,
-                  int(G::Resolutions.size()),
-                  IsGow3() ? "The resolution the game draws at. Higher is sharper and slower."
-                           : "The resolution the 3D scene is drawn at, shown at 1080p: 4K is the sharpest.");
+        if (Common::ElfInfo::Instance().GameSerial().starts_with("CUSA01113")) {
+            // Gravity Rush Remastered: the resolution patches of patches/CUSA01113.xml.
+            static const char* const gr_labels[] = {"Native (1080p)", "720p", "1440p", "1800p", "4K"};
+            static const int gr_values[] = {0, 2, 3, 4, 5};
+            ChoiceRow("Render resolution", s.render_resolution, gr_labels, gr_values, 5,
+                      "The size the game draws at. Above the screen's it works as anti-aliasing.");
+        } else {
+            ChoiceRow("Render resolution", s.render_resolution, resolution_labels, nullptr,
+                      int(G::Resolutions.size()),
+                      IsGow3() ? "The resolution the game draws at. Higher is sharper and slower."
+                               : "The resolution the 3D scene is drawn at, shown at 1080p: 4K is the sharpest.");
+        }
         // The highest frame rate the game runs at (Unreal Engine 4: run.py's override pak).
         static const char* const engine_labels[] = {"60 (original)", "120", "240"};
         ChoiceRow("Engine frame rate", s.engine_fps, engine_labels, G::EngineFps.data(),

@@ -102,6 +102,22 @@ _ROWS = [
     ('Vertical sync', 'Sincronia verticale', 'Synchro verticale', 'Vertikale Synchronisation', 'Sincronización vertical'),
     ('FPS limit', 'Limite FPS', 'Limite d\'IPS', 'FPS-Limit', 'Límite de FPS'),
     ('Unlimited', 'Libero', 'Illimité', 'Unbegrenzt', 'Sin límite'),
+    ('IMAGE', 'IMMAGINE', 'IMAGE', 'BILD', 'IMAGEN'),
+    ('Render resolution', 'Risoluzione di rendering', 'Résolution de rendu', 'Render-Auflösung',
+     'Resolución de renderizado'),
+    ('Native (1080p)', 'Nativa (1080p)', 'Native (1080p)', 'Nativ (1080p)', 'Nativa (1080p)'),
+    ('720p (faster)', '720p (più veloce)', '720p (plus rapide)', '720p (schneller)', '720p (más rápido)'),
+    ('4K (sharpest)', '4K (massima nitidezza)', '4K (le plus net)', '4K (am schärfsten)', '4K (máxima nitidez)'),
+    ('The size the game draws at. Above your screen it works as anti-aliasing: 4K on a 1440p screen is '
+     'the cleanest image.',
+     'La dimensione a cui il gioco disegna. Sopra quella dello schermo fa da antialiasing: il 4K su uno '
+     'schermo 1440p dà l’immagine più pulita.',
+     'La taille à laquelle le jeu dessine. Au-delà de votre écran, elle sert d’anticrénelage : la 4K sur un '
+     'écran 1440p donne l’image la plus propre.',
+     'Die Größe, in der das Spiel zeichnet. Über der Bildschirmauflösung wirkt sie als Kantenglättung: 4K auf '
+     'einem 1440p-Bildschirm ergibt das sauberste Bild.',
+     'El tamaño al que dibuja el juego. Por encima de tu pantalla actúa como antialiasing: 4K en una '
+     'pantalla 1440p da la imagen más limpia.'),
     ('The game is made for 60 FPS; other values can change physics and animations.',
      'Il gioco è pensato per 60 FPS: valori diversi possono alterare fisica e animazioni.',
      'Le jeu est prévu pour 60 IPS : d\'autres valeurs peuvent modifier la physique et les animations.',
@@ -247,6 +263,9 @@ GAME_LANGUAGES = [('5', 'Italian'), ('1', 'English'), ('2', 'French'), ('4', 'Ge
                   ('0', 'Japanese')]
 WINDOW_MODES = [('windowed', 'Windowed'), ('fullscreen', 'Fullscreen'), ('borderless', 'Borderless')]
 FPS_CHOICES = [('30', '30'), ('60', '60'), ('120', '120'), ('0', 'Unlimited')]
+# Render resolution patches (patches/CUSA01113.xml, scripts/gr_resolution_patch.py).
+RESOLUTION_CHOICES = [('native', 'Native (1080p)'), ('720p', '720p (faster)'), ('1440p', '1440p'),
+                      ('1800p', '1800p'), ('4K', '4K (sharpest)')]
 
 
 # ---------------------------------------------------------------------------------------------
@@ -1347,7 +1366,17 @@ class LauncherWindow:
         self.row(body, 'FPS limit', lambda c: Segments(self, c, FPS_CHOICES, self.ini.get('fps_limit', '0'),
                                                       lambda v: self.set_ini('fps_limit', v)).widget.pack(side='right'),
                  'The game is made for 60 FPS; other values can change physics and animations.')
-        self.footer(foot, [('Reset', lambda: self.reset({'display_mode': 'borderless', 'vsync': '1', 'fps_limit': '0'}), False),
+        self.sec(body, 'IMAGE')
+        current = self.ini.get('render_resolution', 'native')
+        if current not in dict(RESOLUTION_CHOICES):
+            current = 'native'
+        self.row(body, 'Render resolution',
+                 lambda c: self.choice(c, RESOLUTION_CHOICES, current,
+                                       lambda v: self.set_ini('render_resolution', v), 16).pack(side='right'),
+                 'The size the game draws at. Above your screen it works as anti-aliasing: 4K on a 1440p screen is '
+                 'the cleanest image.')
+        self.footer(foot, [('Reset', lambda: self.reset({'display_mode': 'borderless', 'vsync': '1', 'fps_limit': '0',
+                                                         'render_resolution': 'native'}), False),
                            ('Apply', self.apply, True)])
 
     def page_controls(self, body, foot):

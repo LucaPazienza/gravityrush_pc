@@ -69,7 +69,10 @@ PATCHES_DIR=Path(__file__).resolve().parent.parent/'patches'
 # Built-in patch file per game, the app version its addresses are for and, when known, the
 # sha256 of the only eboot.bin they were checked against (another build of the same version has
 # its code elsewhere: byte writes there corrupt it).
-GAMES=[]
+GAMES=[
+    (('CUSA01113',),PATCHES_DIR/'CUSA01113.xml','01.00',
+     '7c0216e8ff7254d03141e98c2df2b69f4f2259d08f2fe2754c33c5a3f137033a'),  # Gravity Rush Remastered (EU)
+]
 DMEM_RETAIL_MB=5056  # runtime_memory.c POOL_SIZE default
 
 

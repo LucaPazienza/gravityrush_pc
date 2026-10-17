@@ -223,6 +223,8 @@ int VideoOutDriver::RegisterBuffers(VideoOutPort* port, s32 startIndex, void* co
              startIndex, bufferNum, GetPixelFormatString(attribute->pixel_format),
              attribute->aspect_ratio, static_cast<u32>(attribute->tiling_mode), attribute->width,
              attribute->height, attribute->pitch_in_pixel, attribute->option);
+    std::printf("VideoOut: %d display buffers of %ux%u\n", bufferNum, attribute->width,
+                attribute->height);
 
     auto& group = port->groups[group_index];
     std::memcpy(&group.attrib, attribute, sizeof(BufferAttribute));
