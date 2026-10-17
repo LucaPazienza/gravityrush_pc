@@ -45,7 +45,7 @@ rm -rf -- out/stage
 mkdir -p "$dest/bin" "$dest/launcher"
 cp -r "out/pyi-dist/GravityRush/." "$dest/"
 llvm-strip -o "$dest/Play Gravity Rush.exe" out/gravityrush-play.exe
-cp launcher/gravityrush.ico launcher/gravityrush.png "$dest/launcher/"
+cp launcher/gravityrush.ico launcher/gravityrush.png launcher/gravityrush.bmp "$dest/launcher/"
 # The executables without debug information (out/ keeps the symbols for crash reports).
 for exe in gravityrush-runtime.exe gravityrush-gpu-check.exe; do
     llvm-strip --strip-debug -o "$dest/bin/$exe" "out/$exe"

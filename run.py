@@ -167,7 +167,9 @@ def main():
         patched = bool(profile) and ((game_app_version(game) == profile[2] and eboot_matches(game, profile))
                                      or bool(env.get('GOW3_FORCE_PATCHES')))
         # The window shows the port's icon, else the game's (BMP: the format SDL loads without
-        # extra libraries).
+        # extra libraries). launcher/gravityrush.bmp is ready-made, so no Pillow is needed for it.
+        if (PORT / 'launcher' / 'gravityrush.bmp').is_file():
+            env.setdefault('GOW3_WINDOW_ICON', str(PORT / 'launcher' / 'gravityrush.bmp'))
         try:
             from PIL import Image
             source = PORT / 'launcher' / 'gravityrush.png'

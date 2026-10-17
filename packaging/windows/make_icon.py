@@ -32,6 +32,8 @@ def main():
     full = fit_square(Image.open(SOURCE).convert('RGBA'))
     frames = [full.resize((size, size), Image.LANCZOS) for size in SIZES]
     frames[-1].save(ROOT / 'launcher' / 'gravityrush.png')
+    # The game window's icon: a BMP SDL loads by itself (run.py then needs no Pillow).
+    full.resize((64, 64), Image.LANCZOS).save(ROOT / 'launcher' / 'gravityrush.bmp')
     frames[-1].save(ROOT / 'launcher' / 'gravityrush.ico', sizes=[(s, s) for s in SIZES],
                     append_images=frames[:-1], bitmap_format='png')
     print('launcher/gravityrush.ico, launcher/gravityrush.png')
