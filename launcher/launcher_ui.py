@@ -181,6 +181,12 @@ _ROWS = [
     ('Aiming by moving a DualSense or DualShock 4.', 'Per mirare muovendo un DualSense o un DualShock 4.',
      'Pour viser en bougeant une DualSense ou une DualShock 4.', 'Zum Zielen durch Bewegen eines DualSense oder DualShock 4.',
      'Para apuntar moviendo un DualSense o un DualShock 4.'),
+    ('Vita mode', 'Modalità Vita', 'Mode Vita', 'Vita-Modus', 'Modo Vita'),
+    ('Aiming by moving the console itself (handhelds such as the ROG Ally), when the controller has no gyroscope.',
+     'Per mirare muovendo la console stessa (portatili come la ROG Ally), quando il controller non ha il giroscopio.',
+     'Pour viser en bougeant la console elle-même (portables comme la ROG Ally), quand la manette n\'a pas de gyroscope.',
+     'Zum Zielen durch Bewegen der Konsole selbst (Handhelds wie der ROG Ally), wenn der Controller kein Gyroskop hat.',
+     'Para apuntar moviendo la consola misma (portátiles como la ROG Ally), cuando el mando no tiene giroscopio.'),
     ('Click a key, then press the new one (Esc cancels).', 'Clicca un tasto, poi premi quello nuovo (Esc annulla).',
      'Cliquez sur une touche, puis appuyez sur la nouvelle (Échap annule).',
      'Klicke auf eine Taste und drücke dann die neue (Esc bricht ab).',
@@ -1842,6 +1848,9 @@ class LauncherWindow:
             Slider(self, control, 0.5, 3.0, 0.1, value, changed).widget.pack(side='left')
             shown.pack(side='left')
         self.row(body, 'Sensitivity', make_slider, 'Aiming by moving a DualSense or DualShock 4.')
+        self.toggle_row(body, 'Vita mode', self.app.get('vita_mode', True), lambda v: self.set_app('vita_mode', v),
+                        'Aiming by moving the console itself (handhelds such as the ROG Ally), when the controller has '
+                        'no gyroscope.')
         keys = self.app.get('controls', {}).get('key', {}) if isinstance(self.app.get('controls'), dict) else {}
         pads = logic.PAD_STYLES.get(self.app.get('pad_style', 'playstation'), logic.PAD_STYLES['playstation'])
         for group, members in (('BUTTONS', logic.CONTROLS[:12]), ('D-PAD', logic.CONTROLS[12:])):
@@ -2016,6 +2025,7 @@ class LauncherWindow:
     def reset_controls(self):
         self.app['controls'] = {}
         self.app['gyro_sens'] = 1.4
+        self.app['vita_mode'] = True
         self.save()
         self.open_page('controls')
         self.toast(t('Defaults restored'))

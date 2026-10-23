@@ -182,9 +182,11 @@ static void key_axis(uint8_t *axis, bool negative, bool positive) {
  * gr_motion_filter.h: the gyro bias is learned while the controller lies still, and with the
  * game's tilt correction (Gravity Rush asks for it) the accelerometer keeps pitch and roll from
  * drifting; before, the raw integration made the view turn by itself (the apple scene).
- * Sensors are switched on again whenever the gamepad changes (hot-plugging). */
+ * Sensors are switched on again whenever the gamepad changes (hot-plugging). A gamepad without
+ * a gyro uses the PC's own sensors when it has them (handhelds: gr_host_motion.h). */
 #include "gr_motion_filter.h"
-static struct { SDL_Gamepad *pad; int gyro, accel, tilt; MotionFilter filter; uint64_t last_us; } motion;
+#include "gr_host_motion.h"
+static struct { SDL_Gamepad *pad; int gyro, accel, tilt, host; MotionFilter filter; uint64_t last_us; } motion;
 static void motion_reset(void) { motion_filter_reset(&motion.filter); motion.last_us=0; }
 /* The orientation the game sees: the filtered one with its rotation angle scaled by the gyro
  * sensitivity (scaling the integration instead would fight the tilt correction). */
@@ -203,15 +205,19 @@ static void sample_motion(SDL_Gamepad *g, PadData *d) {
         motion_filter_init(&motion.filter);
         motion.last_us=0;
         printf("Runtime: gamepad motion sensors: gyro %s, accelerometer %s\n",motion.gyro ? "on" : "none",motion.accel ? "on" : "none");
+        float probe[3];
+        motion.host=!motion.gyro && host_motion_read(probe,NULL);
+        if (motion.host) printf("Runtime: system motion sensors instead: %s\n",host_motion_describe());
     }
     float v[3], a[3];
-    const int have_accel=motion.accel && SDL_GetGamepadSensorData(g,SDL_SENSOR_ACCEL,a,3);
+    const int host=motion.host ? host_motion_read(v,a) : 0;
+    const int have_accel=host ? host==3 : motion.accel && SDL_GetGamepadSensorData(g,SDL_SENSOR_ACCEL,a,3);
     if (have_accel)
         for (int i=0;i<3;++i) { a[i]*=0.098f; d->acceleration[i]=a[i]; }
     /* GOW3_GYRO_SENS: gyro sensitivity (default 1.4: the player found 1.0 a little slow). */
     static float sens=-1.0f;
     if (sens<0.0f) { const char *e=getenv("GOW3_GYRO_SENS"); sens=e && atof(e)>0.0 ? (float)atof(e) : 1.4f; }
-    if (motion.gyro && SDL_GetGamepadSensorData(g,SDL_SENSOR_GYRO,v,3)) {
+    if (host || (motion.gyro && SDL_GetGamepadSensorData(g,SDL_SENSOR_GYRO,v,3))) {
         uint64_t now=d->timestamp;
         float dt=motion.last_us && now>motion.last_us ? (float)(now-motion.last_us)/1e6f : 0.0f;
         motion.last_us=now;
