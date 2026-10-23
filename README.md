@@ -78,6 +78,7 @@ Not done yet / known gaps:
 - Your own legally acquired copy of Gravity Rush Remastered (PS4), as an unpacked game folder
   (eboot.bin, sce_module, sce_sys) that you prepare with your own tools. Tested with the European
   release CUSA01113, version 01.00; the resolution and shadow patches only apply to that version.
+  The US release CUSA01130 01.00 ships the same eboot.bin and gets the same patches.
 
 ## Playing
 
