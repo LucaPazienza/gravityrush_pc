@@ -46,6 +46,8 @@ What works today:
 - **Input:** controllers through SDL3 (Xbox, DualSense and others), keyboard and mouse.
   The touchpad works with real touch ids; the mouse acts as a finger (hold and drag for swipes).
   The **DualSense gyro** steers the gravity camera like on the PS4 (adjustable sensitivity).
+  On handhelds whose controller has no gyro (ROG Xbox Ally), **Vita mode** uses the console's own
+  gyroscope instead (Windows sensors; a switch on the Controls page).
 - **Launcher:** a dark window with a sidebar menu and pages in a card (game, video, controls,
   advanced, log), in English, Italian, French, German and Spanish. `Gravity Rush.exe` starts the game directly with the saved settings.
   The launcher finds new releases on GitHub by itself and installs them when the player agrees

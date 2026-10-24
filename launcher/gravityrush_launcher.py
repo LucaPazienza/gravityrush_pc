@@ -157,6 +157,7 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': os.environ.get('GOW3_GAME_DIR', '
                 'background_warmup': True, 'parallel_warmup': True, 'pipeline_binary_cache': True, 'perf_diag': False, 'frame_capture_key': False, 'frame_stats': False, 'gpu_profile': False,
                 'vk_validation': False, 'close_on_play': False, 'f12_quits': False,
                 'check_updates': False, 'game_patches': {}, 'controls': {}, 'pad_style': 'playstation',
+                'vita_mode': True,
                 'last_pkg': '', 'update_check': True,
                 # Play time in seconds, and the save backups made before every start.
                 'save_backup': True, 'save_backup_keep': 10}
@@ -422,6 +423,8 @@ def game_environment(s):
             env[name] = value
     if s.get('gyro_sens'):
         env['GOW3_GYRO_SENS'] = str(s['gyro_sens'])
+    # Vita mode: the PC's own gyro (handhelds) when the controller has none (src/runtime_host_motion.c).
+    env['GOW3_HOST_MOTION'] = '1' if s.get('vita_mode', True) else '0'
     env.setdefault('GOW3_FPS_LOG', '1')  # FPS and worst frame every 5 s in the log (diagnostics)
     env.setdefault('GOW3_FRAME_STATS', '1')  # draws, compiles and stalls every 5 s (diagnostics)
     # F12 in the game (or creating the trigger file) saves the next frames here, for bug reports
