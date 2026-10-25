@@ -173,6 +173,11 @@ static void load_button_maps(void) {
     if (pad || keys) printf("Runtime: pad map: %d gamepad and %d keyboard buttons remapped\n",pad,keys);
 }
 
+/* 1 when the key presses a PS4 button (key_map). */
+static int key_bound(int scancode) {
+    for (size_t i=0;i<key_map.count;++i) if (key_map.entries[i].source==scancode) return 1;
+    return 0;
+}
 static void key_axis(uint8_t *axis, bool negative, bool positive) {
     if (negative || positive) *axis=(uint8_t)(128-(negative ? 128 : 0)+(positive ? 127 : 0));
 }
@@ -408,8 +413,11 @@ static void sample_host(PadData *d) {
     if (d->buttons & BTN_R2) d->r2=255;
     key_axis(&d->left_x,k[SDL_SCANCODE_A],k[SDL_SCANCODE_D]);
     key_axis(&d->left_y,k[SDL_SCANCODE_W],k[SDL_SCANCODE_S]);
-    key_axis(&d->right_x,k[SDL_SCANCODE_LEFT],k[SDL_SCANCODE_RIGHT]);
-    key_axis(&d->right_y,k[SDL_SCANCODE_UP],k[SDL_SCANCODE_DOWN]);
+    /* Arrow keys are the right stick unless the player gave them to a button (the d-pad, often). */
+    key_axis(&d->right_x,k[SDL_SCANCODE_LEFT] && !key_bound(SDL_SCANCODE_LEFT),
+             k[SDL_SCANCODE_RIGHT] && !key_bound(SDL_SCANCODE_RIGHT));
+    key_axis(&d->right_y,k[SDL_SCANCODE_UP] && !key_bound(SDL_SCANCODE_UP),
+             k[SDL_SCANCODE_DOWN] && !key_bound(SDL_SCANCODE_DOWN));
 }
 
 /* GOW3_PAD_FILE=<file>: scripted input for automated runs. The file holds whitespace-separated
