@@ -44,7 +44,13 @@ What works today:
   Native/DLAA, Quality, Balanced and Performance modes that render below the screen and enlarge the
   image to it, the HUD kept as the game draws it. FSR 1.0 is available as a simple upscaler.
 - **Input:** controllers through SDL3 (Xbox, DualSense and others), keyboard and mouse.
-  The touchpad works with real touch ids; the mouse acts as a finger (hold and drag for swipes).
+  The touchpad works with real touch ids.
+  **Mouse look:** the mouse turns the camera and aims the gravity shift (the cursor is captured;
+  hold Left Alt or press F8 to free it, and the left button is then a touchpad finger). Default
+  buttons: left Square (kick), right R1 (gravity shift), middle L1, side buttons L2 / R2
+  (`GOW3_MOUSE_MAP`, `GOW3_MOUSE_SENS`, `GOW3_MOUSE_INVERT_Y`; sensitivity in the launcher).
+  **Keyboard and mouse prompts:** the game's hints show your keys and mouse buttons instead of
+  PS4 buttons (automatic without a controller; `GOW3_PROMPTS=auto|keyboard|controller`).
   The **DualSense gyro** steers the gravity camera like on the PS4 (adjustable sensitivity).
 - **Launcher:** a dark window with a sidebar menu and pages in a card (game, video, controls,
   advanced, log), in English, Italian, French, German and Spanish. `Gravity Rush.exe` starts the game directly with the saved settings.

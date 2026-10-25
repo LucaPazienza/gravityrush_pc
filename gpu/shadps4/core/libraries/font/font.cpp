@@ -14,6 +14,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <limits>
 #include <memory>
 #include <mutex>
@@ -26,6 +27,7 @@
 #include <unordered_set>
 #include <vector>
 #include <fmt/format.h>
+#include <SDL3/SDL.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_TRUETYPE_TABLES_H
@@ -3621,10 +3623,73 @@ s32 PS4_SYSV_ABI sceFontOpenFontInstance(OrbisFontHandle fontHandle, OrbisFontHa
     return ORBIS_OK;
 }
 
+// gow3: keyboard and mouse button prompts. Gravity Rush draws its button prompts with letters of
+// its font Gravity_Gaiji.ttf; scripts/gr_prompt_font.py writes a copy with keycaps and mouse
+// buttons (GOW3_PROMPT_FONT), handed to the game in its place. GOW3_PROMPTS: keyboard, controller
+// or auto (default: keyboard when no gamepad is connected when the game loads its fonts).
+static bool IsGaijiFont(const void* data, u32 size) {
+    static constexpr char name8[] = "Gravity_Gaiji";
+    const auto* bytes = static_cast<const u8*>(data);
+    const size_t n = sizeof(name8) - 1;
+    for (size_t i = 0; i + 2 * n <= size; ++i) {
+        if (bytes[i] != 'G' && !(bytes[i] == 0 && bytes[i + 1] == 'G')) {
+            continue;
+        }
+        if (std::memcmp(bytes + i, name8, n) == 0) {
+            return true;
+        }
+        bool wide = true; // UTF-16BE (Windows name records)
+        for (size_t k = 0; k < n && wide; ++k) {
+            wide = bytes[i + 2 * k] == 0 && bytes[i + 2 * k + 1] == u8(name8[k]);
+        }
+        if (wide) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static void SwapPromptFont(const void*& data, u32& size) {
+    static std::mutex mutex;
+    static std::vector<u8> replacement; // kept for the whole run: the font may point into it
+    static int state = -1;              // -1 unknown, 0 not used, 1 loaded
+    if (!data || size == 0 || size > (16u << 20) || !IsGaijiFont(data, size)) {
+        return;
+    }
+    std::scoped_lock lock{mutex};
+    if (state < 0) {
+        state = 0;
+        const char* path = std::getenv("GOW3_PROMPT_FONT");
+        const char* mode_env = std::getenv("GOW3_PROMPTS");
+        const std::string mode = mode_env && *mode_env ? mode_env : "auto";
+        bool keyboard = mode == "keyboard";
+        if (mode == "auto") {
+            int count = 0;
+            if (SDL_InitSubSystem(SDL_INIT_GAMEPAD)) {
+                SDL_free(SDL_GetGamepads(&count));
+            }
+            keyboard = count == 0;
+        }
+        if (path && *path && keyboard) {
+            std::ifstream file(std::filesystem::path(path), std::ios::binary);
+            replacement.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+            state = replacement.size() > 12 ? 1 : 0;
+        }
+        std::printf("Prompts: %s button prompts (GOW3_PROMPTS=%s)%s\n",
+                    state ? "keyboard and mouse" : "controller", mode.c_str(),
+                    keyboard && !state ? ", no keyboard prompt font" : "");
+    }
+    if (state == 1) {
+        data = replacement.data();
+        size = u32(replacement.size());
+    }
+}
+
 s32 PS4_SYSV_ABI sceFontOpenFontMemory(OrbisFontLib library, const void* fontAddress, u32 fontSize,
                                        const OrbisFontOpenParams* open_params,
                                        OrbisFontHandle* pFontHandle) {
     LOG_INFO(Lib_Font, "called");
+    SwapPromptFont(fontAddress, fontSize);
 
     LOG_DEBUG(Lib_Font, "{}",
               formatParams({

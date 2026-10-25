@@ -46,6 +46,8 @@ private:
     int text_state{};
     std::string text, text_prompt, base_title;
     void UpdateTextTitle();
+    bool mouse_look_on = true; ///< F8 toggles (window thread)
+    void UpdateMouseCapture();
     SDL_Window* window{};
     WindowSystemInfo window_info{};
 };

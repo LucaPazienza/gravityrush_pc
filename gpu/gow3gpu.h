@@ -38,6 +38,11 @@ int gow3gpu_choice_poll(void);
 void gow3gpu_choice_set_input(uint32_t (*buttons)(void));
 /* 1 while the in-game settings menu is open: the game's pad input is held neutral. */
 int gow3gpu_overlay_captures_input(void);
+/* Mouse look: while the cursor is captured (game window focused, settings menu and text entry
+ * closed, Left Alt not held, F8 not toggled off), relative mouse motion is collected by the window
+ * thread. take returns the motion since the last call in pixels (0 when nothing moved) and whether
+ * the cursor is captured right now (mouse buttons then press PS4 buttons instead of the touchpad). */
+int gow3gpu_mouse_take(float *dx, float *dy);
 /* Number of symbols registered by the vendored libraries (diagnostics). */
 unsigned gow3gpu_symbol_count(void);
 #ifdef __cplusplus
