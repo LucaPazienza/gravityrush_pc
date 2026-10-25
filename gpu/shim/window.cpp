@@ -329,6 +329,7 @@ void WindowSDL::UpdateMouseCapture() {
         mouse_dx = mouse_dy = 0.0f; // no jump from motion made while the cursor was free
     }
     mouse_captured.store(want, std::memory_order_relaxed);
+    std::printf("Window: mouse %s\n", want ? "captured (mouse look)" : "released");
     if (!want) {
         int w = 0, h = 0;
         SDL_GetWindowSize(window, &w, &h);

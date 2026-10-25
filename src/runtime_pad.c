@@ -249,19 +249,47 @@ static int sample_mouse(PadData *d) {
     float dx=0.0f, dy=0.0f;
     const int captured=gow3gpu_mouse_take(&dx,&dy);
     const uint64_t now=d->timestamp;
-    float dt=mouse.last_us && now>mouse.last_us ? (float)(now-mouse.last_us)/1e6f : 1.0f/60.0f;
-    mouse.last_us=now;
-    if (dt>0.1f) dt=0.1f; /* a stall must not turn a small motion into nothing */
-    if (dt<0.004f) dt=0.004f;
-    if (!captured) { mouse.vx=mouse.vy=0.0f; return 0; }
-    /* Light smoothing over about two game frames: mouse reports and frames do not line up. */
-    mouse.vx=0.5f*mouse.vx+0.5f*(dx/dt);
-    mouse.vy=0.5f*mouse.vy+0.5f*(dy/dt);
-    if (dx==0.0f && fabsf(mouse.vx)<30.0f) mouse.vx=0.0f;
-    if (dy==0.0f && fabsf(mouse.vy)<30.0f) mouse.vy=0.0f;
+    /* Speed = motion over the last MOUSE_WINDOW_US, whatever the read rate: the game polls the pad
+     * far more often than it draws frames, so a per-read speed was back at zero long before the
+     * camera looked at the stick. */
+    enum { MOUSE_WINDOW_US=33000, MOUSE_HISTORY=256 };
+    typedef struct { uint64_t us; float dx, dy; } MouseMotion;
+    static MouseMotion history[MOUSE_HISTORY];
+    static unsigned head, count;
+    static uint64_t rate_start; static unsigned rate_reads;
+    if (!rate_start) rate_start=now;
+    if (++rate_reads, now-rate_start>=1000000) { /* pad reads per second, logged a few times */
+        static int rate_logs;
+        if (rate_logs++<3) printf("Runtime: pad read %u times per second\n",rate_reads);
+        rate_start=now; rate_reads=0;
+    }
+    if (!captured) { count=0; mouse.vx=mouse.vy=0.0f; return 0; }
+    if (dx!=0.0f || dy!=0.0f) {
+        history[head]=(MouseMotion){now,dx,dy};
+        head=(head+1)%MOUSE_HISTORY;
+        if (count<MOUSE_HISTORY) ++count;
+    }
+    float sx=0.0f, sy=0.0f;
+    unsigned kept=0;
+    for (unsigned i=0;i<count;++i) {
+        const unsigned at=(head+MOUSE_HISTORY-1-i)%MOUSE_HISTORY;
+        if (now-history[at].us>MOUSE_WINDOW_US) break;
+        sx+=history[at].dx; sy+=history[at].dy; ++kept;
+    }
+    count=kept;
+    mouse.vx=sx*(1e6f/MOUSE_WINDOW_US);
+    mouse.vy=sy*(1e6f/MOUSE_WINDOW_US);
     if (mouse.vx!=0.0f) d->right_x=stick_value(mouse_deflection(mouse.vx,mouse.sens));
     if (mouse.vy!=0.0f) d->right_y=stick_value(mouse_deflection(mouse.vy*mouse.invert,mouse.sens));
     d->buttons|=mouse_buttons();
+    /* The first motions, then one line every 2 s while moving: what the game gets as right stick. */
+    static unsigned logged;
+    static uint64_t next_log;
+    if ((dx!=0.0f || dy!=0.0f) && (logged<5 || now>=next_log)) {
+        printf("Runtime: mouse %.0f,%.0f px -> right stick %u,%u\n",dx,dy,d->right_x,d->right_y);
+        ++logged;
+        next_log=now+2000000;
+    }
     return 1;
 }
 /* Motion sensors (DualSense / DualShock 4 through SDL, as shadPS4 does): angular velocity in
