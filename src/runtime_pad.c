@@ -176,6 +176,94 @@ static void load_button_maps(void) {
 static void key_axis(uint8_t *axis, bool negative, bool positive) {
     if (negative || positive) *axis=(uint8_t)(128-(negative ? 128 : 0)+(positive ? 127 : 0));
 }
+
+/* Mouse look. While the window has captured the cursor (gow3gpu_mouse_take), mouse motion moves
+ * the right stick, which turns the camera and aims the gravity shift, and the mouse buttons press
+ * PS4 buttons. Left Alt held or F8 frees the cursor: the left button is then the touchpad finger.
+ *   GOW3_MOUSE_SENS     sensitivity (default 1.0)
+ *   GOW3_MOUSE_INVERT_Y 1: moving the mouse forward looks down
+ *   GOW3_MOUSE_MAP      PS4 button per mouse button, e.g. "left=square,right=r1,middle=l1,x1=l2,x2=r2"
+ *                       (the default; "right=" leaves a button unused). */
+enum { MOUSE_LEFT, MOUSE_MIDDLE, MOUSE_RIGHT, MOUSE_X1, MOUSE_X2, MOUSE_BUTTONS };
+static const char *const mouse_names[MOUSE_BUTTONS]={"left","middle","right","x1","x2"};
+static uint32_t mouse_map[MOUSE_BUTTONS]={BTN_SQUARE,BTN_L1,BTN_R1,BTN_L2,BTN_R2};
+static struct { float sens, invert, vx, vy; uint64_t last_us; int loaded; } mouse={.sens=1.0f,.invert=1.0f};
+
+static int apply_mouse_map(const char *spec) {
+    if (!spec || !*spec) return 0;
+    char copy[512];
+    snprintf(copy,sizeof(copy),"%s",spec);
+    int used=0;
+    for (char *entry=copy, *next; entry; entry=next) {
+        if ((next=strchr(entry,','))) *next++=0;
+        char *eq=strchr(entry,'=');
+        if (!eq) continue;
+        *eq=0;
+        const char *name=trim(entry), *button=trim(eq+1);
+        int index=-1;
+        for (int i=0;i<MOUSE_BUTTONS;++i) if (!SDL_strcasecmp(name,mouse_names[i])) index=i;
+        uint32_t ps=0;
+        for (size_t i=0;i<sizeof(ps_names)/sizeof(*ps_names);++i) if (!SDL_strcasecmp(button,ps_names[i].name)) ps=ps_names[i].ps;
+        if (index<0 || (!ps && *button)) { printf("Runtime: mouse map: ignored '%s=%s'\n",name,button); continue; }
+        mouse_map[index]=ps;
+        ++used;
+    }
+    return used;
+}
+static void load_mouse_settings(void) {
+    if (mouse.loaded) return;
+    mouse.loaded=1;
+    const char *sens=getenv("GOW3_MOUSE_SENS"), *invert=getenv("GOW3_MOUSE_INVERT_Y");
+    if (sens && atof(sens)>0.0) mouse.sens=(float)atof(sens);
+    if (invert && *invert=='1') mouse.invert=-1.0f;
+    const int used=apply_mouse_map(getenv("GOW3_MOUSE_MAP"));
+    printf("Runtime: mouse look sensitivity %.2f%s, %d mouse buttons remapped\n",mouse.sens,
+           mouse.invert<0.0f ? ", inverted" : "",used);
+}
+/* Stick deflection (-1..1) for a mouse speed in pixels per second: a dead zone the game ignores is
+ * skipped so that slow motion still turns the camera, and full deflection is reached at
+ * 2400 px/s for sensitivity 1. */
+static float mouse_deflection(float speed, float sens) {
+    const float dead=0.12f;
+    const float v=speed*sens/2400.0f;
+    if (v==0.0f) return 0.0f;
+    const float a=fabsf(v), out=a>=1.0f ? 1.0f : dead+(1.0f-dead)*sqrtf(a);
+    return v<0.0f ? -out : out;
+}
+static uint8_t stick_value(float deflection) {
+    const int v=128+(int)lrintf(deflection*(deflection<0.0f ? 128.0f : 127.0f));
+    return (uint8_t)(v<0 ? 0 : v>255 ? 255 : v);
+}
+/* PS4 buttons the held mouse buttons press (mouse_map). */
+static uint32_t mouse_buttons(void) {
+    static const SDL_MouseButtonFlags masks[MOUSE_BUTTONS]={SDL_BUTTON_LMASK,SDL_BUTTON_MMASK,SDL_BUTTON_RMASK,
+                                                           SDL_BUTTON_X1MASK,SDL_BUTTON_X2MASK};
+    const SDL_MouseButtonFlags held=SDL_GetMouseState(NULL,NULL);
+    uint32_t buttons=0;
+    for (int i=0;i<MOUSE_BUTTONS;++i) if (held & masks[i]) buttons|=mouse_map[i];
+    return buttons;
+}
+/* Applies the mouse to `d`; returns 1 while the cursor is captured. */
+static int sample_mouse(PadData *d) {
+    load_mouse_settings();
+    float dx=0.0f, dy=0.0f;
+    const int captured=gow3gpu_mouse_take(&dx,&dy);
+    const uint64_t now=d->timestamp;
+    float dt=mouse.last_us && now>mouse.last_us ? (float)(now-mouse.last_us)/1e6f : 1.0f/60.0f;
+    mouse.last_us=now;
+    if (dt>0.1f) dt=0.1f; /* a stall must not turn a small motion into nothing */
+    if (dt<0.004f) dt=0.004f;
+    if (!captured) { mouse.vx=mouse.vy=0.0f; return 0; }
+    /* Light smoothing over about two game frames: mouse reports and frames do not line up. */
+    mouse.vx=0.5f*mouse.vx+0.5f*(dx/dt);
+    mouse.vy=0.5f*mouse.vy+0.5f*(dy/dt);
+    if (dx==0.0f && fabsf(mouse.vx)<30.0f) mouse.vx=0.0f;
+    if (dy==0.0f && fabsf(mouse.vy)<30.0f) mouse.vy=0.0f;
+    if (mouse.vx!=0.0f) d->right_x=stick_value(mouse_deflection(mouse.vx,mouse.sens));
+    if (mouse.vy!=0.0f) d->right_y=stick_value(mouse_deflection(mouse.vy*mouse.invert,mouse.sens));
+    d->buttons|=mouse_buttons();
+    return 1;
+}
 /* Motion sensors (DualSense / DualShock 4 through SDL, as shadPS4 does): angular velocity in
  * rad/s on the PS4's axes, acceleration in g (SDL's m/s^2 x 0.098), and an orientation
  * quaternion (scePadResetOrientation brings it back to identity). The orientation comes from
@@ -277,11 +365,13 @@ static void sample_host(PadData *d) {
     if (k[SDL_SCANCODE_TAB]) touch_click(d,0);
     if ((d->buttons & BTN_TOUCHPAD) && !d->touch_count) touch_click(d,0); /* a remapped touchpad key */
     if (k[SDL_SCANCODE_BACKSPACE]) touch_click(d,1);
-    /* Left mouse button held over the window is a finger at the pointer, so dragging is a swipe. */
+    /* Mouse look while the cursor is captured; otherwise the left mouse button held over the
+     * window is a finger at the pointer, so dragging is a swipe. */
+    const int mouse_look=sample_mouse(d);
     SDL_Window *mw=SDL_GetMouseFocus();
     float mx=0, my=0;
     int ww=0, wh=0;
-    if (mw && (SDL_GetMouseState(&mx,&my) & SDL_BUTTON_LMASK) && SDL_GetWindowSize(mw,&ww,&wh) && ww>0 && wh>0) {
+    if (!mouse_look && mw && (SDL_GetMouseState(&mx,&my) & SDL_BUTTON_LMASK) && SDL_GetWindowSize(mw,&ww,&wh) && ww>0 && wh>0) {
         d->buttons|=BTN_TOUCHPAD;
         d->touch_count=1;
         d->touches[0]=(PadTouch){.x=touch_axis(mx/ww,1919),.y=touch_axis(my/wh,942),.id=0};
@@ -422,6 +512,10 @@ static uint32_t host_buttons(void) {
         if (SDL_GetGamepadButton(g,(SDL_GamepadButton)pad_map.entries[i].source)) buttons|=pad_map.entries[i].ps;
     const bool *k=SDL_WasInit(SDL_INIT_VIDEO) ? SDL_GetKeyboardState(NULL) : NULL;
     if (k) for (size_t i=0;i<key_map.count;++i) if (k[key_map.entries[i].source]) buttons|=key_map.entries[i].ps;
+    if (k && gow3gpu_mouse_take(NULL,NULL)) { /* captured: mouse buttons as mapped (no motion taken) */
+        load_mouse_settings();
+        buttons|=mouse_buttons();
+    }
     return buttons;
 }
 /* Buttons for the port's save list (sceSaveDataDialog), polled by the overlay every frame while

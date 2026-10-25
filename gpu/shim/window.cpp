@@ -13,6 +13,32 @@
 #include <windows.h>
 #endif
 
+// Mouse look (gow3gpu.h): motion collected on the window thread while the cursor is captured,
+// taken by the pad thread (runtime_pad.c) when the game reads the pad.
+namespace {
+std::mutex mouse_mutex;
+float mouse_dx = 0.0f, mouse_dy = 0.0f;
+std::atomic<bool> mouse_captured{false};
+// GOW3_MOUSE_LOOK=0 turns mouse look off (the mouse is only the touchpad finger, as before).
+bool MouseLookEnabled() {
+    static const bool enabled = [] {
+        const char* env = std::getenv("GOW3_MOUSE_LOOK");
+        return !env || *env != '0';
+    }();
+    return enabled;
+}
+} // namespace
+
+extern "C" int gow3gpu_mouse_take(float* dx, float* dy) {
+    std::scoped_lock lock{mouse_mutex};
+    if (dx && dy) { // NULL pointers only ask whether the cursor is captured
+        *dx = mouse_dx;
+        *dy = mouse_dy;
+        mouse_dx = mouse_dy = 0.0f;
+    }
+    return mouse_captured.load(std::memory_order_relaxed) ? 1 : 0;
+}
+
 namespace Frontend {
 
 // gow3: Borderless keeps the desktop's display mode, so a refresh rate chosen in gravityrush.ini is
@@ -210,9 +236,26 @@ bool WindowSDL::PollEvents() {
         mode != display_mode || Gow3Settings::Get().refresh_rate != refresh_rate) {
         ApplyDisplayMode(mode);
     }
+    UpdateMouseCapture();
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
-        if (text_active && (event.type == SDL_EVENT_TEXT_INPUT || event.type == SDL_EVENT_KEY_DOWN)) {
+        if (event.type == SDL_EVENT_MOUSE_MOTION && mouse_captured.load(std::memory_order_relaxed)) {
+            std::scoped_lock lock{mouse_mutex};
+            mouse_dx += event.motion.xrel;
+            mouse_dy += event.motion.yrel;
+            continue;
+        }
+        // F8 switches mouse look off and on (the cursor is then free in the window).
+        if (event.type == SDL_EVENT_KEY_DOWN && !event.key.repeat && event.key.key == SDLK_F8 &&
+            MouseLookEnabled() && !text_active) {
+            mouse_look_on = !mouse_look_on;
+            std::printf("Window: mouse look %s (F8)\n", mouse_look_on ? "on" : "off");
+            UpdateMouseCapture();
+        }
+        if (event.type == SDL_EVENT_WINDOW_FOCUS_LOST || event.type == SDL_EVENT_WINDOW_FOCUS_GAINED) {
+            UpdateMouseCapture();
+        }
+        if (text_active &&(event.type == SDL_EVENT_TEXT_INPUT || event.type == SDL_EVENT_KEY_DOWN)) {
             std::scoped_lock lock{text_mutex};
             if (event.type == SDL_EVENT_TEXT_INPUT) {
                 text += event.text.text;
@@ -263,6 +306,34 @@ bool WindowSDL::PollEvents() {
         }
     }
     return is_open;
+}
+
+// Captures the cursor (relative mouse mode: hidden, unlimited motion) while the game is played
+// with the mouse: window focused, settings menu and text entry closed, Left Alt not held and mouse
+// look not switched off with F8. Window thread only (SDL).
+void WindowSDL::UpdateMouseCapture() {
+    const SDL_WindowFlags flags = SDL_GetWindowFlags(window);
+    const bool* keys = SDL_GetKeyboardState(nullptr);
+    const bool want = MouseLookEnabled() && mouse_look_on && (flags & SDL_WINDOW_INPUT_FOCUS) &&
+                      !(flags & SDL_WINDOW_MINIMIZED) && !text_active && !Gow3Overlay::CapturesInput() &&
+                      !(keys && (keys[SDL_SCANCODE_LALT] || keys[SDL_SCANCODE_RALT]));
+    if (want == mouse_captured.load(std::memory_order_relaxed)) {
+        return;
+    }
+    if (!SDL_SetWindowRelativeMouseMode(window, want) && want) {
+        LOG_WARNING(Frontend, "Mouse capture: {}", SDL_GetError());
+        return;
+    }
+    {
+        std::scoped_lock lock{mouse_mutex};
+        mouse_dx = mouse_dy = 0.0f; // no jump from motion made while the cursor was free
+    }
+    mouse_captured.store(want, std::memory_order_relaxed);
+    if (!want) {
+        int w = 0, h = 0;
+        SDL_GetWindowSize(window, &w, &h);
+        SDL_WarpMouseInWindow(window, w * 0.5f, h * 0.5f);
+    }
 }
 
 } // namespace Frontend

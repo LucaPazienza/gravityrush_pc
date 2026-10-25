@@ -204,6 +204,18 @@ def main():
                 print(f'Saves backed up to {made}', flush=True)
         except OSError as error:
             print(f'Save backup failed, starting anyway: {error}', flush=True)
+        # Keyboard and mouse button prompts (scripts/gr_prompt_font.py): a copy of the game's prompt
+        # font for the current bindings, used when GOW3_PROMPTS is keyboard, or auto without a gamepad.
+        if env.get('GOW3_PROMPTS', 'auto') != 'controller' and not env.get('GOW3_PROMPT_FONT'):
+            try:
+                import gr_prompt_font
+                prompt_font = out / 'prompt_font.ttf'
+                gr_prompt_font.build(gr_prompt_font.original_font(original_game), prompt_font, env)
+                env['GOW3_PROMPT_FONT'] = str(prompt_font)
+                derived.append('GOW3_PROMPT_FONT')
+                env['GOW3_DERIVED'] = ','.join(derived)
+            except Exception as error:  # the game still runs, with its controller prompts
+                print(f'Prompts: keyboard prompts unavailable ({error})', flush=True)
         this = ['--run'] if getattr(sys, 'frozen', False) else [str(Path(__file__).resolve())]
         restart = [sys.executable, *this, '--after', str(os.getpid()), *args]
         env['GOW3_RESTART_COMMAND'] = subprocess.list2cmdline(restart)

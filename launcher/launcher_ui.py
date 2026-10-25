@@ -1859,7 +1859,26 @@ class LauncherWindow:
             Slider(self, control, 0.5, 3.0, 0.1, value, changed).widget.pack(side='left')
             shown.pack(side='left')
         self.row(body, 'Sensitivity', make_slider, 'Aiming by moving a DualSense or DualShock 4.')
-        keys = self.app.get('controls', {}).get('key', {}) if isinstance(self.app.get('controls'), dict) else {}
+        self.sec(body, 'MOUSE')
+
+        def make_mouse_slider(control):
+            value = float(self.app.get('mouse_sens', 1.0))
+            shown = tk.Label(control, text=f'{value:.1f}×', bg=PAPER, fg=MU, font=self.font(14, 'bold'), width=5, anchor='e')
+
+            def changed(v):
+                shown.configure(text=f'{v:.1f}×')
+                self.set_app('mouse_sens', round(v, 1))
+            Slider(self, control, 0.2, 4.0, 0.1, value, changed).widget.pack(side='left')
+            shown.pack(side='left')
+        self.row(body, 'Camera sensitivity', make_mouse_slider,
+                 'The mouse turns the camera and aims. Left Alt held or F8 frees the cursor.')
+        self.toggle_row(body, 'Invert vertical look', bool(self.app.get('mouse_invert', False)),
+                        lambda v: self.set_app('mouse_invert', bool(v)))
+        self.row(body, 'Button prompts', lambda c: self.choice(c, logic.PROMPT_STYLES, self.app.get('prompts', 'auto'),
+                                                              lambda v: self.set_app('prompts', v), 20).pack(side='right'),
+                 'Keyboard and mouse keys or controller buttons in the game\'s hints.')
+        self.hint(body, 'Mouse: left Square (kick), right R1 (gravity shift / aim), middle L1, side buttons L2 / R2.')
+        keys =self.app.get('controls', {}).get('key', {}) if isinstance(self.app.get('controls'), dict) else {}
         pads = logic.PAD_STYLES.get(self.app.get('pad_style', 'playstation'), logic.PAD_STYLES['playstation'])
         for group, members in (('BUTTONS', logic.CONTROLS[:12]), ('D-PAD', logic.CONTROLS[12:])):
             self.sec(body, group)
@@ -2033,6 +2052,8 @@ class LauncherWindow:
     def reset_controls(self):
         self.app['controls'] = {}
         self.app['gyro_sens'] = 1.4
+        for key in ('mouse_sens', 'mouse_invert', 'prompts'):
+            self.app.pop(key, None)
         self.save()
         self.open_page('controls')
         self.toast(t('Defaults restored'))

@@ -5,6 +5,7 @@
 
 static int capture;
 int gow3gpu_overlay_captures_input(void) { return capture; }
+int gow3gpu_mouse_take(float *dx, float *dy) { if (dx && dy) *dx=*dy=0.0f; return 0; }
 uintptr_t runtime_lookup(const RuntimeExport *table, size_t count, const char *name) {
     (void)table; (void)count; (void)name;
     return 0;

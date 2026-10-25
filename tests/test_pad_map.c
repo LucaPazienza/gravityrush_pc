@@ -4,6 +4,7 @@
 #include "../src/runtime_pad.c"
 
 int gow3gpu_overlay_captures_input(void) { return 0; }
+int gow3gpu_mouse_take(float *dx, float *dy) { if (dx && dy) *dx=*dy=0.0f; return 0; }
 uintptr_t runtime_lookup(const RuntimeExport *table, size_t count, const char *name) {
     (void)table; (void)count; (void)name;
     return 0;
@@ -46,5 +47,16 @@ int main(void) {
     assert(pressed_by(&pad,SDL_GAMEPAD_BUTTON_BACK)==0 && pressed_by(&pad,SDL_GAMEPAD_BUTTON_TOUCHPAD)==0);
     assert(pressed_by(&pad,SDL_GAMEPAD_BUTTON_MISC1)==BTN_TOUCHPAD);
     assert(apply_button_map(&pad,"cross=Space",false)==0); /* a key name is no gamepad button */
+
+    /* Mouse buttons: defaults, remapping by name, an empty value unmaps, bad entries skipped. */
+    assert(mouse_map[MOUSE_LEFT]==BTN_SQUARE && mouse_map[MOUSE_RIGHT]==BTN_R1);
+    assert(apply_mouse_map("Right = cross, x1=, bogus=l1, left=nothing")==2);
+    assert(mouse_map[MOUSE_RIGHT]==BTN_CROSS && mouse_map[MOUSE_X1]==0 && mouse_map[MOUSE_LEFT]==BTN_SQUARE);
+
+    /* Mouse speed to stick: still is centred, slow motion passes the dead zone, fast is full. */
+    assert(mouse_deflection(0.0f,1.0f)==0.0f);
+    assert(mouse_deflection(10.0f,1.0f)>0.12f && mouse_deflection(-10.0f,1.0f)<-0.12f);
+    assert(mouse_deflection(5000.0f,1.0f)==1.0f && stick_value(1.0f)==255 && stick_value(-1.0f)==0);
+    assert(stick_value(0.0f)==128);
     puts("PASS: pad and key maps");
 }

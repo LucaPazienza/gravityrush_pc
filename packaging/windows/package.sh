@@ -36,19 +36,20 @@ if [[ -d out/pyenv && ! -x out/pyenv/Scripts/python.exe ]]; then rm -rf out/pyen
 if [[ ! -x out/pyenv/Scripts/python.exe ]]; then
     "$python" -m venv out/pyenv
 fi
-# cryptography: the classic launcher's imports; Pillow: the launcher's drawing and icons.
-out/pyenv/Scripts/python.exe -m pip install -q --disable-pip-version-check pyinstaller cryptography pillow
+# cryptography: the classic launcher's imports; Pillow: the launcher's drawing and icons; fontTools: the
+# keyboard and mouse prompt font (scripts/gr_prompt_font.py).
+out/pyenv/Scripts/python.exe -m pip install -q --disable-pip-version-check pyinstaller cryptography pillow fonttools
 # The scripts run inside "Gravity Rush Launcher.exe" (--script): the standard modules they import come along.
 hidden=()
 for module in argparse base64 collections hashlib json re shutil struct tempfile xml.etree.ElementTree \
               urllib.request ctypes.wintypes zlib hmac game_profiles \
-              graphics_options prepare link_libc link_modules mods patches save_backup content_profile \
+              graphics_options prepare link_libc link_modules mods patches save_backup content_profile gr_prompt_font lzma \
               cryptography.hazmat.primitives.ciphers PIL.Image PIL.ImageTk PIL.ImageDraw PIL.ImageFont \
               PIL.ImageFilter launcher_ui; do
     hidden+=(--hidden-import "$module")
 done
 out/pyenv/Scripts/python.exe -m PyInstaller --noconfirm --clean --log-level WARN --windowed \
-    --name "Gravity Rush Launcher" --icon "$(cygpath -w "$PWD/launcher/gravityrush.ico")" --collect-submodules cryptography --distpath out/pyi-dist \
+    --name "Gravity Rush Launcher" --icon "$(cygpath -w "$PWD/launcher/gravityrush.ico")" --collect-submodules cryptography --collect-submodules fontTools --distpath out/pyi-dist \
     --workpath out/pyi-work --specpath out/pyi-work --paths "$(cygpath -w "$PWD/scripts")" --paths "$(cygpath -w "$PWD/launcher")" "${hidden[@]}" \
     "$(cygpath -w "$PWD/launcher/gravityrush_launcher.py")"
 

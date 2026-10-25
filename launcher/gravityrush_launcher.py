@@ -220,6 +220,8 @@ DRAW_PIPE = [('', ('Auto (8+ threads)', 'Авто (8+ потоков)')), ('1', 
              ('0', ('Off (more stable)', 'Выключен (стабильнее)'))]
 READBACKS = [('', ('Relaxed (default)', 'Relaxed (по умолчанию)')), ('0', ('Off', 'Выключены')),
              ('2', ('Precise',))]
+PROMPT_STYLES = [('auto', 'Automatic (keyboard without a controller)'), ('keyboard', 'Keyboard and mouse'),
+                 ('controller', 'Controller')]
 FRAMES_QUEUED = [('1', ('1 (lowest latency)',)), ('2', ('2',)), ('0', ('Unlimited',))]
 UI_LANGUAGES = lang.LANGUAGE_NAMES
 
@@ -422,6 +424,12 @@ def game_environment(s):
             env[name] = value
     if s.get('gyro_sens'):
         env['GOW3_GYRO_SENS'] = str(s['gyro_sens'])
+    if s.get('mouse_sens'):
+        env['GOW3_MOUSE_SENS'] = str(s['mouse_sens'])
+    if s.get('mouse_invert'):
+        env['GOW3_MOUSE_INVERT_Y'] = '1'
+    if s.get('prompts') in {key for key, _names in PROMPT_STYLES}:
+        env['GOW3_PROMPTS'] = s['prompts']
     env.setdefault('GOW3_FPS_LOG', '1')  # FPS and worst frame every 5 s in the log (diagnostics)
     env.setdefault('GOW3_FRAME_STATS', '1')  # draws, compiles and stalls every 5 s (diagnostics)
     # F12 in the game (or creating the trigger file) saves the next frames here, for bug reports
