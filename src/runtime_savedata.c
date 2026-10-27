@@ -2,7 +2,7 @@
  *   <user>/savedata/<user id>/<title id>/<dir name>/        files the game writes
  *   <user>/savedata/<user id>/<title id>/<dir name>.sce_sys/ param.bin, icon0.png
  *   <user>/savedata/<user id>/<title id>.memory/memory.dat  SaveDataMemory
- * A mounted directory appears to the guest as /savedata0../savedata15.
+ * A mounted directory appears to the guest as /savedata0.. /savedata15.
  * Metadata lives beside the directory so the guest's own files are untouched. */
 #define _GNU_SOURCE
 #include "runtime.h"
@@ -121,7 +121,7 @@ int runtime_savedata_param(int32_t user, const char *dir, void *param) {
     snprintf(meta,sizeof(meta),"%s/%s.sce_sys",base,dir);
     return read_param(meta,(Param *)param);
 }
-/* Host path of a save's icon0.png (the location picture in the save dialog); 0 when named. */
+/* Host path of a save's icon0.png (the location picture in the save dialog); 0 when named.[cite: 3] */
 int runtime_savedata_icon(int32_t user, const char *dir, char *out, size_t size) {
     if (!valid_name(dir,32)) return -1;
     char base[600];
@@ -242,7 +242,7 @@ static ABI int32_t save_delete(const Delete *d) {
     printf("Runtime: save data '%s' deleted\n",d->dir->data);
     return 0;
 }
-/* SQL-LIKE pattern: % any run, _ one character. */
+/* SQL-LIKE pattern: % any run, _ one character.[cite: 3] */
 static int like(const char *s, const char *p) {
     if (!*p) return !*s;
     if (*p=='%') { for (;;++s) { if (like(s,p+1)) return 1; if (!*s) return 0; } }
@@ -288,7 +288,7 @@ static ABI int32_t save_search(const SearchCond *cond, SearchResult *result) {
     free(entries);
     return 0;
 }
-/* SaveDataMemory: one fixed-size blob per user/title. */
+/* SaveDataMemory: one fixed-size blob per user/title.[cite: 3] */
 static ABI int32_t memory_setup(int32_t user, uint64_t size, const Param *param) {
     if (!initialized) return ERR_NOT_INITIALIZED;
     if (!size) return ERR_PARAMETER;
@@ -342,4 +342,3 @@ static const RuntimeExport exports[]={
 };
 uintptr_t runtime_savedata_resolve(const char *name) { return RUNTIME_LOOKUP(exports,name); }
 void runtime_savedata_report(void) { printf("Runtime: save data mounts=%zu, memory writes=%zu\n",mounts_done,memory_writes); }
-
