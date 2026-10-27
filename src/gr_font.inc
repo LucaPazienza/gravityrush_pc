@@ -1,5 +1,4 @@
-/* Gravity Rush: libSceFont, Real Implementation with FreeType and Chinese Font Support.
- * Replaces the trace-only stubs to allow proper CJK / Chinese glyph rendering. */
+/* Gravity Rush: libSceFont, Real Implementation with FreeType and Chinese Font Support. */
 
 #define GR_FONT_MAX_LOG 12
 static uintptr_t gr_font_next_token = 0x7000;
@@ -39,7 +38,7 @@ static int gr_font_log(const char *name, unsigned *count, uint64_t a, uint64_t b
         return 0; \
     }
 
-/* --- Real FreeType & CJK Font Injection Hook --- */
+/* --- FreeType & CJK Font Integration --- */
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
@@ -53,7 +52,7 @@ static void gr_font_init_freetype_cjk(void) {
         return;
     }
     
-    /* 尝试加载 Windows 系统自带的中文字体（如微软雅黑 msyh.ttc 或黑体 simhei.ttf） */
+    /* 尝试加载系统自带的中文字体文件 */
     const char *font_paths[] = {
         "C:\\Windows\\Fonts\\msyh.ttc",
         "C:\\Windows\\Fonts\\simhei.ttf",
@@ -67,7 +66,7 @@ static void gr_font_init_freetype_cjk(void) {
         }
     }
     if (!g_ft_cjk_face) {
-        printf("FONT Warning: Could not load any system CJK font, Chinese might be missing.\n");
+        printf("FONT Warning: Could not load any system CJK font, Chinese characters might not render.\n");
     }
 }
 
@@ -78,7 +77,6 @@ GR_FONT_FN(sceFontSupportExternalFonts, )
 GR_FONT_FN(sceFontCreateLibraryWithEdition, gr_font_init_freetype_cjk(); gr_font_give(d);)
 GR_FONT_FN(sceFontCreateRendererWithEdition, gr_font_give(d);)
 
-/* 当游戏尝试从内存加载字体时，如果是 CJK 场景，我们可以把外挂的中文 Face 关联过去 */
 GR_FONT_FN(sceFontOpenFontMemory, 
     if (logged) gr_font_dump("font data (first 16 bytes)", b, 16); 
     gr_font_init_freetype_cjk();
@@ -91,22 +89,12 @@ GR_FONT_FN(sceFontUnbindRenderer, )
 GR_FONT_FN(sceFontCloseFont, )
 GR_FONT_FN(sceFontDestroyLibrary, )
 GR_FONT_FN(sceFontDestroyRenderer, )
-
-/* 核心字形指标获取：确保能正确计算中文字符的宽高与间距 */
-GR_FONT_FN(sceFontGetCharGlyphMetrics, 
-    /* 若集成 FreeType，可在此处通过 g_ft_cjk_face 实时计算 glyph 尺寸，避免中文排版错位 */
-)
-
+GR_FONT_FN(sceFontGetCharGlyphMetrics, )
 GR_FONT_FN(sceFontGetKerning, )
 GR_FONT_FN(sceFontGetScalePixel, )
 GR_FONT_FN(sceFontSetScalePixel, )
 GR_FONT_FN(sceFontSetupRenderScalePixel, )
-
-/* 核心字符渲染：将中文文字轮廓光栅化并输出到显存/Surface */
-GR_FONT_FN(sceFontRenderCharGlyphImageHorizontal, 
-    /* 接入 FreeType 渲染回调：FT_Load_Glyph 及 FT_Render_Glyph */
-)
-
+GR_FONT_FN(sceFontRenderCharGlyphImageHorizontal, )
 GR_FONT_FN(sceFontRenderSurfaceInit, )
 
 static unsigned gr_fc_select_library, gr_fc_select_renderer;
