@@ -337,13 +337,7 @@ void PerformanceTab() {
     if (BeginRows("##live")) {
         static const char* const fps_labels[] = {"30", "60", "120", "240", "Unlimited"};
         ChoiceRow("Frame rate limit", s.fps_limit, fps_labels, G::FpsLimits.data(), int(G::FpsLimits.size()),
-                  "Caps the frame rate. The engine frame rate (below) is the highest it can go.");
-        const int effective = G::EffectiveFps(s.fps_limit, s.startup_engine_fps);
-        if (s.fps_limit == 0 || effective < s.fps_limit) {
-            char text[48];
-            std::snprintf(text, sizeof(text), "%d FPS (engine frame rate)", effective);
-            InfoRow("Effective limit", text);
-        }
+                  "Caps the frame rate. Movies always play at 60.");
         static const char* const queued_labels[] = {"1 (lowest latency)", "2", "Unlimited"};
         ChoiceRow("Frames queued", s.frames_queued, queued_labels, G::FramesQueued.data(),
                   int(G::FramesQueued.size()), "More frames queued: steadier FPS, slower response to input.");
@@ -359,10 +353,6 @@ void PerformanceTab() {
         static const int values[] = {10, 11, 2, 12, 13, 0, 14, 3, 4, 5};
         ChoiceRow("Render resolution", s.render_resolution, labels, values, 10,
                   "The size the game draws at. Above the screen's it works as anti-aliasing.");
-        // The highest frame rate the game runs at.
-        static const char* const engine_labels[] = {"60 (original)", "120", "240"};
-        ChoiceRow("Engine frame rate", s.engine_fps, engine_labels, G::EngineFps.data(),
-                  int(G::EngineFps.size()), "The highest frame rate the game itself runs at.");
         CheckRow("Game reads GPU data without waiting", s.stale_readback,
                  "Big FPS gain. Switch it off if lighting or objects look wrong.");
         CheckRow("Deferred GPU readbacks", s.deferred_readback,
@@ -434,7 +424,7 @@ void OverlayTab() {
 // Startup options changed since this launch (applied by "Apply and restart").
 int RestartChanges() {
     const auto& s = Gow3Settings::Get();
-    return (s.render_resolution != s.startup_render_resolution) + (s.engine_fps != s.startup_engine_fps) +
+    return (s.render_resolution != s.startup_render_resolution) +
            (s.deferred_readback != s.startup_deferred_readback) + (s.stale_readback != s.startup_stale_readback);
 }
 

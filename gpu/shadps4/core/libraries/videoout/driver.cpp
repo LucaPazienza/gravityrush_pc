@@ -722,15 +722,15 @@ void VideoOutDriver::PresentThread(std::stop_token token) {
         return {};
     };
 
-    // gow3: with a frame limit (uncapped presets) a queued flip is presented as soon as it
-    // arrives and its slot allows, between vblanks, instead of on the next vblank tick.
-    bool immediate_flips = frame_limit != 0;
+    // gow3: a queued flip is presented as soon as it arrives and its slot allows, between
+    // vblanks, instead of on the next vblank tick. Without a limit ("Unlimited") every flip is
+    // presented at once: waiting for the 60 Hz vblank capped "Unlimited" at 60 FPS.
+    constexpr bool immediate_flips = true;
 
     while (!token.stop_requested()) {
         if (const u32 limit = current_limit(); limit != frame_limit) {
             frame_limit = limit;
             frame_period = limit ? std::chrono::nanoseconds(1000000000 / limit) : std::chrono::nanoseconds(0);
-            immediate_flips = limit != 0;
             next_flip = std::chrono::steady_clock::now();
             std::printf("VideoOut: frame limit %u FPS\n", limit);
         }
