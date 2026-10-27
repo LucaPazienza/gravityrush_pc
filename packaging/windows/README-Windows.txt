@@ -1,4 +1,4 @@
-Gravity Rush Remastered (PS4) for PC - version 0.1.8
+Gravity Rush Remastered (PS4) for PC - version 0.1.9
 ====================================================
 
 A native PC port: the game's own code runs on your processor, with no emulator. The whole story
@@ -6,11 +6,15 @@ has been played from start to finish with this port. Only Nvidia graphics cards 
 so far.
 
 No game files are included. You need your own copy of Gravity Rush Remastered (PS4), as an
-unpacked game folder (eboot.bin, sce_module, sce_sys), prepared with your own tools. Tested with
-the European release CUSA01113, version 01.00, the version this port is built on. Other releases,
-such as the American one (CUSA01130), start and play, but the game patches do not apply to them:
-no render resolution above 1080p, no high-quality shadows, and no fix for the gravity-shift camera
-above 60 FPS (the view may swing during gravity shifts; a 60 FPS limit avoids it).
+unpacked game folder (eboot.bin, sce_module, sce_sys), prepared with your own tools.
+
+This port is developed for the European release only: CUSA01113, version 01.00. Every fix and
+enhancement is made and checked on that version. Other releases, such as the American one
+(CUSA01130), may start and play, but none of the port's work on the game applies to them: the
+render resolution stays at 1080p (no higher resolutions, no upscaling modes that render below the
+screen), shadows stay at the game's quality, the gravity-shift camera may swing above 60 FPS (a
+60 FPS limit avoids it), and the mouse turns the camera through the right stick instead of
+directly.
 
 You need
 - Windows 10 (1903 or newer) or Windows 11, 64-bit.
@@ -35,10 +39,15 @@ Graphics (Video page)
 While playing
 - Insert on the keyboard, or R3 + L2 on the controller, opens the port's menu (image, performance,
   FPS overlay).
-- Controllers (DualSense, DualShock 4, Xbox and others) and keyboard work; remap them on the
-  Controls page. The DualSense / DualShock 4 gyro aims the camera like on the PS4.
-- Touchpad: Tab (left side), Backspace (right side), the controller's View button, or hold the left
-  mouse button over the window and drag.
+- Controllers (DualSense, DualShock 4, Xbox and others), keyboard and mouse work. On the Controls
+  page choose what you play with and remap every button (two keys or mouse buttons per button;
+  L2 + R2, the gravity slide, on one key). The DualSense / DualShock 4 gyro aims the camera like
+  on the PS4.
+- Mouse look: the mouse turns the camera directly, by its DPI. The pointer stays in the game
+  window while you play; the Insert menu or Alt+Tab frees it.
+- Touchpad: Tab (left side), Backspace (right side) or the controller's View button. With mouse
+  look switched off, holding the left mouse button over the window and dragging is a finger.
+- Mods: on the Game page, switch mods on and choose their folder.
 
 Next time
 - "Gravity Rush.exe" starts the game straight away with the saved settings (shortcut, Steam).

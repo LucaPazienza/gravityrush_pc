@@ -20,7 +20,7 @@ and shaders to Vulkan.
 
 ## Current Status
 
-**Status: version 0.1.8 — the whole story has been played from start to finish with this port,
+**Status: version 0.1.9 — the whole story has been played from start to finish with this port,
 with sound and saves.**
 
 **[Download the latest release](https://github.com/LucaPazienza/gravityrush_pc/releases/latest)** —
@@ -44,10 +44,15 @@ What works today:
   Native/DLAA, Quality, Balanced and Performance modes that render below the screen and enlarge the
   image to it, the HUD kept as the game draws it. FSR 1.0 is available as a simple upscaler.
 - **Input:** controllers through SDL3 (Xbox, DualSense and others), keyboard and mouse.
-  The touchpad works with real touch ids; the mouse acts as a finger (hold and drag for swipes).
-  The **DualSense gyro** steers the gravity camera like on the PS4 (adjustable sensitivity).
+  **Mouse look**: the mouse turns the game's camera directly, on the ground and while floating,
+  at once and by the mouse's own counts (its DPI), at any frame rate. Every button can be
+  remapped on the controller and on the keyboard and mouse (two keys per button, Alt, Ctrl, Esc
+  and the mouse buttons included); the gravity slide (L2 + R2) can sit on one key. The launcher
+  plays with the controller, the keyboard and mouse, or both, and finds the connected controller.
+  The touchpad works with real touch ids. The **DualSense gyro** steers the gravity camera like on
+  the PS4 (adjustable sensitivity).
 - **Launcher:** a dark window with a sidebar menu and pages in a card (game, video, controls,
-  advanced, log), in English, Italian, French, German and Spanish. `Gravity Rush.exe` starts the game directly with the saved settings.
+  advanced, log), in English, Italian, French, German and Spanish; a mods folder of your choice. `Gravity Rush.exe` starts the game directly with the saved settings.
   The launcher finds new releases on GitHub by itself and installs them when the player agrees
   (saves, settings and mods are kept).
 - **In-game menu** (Insert, or R3+L2): image options, performance and an FPS overlay.
@@ -56,10 +61,13 @@ Not done yet / known gaps:
 
 - Only Nvidia graphics cards have been tested so far.
 - Trophies are not saved or shown yet.
-- The port is built on the European release (CUSA01113, version 01.00). Other releases, such as
-  the American one (CUSA01130), start and play, but the game patches do not apply to them: no
-  render resolution above 1080p, no high-quality shadows, and no fix for the gravity-shift camera
-  above 60 FPS (the view may swing during gravity shifts; a 60 FPS limit avoids it).
+- **This port is developed for the European release only** (CUSA01113, version 01.00): every fix and
+  enhancement is made and checked on that version. Other releases, such as the American one
+  (CUSA01130), may start and play, but nothing specific to the port's work on the game applies to
+  them: render resolution stays at 1080p (no higher resolutions, no upscaling modes that render
+  below the screen), shadows stay at the game's quality, the gravity-shift camera may swing above
+  60 FPS (a 60 FPS limit avoids it), and the mouse turns the camera through the right stick, with
+  the game's own inertia, instead of directly.
 
 ### Roadmap
 
@@ -82,8 +90,8 @@ Not done yet / known gaps:
 - A graphics card with Vulkan 1.3 and a current driver.
 - Your own legally acquired copy of Gravity Rush Remastered (PS4), as an unpacked game folder
   (eboot.bin, sce_module, sce_sys) that you prepare with your own tools. Tested with the European
-  release CUSA01113, version 01.00; the game patches (resolution, shadows, gravity-shift camera)
-  only apply to that version.
+  release CUSA01113, version 01.00: the port is developed for that version only (see the known
+  gaps above).
 
 ## Playing
 
