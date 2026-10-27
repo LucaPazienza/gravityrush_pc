@@ -47,7 +47,7 @@ CONSOLE_BG = '#0b0f14'
 GLASS = (11, 15, 20, 222)  # the sidebar over the picture
 # The names the pages use.
 PAPER, PAPER2, INK, MU, SD, TX = CARD, FIELD_HI, CONSOLE_BG, TEXT2, TEXT, TEXT
-UI_FONT, UI_FONT_SEMI = 'Segoe UI', 'Segoe UI Semibold'  # Windows' own Chinese-friendly font
+UI_FONT, UI_FONT_SEMI = 'Segoe UI', 'Segoe UI Semibold'  # Windows' own font
 
 # ---------------------------------------------------------------------------------------------
 # Texts in the European set + Chinese (EFIGS + ZH). Each row: English, Italian, French, German, Spanish, Chinese.
