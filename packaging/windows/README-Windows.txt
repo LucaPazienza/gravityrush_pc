@@ -7,8 +7,10 @@ so far.
 
 No game files are included. You need your own copy of Gravity Rush Remastered (PS4), as an
 unpacked game folder (eboot.bin, sce_module, sce_sys), prepared with your own tools. Tested with
-the European release CUSA01113, version 01.00. Other versions may start, but the resolution and
-shadow patches only apply to that one.
+the European release CUSA01113, version 01.00, the version this port is built on. Other releases,
+such as the American one (CUSA01130), start and play, but the game patches do not apply to them:
+no render resolution above 1080p, no high-quality shadows, and no fix for the gravity-shift camera
+above 60 FPS (the view may swing during gravity shifts; a 60 FPS limit avoids it).
 
 You need
 - Windows 10 (1903 or newer) or Windows 11, 64-bit.

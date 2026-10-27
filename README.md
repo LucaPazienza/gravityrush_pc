@@ -56,6 +56,10 @@ Not done yet / known gaps:
 
 - Only Nvidia graphics cards have been tested so far.
 - Trophies are not saved or shown yet.
+- The port is built on the European release (CUSA01113, version 01.00). Other releases, such as
+  the American one (CUSA01130), start and play, but the game patches do not apply to them: no
+  render resolution above 1080p, no high-quality shadows, and no fix for the gravity-shift camera
+  above 60 FPS (the view may swing during gravity shifts; a 60 FPS limit avoids it).
 
 ### Roadmap
 
@@ -78,7 +82,8 @@ Not done yet / known gaps:
 - A graphics card with Vulkan 1.3 and a current driver.
 - Your own legally acquired copy of Gravity Rush Remastered (PS4), as an unpacked game folder
   (eboot.bin, sce_module, sce_sys) that you prepare with your own tools. Tested with the European
-  release CUSA01113, version 01.00; the resolution and shadow patches only apply to that version.
+  release CUSA01113, version 01.00; the game patches (resolution, shadows, gravity-shift camera)
+  only apply to that version.
 
 ## Playing
 
