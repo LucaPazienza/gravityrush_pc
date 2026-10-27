@@ -48,6 +48,7 @@ VERSION = '0.1.9'
 RELEASES_API = os.environ.get('GR_UPDATE_API') or \
     'https://api.github.com/repos/LucaPazienza/gravityrush_pc/releases?per_page=20'
 RELEASES_PAGE = 'https://github.com/LucaPazienza/gravityrush_pc/releases'
+ISSUE_FORM = 'https://github.com/LucaPazienza/gravityrush_pc/issues/new'
 INSTALLED_VERSION = os.environ.get('GR_UPDATE_TEST_FROM') or VERSION
 # The Windows package of a release (packaging/windows/package.sh).
 RELEASE_ASSET = re.compile(r'GravityRush-PC-[0-9.]+-Windows\.zip', re.IGNORECASE)
@@ -377,6 +378,27 @@ def game_info(folder):
         return values.get('TITLE', APP_NAME).replace('™', '').replace('®', '').strip(), values.get('APP_VER', '?')
     except (OSError, ValueError, ImportError):
         return APP_NAME, '?'
+
+
+def report_url(settings):
+    """The 'Report a problem' form on GitHub (.github/ISSUE_TEMPLATE/bug_report.yml), filled in with
+    the port's version, the game's release and the graphics card and Windows version."""
+    import platform
+    from urllib.parse import urlencode
+    gpus = vulkan_gpus()
+    gpu = settings.get('gpu') or next((name for name, kind in gpus if kind == 'discrete'),
+                                      gpus[0][0] if gpus else '')
+    system = f'Windows {platform.release()} ({platform.version()})'
+    try:
+        title_id = game_profile_of(settings.get('game_dir', ''))[0]
+        found = game_info(settings.get('game_dir', ''))
+    except Exception:
+        title_id, found = None, None
+    release = ('European CUSA01113, version 01.00' if title_id == 'CUSA01113' and found and found[1] == '01.00'
+               else 'American CUSA01130' if title_id == 'CUSA01130' else 'Other or not sure')
+    fields = {'template': 'bug_report.yml', 'version': VERSION, 'release': release,
+              'gpu': f'{gpu}, {system}' if gpu else system}
+    return f'{ISSUE_FORM}?{urlencode(fields)}'
 
 
 def game_profile_of(folder):

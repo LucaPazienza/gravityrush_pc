@@ -514,6 +514,8 @@ _ROWS = [
     ('short:Mouse X2', 'Mouse 5', 'Souris 5', 'Maus 5', 'Ratón 5'),
     ('Click a label to change it.', 'Clicca una scritta per cambiarla.', 'Cliquez sur une étiquette pour la changer.', 'Klicke auf eine Beschriftung, um sie zu ändern.', 'Haz clic en una etiqueta para cambiarla.'),
     ('Click a label: a key or a mouse button, main and second one (Delete empties it).', 'Clicca una scritta: un tasto o un pulsante del mouse, principale e secondo (Canc la svuota).', 'Cliquez sur une étiquette : une touche ou un bouton de la souris, principal et second (Suppr la vide).', 'Klicke auf eine Beschriftung: eine Taste oder Maustaste, erste und zweite (Entf leert sie).', 'Haz clic en una etiqueta: una tecla o un botón del ratón, principal y segundo (Supr la vacía).'),
+    ('Report a problem', 'Segnala un problema', 'Signaler un problème', 'Problem melden', 'Informar de un problema'),
+    ('Attach last_run.log from the folder that opened', 'Allega last_run.log dalla cartella che si è aperta', 'Joignez last_run.log depuis le dossier qui s’est ouvert', 'Hänge last_run.log aus dem geöffneten Ordner an', 'Adjunta last_run.log desde la carpeta que se abrió'),
     ('Updated to version {}', 'Aggiornato alla versione {}', 'Mis à jour vers la version {}', 'Auf Version {} aktualisiert', 'Actualizado a la versión {}'),
 ]
 TRANSLATIONS = {code: {row[0]: row[i] for row in _ROWS} for i, code in enumerate(('it', 'fr', 'de', 'es'), 1)}
@@ -2235,7 +2237,18 @@ class LauncherWindow:
         for line in self.log_lines:
             self.console_line(line)
         text.configure(state='disabled')
-        self.footer(foot, [('Copy log', self.copy_log, False), ('Open log folder', lambda: self.open_path(str(self.user_dir())), True)])
+        self.footer(foot, [('Report a problem', self.report_problem, False), ('Copy log', self.copy_log, False),
+                           ('Open log folder', lambda: self.open_path(str(self.user_dir())), True)])
+
+    def report_problem(self):
+        """The report form on GitHub, filled in, and the folder with last_run.log to attach."""
+        import webbrowser
+        webbrowser.open(self.logic.report_url(self.app))
+        try:
+            self.open_path(str(self.user_dir()))
+        except OSError:
+            pass
+        self.toast(t('Attach last_run.log from the folder that opened'))
 
     def console_line(self, line):
         tag = 'warn' if ('Fault' in line or 'STOP' in line or 'error' in line.lower() or '<Warning>' in line) else \
@@ -2808,6 +2821,7 @@ class LauncherWindow:
                 t('The game closed right away')
             self.modal(title, t('Exit code {}. Its last messages:').format(code) + '\n\n' + '\n'.join(last)[-700:],
                        [('Close', self.close_modal, False),
+                        ('Report a problem', lambda: (self.close_modal(), self.report_problem()), False),
                         ('Open the log', lambda: (self.close_modal(), self.open_page('log')), True)])
             return
         self.toast(t('The game exited.'))

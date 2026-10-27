@@ -103,9 +103,15 @@ Not done yet / known gaps:
 4. New versions: the launcher offers them when it opens (Advanced > Updates).
 
 The Video page sets the render resolution (up to 4K), shadow quality and the display options.
-To report a problem, press **F12** where you see it (the frames are saved in `user\screenshots`)
-and open an [issue](https://github.com/LucaPazienza/gravityrush_pc/issues) with them,
-`user\last_run.log` and where you were in the game.
+
+### Reporting problems
+
+Use the launcher's **Report a problem** button (Log page, or the notice after the game closes
+unexpectedly): it opens the [report form](https://github.com/LucaPazienza/gravityrush_pc/issues/new/choose)
+already filled in with the version and your graphics card, and the folder with `last_run.log` to
+attach. If the picture goes wrong or the game freezes, press **F12** at that moment first (the frames
+are saved in `user\screenshots`). Questions and impressions are welcome in
+[Discussions](https://github.com/LucaPazienza/gravityrush_pc/discussions).
 
 ## Building and Running
 

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions, ideas and impressions
+    url: https://github.com/LucaPazienza/gravityrush_pc/discussions
+    about: How it runs on your PC, questions about settings, ideas. Problems go in a report.

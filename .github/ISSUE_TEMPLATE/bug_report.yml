@@ -1,0 +1,56 @@
+name: Report a problem
+description: Something does not work or looks wrong in the game or the launcher.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. The launcher's **Report a problem** button (Log page) fills in the
+        version and graphics card for you. Please do not attach game files, dumps or keys.
+  - type: input
+    id: version
+    attributes:
+      label: Port version
+      description: Shown at the bottom left of the launcher.
+      placeholder: 0.1.9
+    validations:
+      required: true
+  - type: dropdown
+    id: release
+    attributes:
+      label: Game release
+      description: The port is developed for the European release only.
+      options:
+        - European CUSA01113, version 01.00
+        - American CUSA01130
+        - Other or not sure
+    validations:
+      required: true
+  - type: input
+    id: gpu
+    attributes:
+      label: Graphics card and Windows version
+      placeholder: NVIDIA GeForce RTX 5070 Ti, Windows 11
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: What you see, and what you expected instead. Screenshots or a short video help a lot.
+    validations:
+      required: true
+  - type: textarea
+    id: where
+    attributes:
+      label: Where and how
+      description: The episode or place in the game, and what you did just before.
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: |
+        Attach `user\last_run.log` from the game's folder (drag the file here), or paste its last part.
+        If the game froze or the picture went wrong, press F12 at that moment first: it saves the
+        frames in `user\screenshots`.
+      render: text
