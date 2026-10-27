@@ -19,6 +19,20 @@ int main(void) {
     unsigned char param[128]={0}, result[64]={0}; /* the game zeroes the pointers it does not want */
     uint32_t value;
 
+    /* A menu preference, not a global gameplay remap. Invalid/unset keeps Cross. */
+    int enter;
+    unsetenv("GOW3_MENU_CONFIRM");
+    assert(system_param(1000, &enter)==0 && enter==1);
+    assert(menu_button_result(1,0)==1 && menu_button_result(0,1)==2);
+    assert(menu_button_result(0,0)==0 && menu_button_result(1,1)==1);
+    setenv("GOW3_MENU_CONFIRM", "circle", 1);
+    assert(system_param(1000, &enter)==0 && enter==0);
+    assert(menu_button_result(1,0)==2 && menu_button_result(0,1)==1);
+    assert(menu_button_result(0,0)==0 && menu_button_result(1,1)==1);
+    setenv("GOW3_MENU_CONFIRM", "invalid", 1);
+    assert(system_param(1000, &enter)==0 && enter==1);
+    unsetenv("GOW3_MENU_CONFIRM");
+
     /* MsgDialog: a user message finishes with OK; a progress bar runs until closed. */
     assert(msg_init()==0);
     memset(param+56,0,4); param[56]=1;

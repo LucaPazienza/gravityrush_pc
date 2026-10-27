@@ -1847,7 +1847,13 @@ class LauncherWindow:
 
     def page_controls(self, body, foot):
         tk, logic = self.tk, self.logic
-        self.sec(body, 'GYROSCOPE', first=True)
+        self.sec(body, 'MENUS', first=True)
+        self.row(body, 'Menu confirm button',
+                 lambda c: self.choice(c, [('cross', ('Cross (X / A)',)), ('circle', ('Circle (O / B)',))],
+                                       self.ini.get('menu_confirm', 'cross'),
+                                       lambda v: self.set_ini('menu_confirm', v), 18).pack(side='right'),
+                 'Applies on next launch. Changes menu confirm/back only, not gameplay buttons.')
+        self.sec(body, 'GYROSCOPE')
 
         def make_slider(control):
             value = float(self.app.get('gyro_sens', 1.4))

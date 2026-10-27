@@ -6,6 +6,7 @@
  * Every entry here is an explicit contract; unknown functions still stop. */
 #define _GNU_SOURCE
 #include "runtime.h"
+#include "runtime_menu.h"
 #include "gpu/gow3gpu.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,7 +86,7 @@ static ABI int32_t system_param(int32_t id,int32_t *value) {
 #endif
     case 5: *value=0; break;                    /* summer time */
     case 7: *value=0; break;                    /* parental level off */
-    case 1000: *value=1; break;                 /* enter button = cross */
+    case 1000: *value=menu_circle_confirm() ? 0 : 1; break; /* menu enter button */
     default: fprintf(stderr,"STOP: unsupported system parameter %d\n",id); exit(21);
     }
     return 0;
@@ -431,7 +432,8 @@ static ABI int32_t ime_init(const ImeParam *param, const void *extended) {
     const char *name=getenv("GOW3_USER_NAME");
     const char *start=initial[0] ? initial : name && *name ? name : "Hunter";
     if (!gow3gpu_text_input_begin(start,prompt[0] ? prompt : "Text")) ime_complete(0,start);
-    else printf("Runtime: ImeDialog opened: shown on screen; keyboard Enter or Cross accepts, Esc or Circle cancels\n");
+    else printf("Runtime: ImeDialog opened: shown on screen; keyboard Enter or %s accepts, Esc or %s cancels\n",
+                menu_circle_confirm() ? "Circle" : "Cross", menu_circle_confirm() ? "Cross" : "Circle");
     return 0;
 }
 static ABI int32_t ime_status(void) {

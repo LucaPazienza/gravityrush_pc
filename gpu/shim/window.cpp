@@ -7,6 +7,7 @@
 #include "common/logging/log.h"
 #include "sdl_window.h"
 #include "gow3_overlay.h"
+#include "../../src/runtime_menu.h"
 #include "gow3_graphics.h"
 #include "gow3_settings.h"
 #ifdef _WIN32
@@ -228,12 +229,13 @@ bool WindowSDL::PollEvents() {
             UpdateTextTitle();
             continue;
         }
-        // The controller finishes the text dialog too: Cross (A) accepts, Circle (B) cancels.
+        // The controller follows the menu preference; keyboard Enter/Escape stay unchanged.
         if (text_active && event.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN &&
             (event.gbutton.button == SDL_GAMEPAD_BUTTON_SOUTH ||
              event.gbutton.button == SDL_GAMEPAD_BUTTON_EAST)) {
             std::scoped_lock lock{text_mutex};
-            text_state = event.gbutton.button == SDL_GAMEPAD_BUTTON_SOUTH ? 1 : 2;
+            text_state = menu_button_result(event.gbutton.button == SDL_GAMEPAD_BUTTON_SOUTH,
+                                            event.gbutton.button == SDL_GAMEPAD_BUTTON_EAST);
             text_active = false;
             SDL_StopTextInput(window);
             UpdateTextTitle();
