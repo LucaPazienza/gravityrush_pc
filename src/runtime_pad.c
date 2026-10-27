@@ -2,9 +2,9 @@
  * by the window thread (gpu/shim/window.cpp); here state is only sampled.
  *
  * Default keyboard layout (GOW3_KEY_MAP changes the buttons, see apply_button_map):
- *   WASD left stick, arrow keys right stick, Space Cross, LShift Circle,
+ *   WASD left stick, mouse or arrow keys right stick (see mouse_stick), Space Cross, LShift Circle,
  *   E Square, Q Triangle, 1 L1, 3 R1, R L2, F R2, Z L3, C R3,
- *   Enter Options, Tab left touchpad, Backspace right touchpad,
+ *   Enter Options, Tab left touchpad, Backspace right touchpad, LCtrl gravity slide (L2+R2),
  *   IJKL d-pad (I up, K down, J left, L right). */
 #define _GNU_SOURCE
 #include "runtime.h"
@@ -91,17 +91,27 @@ static SDL_Gamepad *current_gamepad(void) {
     return gamepad;
 }
 /* Button sources: a host button or key and the PS4 button it presses. The defaults below can be
- * changed per PS4 button with GOW3_PAD_MAP (gamepad) and GOW3_KEY_MAP (keyboard), e.g.
- * GOW3_KEY_MAP="cross=Q,square=Left Shift" or GOW3_PAD_MAP="cross=b,circle=a": comma-separated
- * <ps4 button>=<SDL key or gamepad button name>. A mapped PS4 button loses its default sources.
- * Sticks, triggers and the overlay shortcuts are not remapped. */
+ * changed per PS4 button with GOW3_PAD_MAP (gamepad) and GOW3_KEY_MAP (keyboard and mouse), e.g.
+ * GOW3_KEY_MAP="cross=Q,square=E|Mouse Left" or GOW3_PAD_MAP="cross=b,circle=a": comma-separated
+ * <ps4 button>=<names>, '|' between several sources (SDL key names, "Mouse Left", "Mouse Right",
+ * "Mouse Middle", "Mouse X1", "Mouse X2"; SDL gamepad button names). A mapped PS4 button loses
+ * its default sources; an empty name leaves it without any. Sticks, triggers and the overlay
+ * shortcuts are not remapped. */
 static const struct { const char *name; uint32_t ps; } ps_names[]={
     {"cross",BTN_CROSS}, {"circle",BTN_CIRCLE}, {"square",BTN_SQUARE}, {"triangle",BTN_TRIANGLE},
     {"l1",BTN_L1}, {"r1",BTN_R1}, {"l2",BTN_L2}, {"r2",BTN_R2}, {"l3",BTN_L3}, {"r3",BTN_R3},
     {"options",BTN_OPTIONS}, {"touchpad",BTN_TOUCHPAD},
     {"up",BTN_UP}, {"down",BTN_DOWN}, {"left",BTN_LEFT}, {"right",BTN_RIGHT},
+    /* Gravity slide: the game wants L2 and R2 held together; one key or button presses both. */
+    {"slide",BTN_L2|BTN_R2},
 };
 typedef struct { int source; uint32_t ps; } ButtonSource;
+/* Mouse buttons in the key map: MOUSE_SOURCE + index in mouse_names (past every scancode). */
+#define MOUSE_SOURCE 0x10000
+static const struct { const char *name; uint32_t mask; } mouse_names[]={
+    {"Mouse Left",SDL_BUTTON_LMASK}, {"Mouse Right",SDL_BUTTON_RMASK}, {"Mouse Middle",SDL_BUTTON_MMASK},
+    {"Mouse X1",SDL_BUTTON_X1MASK}, {"Mouse X2",SDL_BUTTON_X2MASK},
+};
 typedef struct { ButtonSource entries[48]; size_t count; } ButtonMap;
 static ButtonMap pad_map={{
     {SDL_GAMEPAD_BUTTON_SOUTH,BTN_CROSS}, {SDL_GAMEPAD_BUTTON_EAST,BTN_CIRCLE},
@@ -119,7 +129,10 @@ static ButtonMap key_map={{
     {SDL_SCANCODE_R,BTN_L2}, {SDL_SCANCODE_F,BTN_R2}, {SDL_SCANCODE_Z,BTN_L3}, {SDL_SCANCODE_C,BTN_R3},
     {SDL_SCANCODE_RETURN,BTN_OPTIONS},
     {SDL_SCANCODE_I,BTN_UP}, {SDL_SCANCODE_K,BTN_DOWN}, {SDL_SCANCODE_J,BTN_LEFT}, {SDL_SCANCODE_L,BTN_RIGHT},
-},15};
+    /* Mouse look: kick, gravity shift, stasis field. */
+    {MOUSE_SOURCE+0,BTN_SQUARE}, {MOUSE_SOURCE+1,BTN_R1}, {MOUSE_SOURCE+2,BTN_CIRCLE},
+    {SDL_SCANCODE_LCTRL,BTN_L2|BTN_R2}, /* gravity slide */
+},19};
 
 static char *trim(char *text) {
     while (*text==' ' || *text=='\t') ++text;
@@ -150,15 +163,38 @@ static int apply_button_map(ButtonMap *map, const char *spec, bool keyboard) {
         entry=next;
         uint32_t ps=0;
         for (size_t i=0;i<sizeof(ps_names)/sizeof(*ps_names);++i) if (!SDL_strcasecmp(button,ps_names[i].name)) ps=ps_names[i].ps;
-        const int source=!*name ? -1 : keyboard ? (int)SDL_GetScancodeFromName(name) : (int)SDL_GetGamepadButtonFromString(name);
-        if (!ps || source<=(keyboard ? (int)SDL_SCANCODE_UNKNOWN : (int)SDL_GAMEPAD_BUTTON_INVALID)) {
+        /* Its sources, '|' between them; all must be known, or the entry is skipped. */
+        int sources[4], count=0;
+        bool bad=!ps;
+        char names[256];
+        snprintf(names,sizeof(names),"%s",name);
+        for (char *part=names, *bar; part && !bad; part=bar) {
+            bar=strchr(part,'|');
+            if (bar) *bar++=0;
+            const char *one=trim(part);
+            if (!*one) continue;
+            int source=-1;
+            if (keyboard) {
+                for (size_t m=0;m<sizeof(mouse_names)/sizeof(*mouse_names);++m)
+                    if (!SDL_strcasecmp(one,mouse_names[m].name)) source=MOUSE_SOURCE+(int)m;
+                if (source<0) source=(int)SDL_GetScancodeFromName(one);
+                if (source==(int)SDL_SCANCODE_UNKNOWN) source=-1;
+            } else {
+                source=(int)SDL_GetGamepadButtonFromString(one);
+                if (source==(int)SDL_GAMEPAD_BUTTON_INVALID) source=-1;
+            }
+            if (source<0 || count==4) bad=true;
+            else sources[count++]=source;
+        }
+        if (bad) {
             printf("Runtime: pad map: ignored '%s=%s'\n",button,name);
             continue;
         }
         size_t kept=0;
         for (size_t i=0;i<map->count;++i) if (map->entries[i].ps!=ps) map->entries[kept++]=map->entries[i];
         map->count=kept;
-        if (map->count<sizeof(map->entries)/sizeof(*map->entries)) map->entries[map->count++]=(ButtonSource){source,ps};
+        for (int i=0;i<count;++i)
+            if (map->count<sizeof(map->entries)/sizeof(*map->entries)) map->entries[map->count++]=(ButtonSource){sources[i],ps};
         ++used;
     }
     return used;
@@ -171,6 +207,73 @@ static void load_button_maps(void) {
     const int pad=apply_button_map(&pad_map,getenv("GOW3_PAD_MAP"),false);
     const int keys=apply_button_map(&key_map,getenv("GOW3_KEY_MAP"),true);
     if (pad || keys) printf("Runtime: pad map: %d gamepad and %d keyboard buttons remapped\n",pad,keys);
+}
+
+/* Mouse look (GOW3_MOUSE_LOOK, default on): while the game window has the focus and no menu of
+ * the port is open, the window thread captures the cursor and passes its motion here; the right
+ * stick follows the mouse's speed (GOW3_MOUSE_SENS, GOW3_MOUSE_INVERT_Y=1 inverts it). The mouse
+ * buttons are sources of the key map (GOW3_KEY_MAP). Without mouse look the left button is a
+ * finger on the touchpad, as before, and the other buttons work over the window. */
+static long long mouse_dx, mouse_dy; /* motion in 1/256 pixel, window thread -> pad sampling */
+static int mouse_captured;
+void runtime_pad_mouse_motion(float dx, float dy) {
+    __atomic_fetch_add(&mouse_dx,(long long)lrintf(dx*256.0f),__ATOMIC_RELAXED);
+    __atomic_fetch_add(&mouse_dy,(long long)lrintf(dy*256.0f),__ATOMIC_RELAXED);
+}
+void runtime_pad_mouse_capture(int on) { __atomic_store_n(&mouse_captured,on,__ATOMIC_RELAXED); }
+/* GOW3_INPUT: 'pad' plays with the controller only, 'keyboard' with the keyboard and mouse only
+ * (a connected controller is ignored); unset, all of them work together. */
+static int input_mode(void) {
+    static int mode=-1;
+    if (mode<0) {
+        const char *e=getenv("GOW3_INPUT");
+        mode=e && !SDL_strcasecmp(e,"pad") ? 1 : e && !SDL_strcasecmp(e,"keyboard") ? 2 : 0;
+    }
+    return mode;
+}
+int runtime_pad_mouse_look(void) {
+    static int on=-1;
+    if (on<0) { const char *e=getenv("GOW3_MOUSE_LOOK"); on=!(e && e[0]=='0') && input_mode()!=1; }
+    return on;
+}
+/* Degrees the camera turns per mouse count (the mouse's DPI set the speed; GOW3_MOUSE_DEG). */
+#define MOUSE_DEG_PER_COUNT 0.05f
+#include "gr_mouse_camera.inc"
+
+/* Mouse speed -> right stick (where the camera cave cannot be installed). The stick is read every frame and can be read more than once a
+ * frame, so the motion is measured over at least 8 ms and the last deflection is kept between. */
+static void mouse_stick(PadData *d) {
+    static uint64_t last;
+    static long long acc_x, acc_y;
+    static float out_x, out_y;
+    static float sens=-1.0f;
+    static int invert;
+    if (sens<0) {
+        const char *e=getenv("GOW3_MOUSE_SENS");
+        sens=e && atof(e)>0 ? (float)atof(e) : 1.0f;
+        const char *i=getenv("GOW3_MOUSE_INVERT_Y");
+        invert=i && i[0]=='1';
+    }
+    const long long dx=__atomic_exchange_n(&mouse_dx,0,__ATOMIC_RELAXED);
+    const long long dy=__atomic_exchange_n(&mouse_dy,0,__ATOMIC_RELAXED);
+    if (mouse_camera_drive(dx,dy,invert)) return;
+    acc_x+=dx;
+    acc_y+=dy;
+    const uint64_t now=now_us();
+    if (!last) last=now;
+    if (now-last>=8000) {
+        const float seconds=(float)(now-last)*1e-6f;
+        const float vx=(float)acc_x/256.0f/seconds, vy=(float)acc_y/256.0f/seconds; /* pixels per second */
+        /* Full deflection at 1500 px/s (sensitivity 1); a small step past the game's dead zone
+         * makes slow movements turn the camera too. */
+        const float speed=1500.0f/sens;
+        out_x=fabsf(vx)<20.0f ? 0.0f : copysignf(fminf(1.0f,0.12f+fabsf(vx)/speed),vx);
+        out_y=fabsf(vy)<20.0f ? 0.0f : copysignf(fminf(1.0f,0.12f+fabsf(vy)/speed),vy)*(invert ? -1.0f : 1.0f);
+        acc_x=acc_y=0;
+        last=now;
+    }
+    if (out_x!=0.0f) d->right_x=(uint8_t)lrintf(127.5f+out_x*127.5f);
+    if (out_y!=0.0f) d->right_y=(uint8_t)lrintf(127.5f+out_y*127.5f);
 }
 
 static void key_axis(uint8_t *axis, bool negative, bool positive) {
@@ -240,7 +343,8 @@ static void sample_host(PadData *d) {
     d->orientation[3]=1.0f;
     d->connected=1; d->connected_count=connected_count ? connected_count : 1;
     d->timestamp=now_us();
-    SDL_Gamepad *g=current_gamepad();
+    mouse_camera_test();
+    SDL_Gamepad *g=input_mode()==2 ? NULL : current_gamepad();
     if (gow3gpu_overlay_captures_input()) return; /* settings menu open: neutral input */
     const bool *k=SDL_WasInit(SDL_INIT_VIDEO) ? SDL_GetKeyboardState(NULL) : NULL;
     load_button_maps();
@@ -272,20 +376,38 @@ static void sample_host(PadData *d) {
     }
     /* The keyboard works with or without a gamepad: its buttons add to the pad's, and a stick
      * follows the keys only while one of them is held. */
-    if (!k) return;
-    for (size_t i=0;i<key_map.count;++i) if (k[key_map.entries[i].source]) d->buttons|=key_map.entries[i].ps;
+    if (!k || input_mode()==1) return;
+    /* The mouse buttons held: all while the cursor is captured (mouse look); over the window
+     * without mouse look, all but the left one (a finger on the touchpad there). */
+    const bool captured=runtime_pad_mouse_look() && __atomic_load_n(&mouse_captured,__ATOMIC_RELAXED);
+    SDL_MouseButtonFlags mouse_held=0;
+    if (captured) mouse_held=SDL_GetMouseState(NULL,NULL);
+    else if (!runtime_pad_mouse_look() && SDL_GetMouseFocus()) mouse_held=SDL_GetMouseState(NULL,NULL) & ~SDL_BUTTON_LMASK;
+    for (size_t i=0;i<key_map.count;++i) {
+        const int source=key_map.entries[i].source;
+        const bool held=source>=MOUSE_SOURCE ? (mouse_held & mouse_names[source-MOUSE_SOURCE].mask)!=0 : k[source];
+        if (held) d->buttons|=key_map.entries[i].ps;
+    }
     if (k[SDL_SCANCODE_TAB]) touch_click(d,0);
     if ((d->buttons & BTN_TOUCHPAD) && !d->touch_count) touch_click(d,0); /* a remapped touchpad key */
     if (k[SDL_SCANCODE_BACKSPACE]) touch_click(d,1);
-    /* Left mouse button held over the window is a finger at the pointer, so dragging is a swipe. */
-    SDL_Window *mw=SDL_GetMouseFocus();
-    float mx=0, my=0;
-    int ww=0, wh=0;
-    if (mw && (SDL_GetMouseState(&mx,&my) & SDL_BUTTON_LMASK) && SDL_GetWindowSize(mw,&ww,&wh) && ww>0 && wh>0) {
-        d->buttons|=BTN_TOUCHPAD;
-        d->touch_count=1;
-        d->touches[0]=(PadTouch){.x=touch_axis(mx/ww,1919),.y=touch_axis(my/wh,942),.id=0};
+    if (captured) {
+        mouse_stick(d);
+    } else {
+        mouse_camera_release();
     }
+    if (!captured && !runtime_pad_mouse_look()) {
+        /* Left mouse button held over the window is a finger at the pointer, so dragging is a swipe. */
+        SDL_Window *mw=SDL_GetMouseFocus();
+        float mx=0, my=0;
+        int ww=0, wh=0;
+        if (mw && (SDL_GetMouseState(&mx,&my) & SDL_BUTTON_LMASK) && SDL_GetWindowSize(mw,&ww,&wh) && ww>0 && wh>0) {
+            d->buttons|=BTN_TOUCHPAD;
+            d->touch_count=1;
+            d->touches[0]=(PadTouch){.x=touch_axis(mx/ww,1919),.y=touch_axis(my/wh,942),.id=0};
+        }
+    }
+    if ((d->buttons & BTN_TOUCHPAD) && !d->touch_count) touch_click(d,0); /* a mouse button */
     if (d->buttons & BTN_L2) d->l2=255;
     if (d->buttons & BTN_R2) d->r2=255;
     key_axis(&d->left_x,k[SDL_SCANCODE_A],k[SDL_SCANCODE_D]);

@@ -13,6 +13,11 @@
 #include <windows.h>
 #endif
 
+// gow3: mouse look (src/runtime_pad.c): the cursor's motion while it is captured in the window.
+extern "C" void runtime_pad_mouse_motion(float dx, float dy);
+extern "C" void runtime_pad_mouse_capture(int on);
+extern "C" int runtime_pad_mouse_look(void);
+
 namespace Frontend {
 
 // gow3: Borderless keeps the desktop's display mode, so a refresh rate chosen in gravityrush.ini is
@@ -210,6 +215,18 @@ bool WindowSDL::PollEvents() {
         mode != display_mode || Gow3Settings::Get().refresh_rate != refresh_rate) {
         ApplyDisplayMode(mode);
     }
+    // gow3: mouse look captures the cursor while the game has the focus and nothing of the port's
+    // (its menu, a text entry) needs the pointer; SDL then reports motion without an edge.
+    if (runtime_pad_mouse_look()) {
+        static bool captured = false;
+        const bool want = (SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) != 0 &&
+                          !Gow3Overlay::CapturesInput() && !text_active;
+        if (want != captured) {
+            captured = want;
+            SDL_SetWindowRelativeMouseMode(window, want);
+            runtime_pad_mouse_capture(want ? 1 : 0);
+        }
+    }
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
         if (text_active && (event.type == SDL_EVENT_TEXT_INPUT || event.type == SDL_EVENT_KEY_DOWN)) {
@@ -243,6 +260,11 @@ bool WindowSDL::PollEvents() {
             continue;
         }
         switch (event.type) {
+        case SDL_EVENT_MOUSE_MOTION:
+            if (SDL_GetWindowRelativeMouseMode(window)) {
+                runtime_pad_mouse_motion(event.motion.xrel, event.motion.yrel);
+            }
+            break;
         case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
         case SDL_EVENT_WINDOW_RESIZED: {
             int w = 0, h = 0;
