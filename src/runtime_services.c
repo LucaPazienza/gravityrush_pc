@@ -70,12 +70,21 @@ static ABI int32_t user_event(int32_t *event) {
     return 0;
 }
 
-/* ---- SystemService ---- */
-static int language(void) { const char *v=getenv("GOW3_LANGUAGE"); return v ? atoi(v) : 1; }
+/* ---- SystemService (Modified for Launcher Language Support) ---- */
+static int language(void) { 
+    // 优先从启动器传入的环境变量获取语言配置（支持 GRAVITY_LANGUAGE 或 GOW3_LANGUAGE）
+    const char *v = getenv("GRAVITY_LANGUAGE"); 
+    if (v) return atoi(v);
+    const char *v2 = getenv("GOW3_LANGUAGE"); 
+    if (v2) return atoi(v2);
+    
+    return 6; /* 默认返回 6 (简体中文)，适配亚洲版官方中文加载 */
+}
+
 static ABI int32_t system_param(int32_t id,int32_t *value) {
     if (!value) return SYSTEM_PARAMETER;
     switch (id) {
-    case 1: *value=language(); break;           /* language (1 = English US, 8 = Russian) */
+    case 1: *value=language(); break;           /* language */
     case 2: *value=1; break;                    /* date format DD/MM/YYYY */
     case 3: *value=1; break;                    /* 24-hour clock */
 #ifdef _WIN32
@@ -138,11 +147,10 @@ static ABI int32_t netctl_nat(uint32_t *info) {
 static ABI int32_t lib_init_id(void) { return new_id(); }
 static ABI int32_t ok_void(void) { return 0; }
 static ABI int32_t http_fail(void) { return HTTP_NETWORK; }
-/* Objects are created so setup code proceeds; any transfer fails as unplugged. */
 static ABI int32_t http_object(void) { return new_id(); }
 static ABI int32_t http_epoll(int32_t ctx,void **handle) {
     (void)ctx;
-    if (!handle) return (int32_t)0x80431077; /* HTTP INVALID_VALUE */
+    if (!handle) return (int32_t)0x80431077;
     *handle=(void *)(uintptr_t)(0x100+new_id()); return 0;
 }
 static ABI int32_t http_wait(void *handle,void *events,int32_t max,int64_t timeout) {
@@ -152,13 +160,13 @@ static ABI int32_t http_wait(void *handle,void *events,int32_t max,int64_t timeo
 #else
     if (timeout>0) { struct timespec t={timeout/1000000,(timeout%1000000)*1000}; nanosleep(&t,NULL); }
 #endif
-    return 0; /* no events: nothing is in flight */
+    return 0;
 }
 
 /* ---- NP (PSN): signed out ---- */
 static ABI int32_t np_state(int32_t user,int32_t *state) {
     if (!state) return NP_INVALID_ARGUMENT;
-    (void)user; *state=1; /* SIGNED_OUT */
+    (void)user; *state=1;
     return 0;
 }
 static ABI int32_t np_signed_out(void) { return NP_SIGNED_OUT; }
@@ -169,7 +177,7 @@ static ABI int32_t np_request_ctx(int32_t ctx,const void *param) { (void)ctx; (v
 static ABI int32_t np_poll(int32_t request,int32_t *result) { (void)request; if (result) *result=NP_SIGNED_OUT; return 0; }
 static ABI int32_t np_compare(const void *a,const void *b) {
     if (!a || !b) return NP_INVALID_ARGUMENT;
-    return memcmp(a,b,16) ? (int32_t)0x80550609 : 0; /* NP_UTIL NOT_MATCH */
+    return memcmp(a,b,16) ? (int32_t)0x80550609 : 0;
 }
 
 /* ---- Voice chat: ports exist, carry no audio ---- */
