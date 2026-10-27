@@ -6,6 +6,7 @@
 #include "common/assert.h"
 #include "common/logging/log.h"
 #include "sdl_window.h"
+#include "window_cursor.h"
 #include "gow3_overlay.h"
 #include "gow3_graphics.h"
 #include "gow3_settings.h"
@@ -134,6 +135,7 @@ WindowSDL::WindowSDL(s32 width_, s32 height_, const char* title) : width{width_}
     width = w;
     height = h;
     LOG_INFO(Frontend, "Window {}x{} on {}", w, h, driver);
+    UpdateCursor();
 }
 
 // Windowed, borderless (desktop-sized, the monitor at the chosen refresh rate) or exclusive
@@ -171,7 +173,25 @@ void WindowSDL::ApplyDisplayMode(int mode) {
 }
 
 WindowSDL::~WindowSDL() {
+    SDL_ShowCursor();
     SDL_DestroyWindow(window);
+}
+
+void WindowSDL::UpdateCursor() {
+    const SDL_WindowFlags flags = SDL_GetWindowFlags(window);
+    const auto policy = FullscreenCursorPolicy(
+        IsOpen() && (flags & SDL_WINDOW_FULLSCREEN) != 0, (flags & SDL_WINDOW_INPUT_FOCUS) != 0,
+        SDL_GetMouseFocus() == window, text_active || Gow3Overlay::CapturesInput(),
+        SDL_GetWindowRelativeMouseMode(window));
+    if (policy == CursorVisibility::Keep) {
+        // Relative mode owns the pointer. Force a fresh decision when it releases it.
+        cursor_hidden = -1;
+        return;
+    }
+    const int hide = policy == CursorVisibility::Hide;
+    if (hide != cursor_hidden && (hide ? SDL_HideCursor() : SDL_ShowCursor())) {
+        cursor_hidden = hide;
+    }
 }
 
 void WindowSDL::BeginTextInput(const std::string& initial, const std::string& prompt) {
@@ -284,6 +304,9 @@ bool WindowSDL::PollEvents() {
             break;
         }
     }
+    // Run on the SDL window thread, after events may have opened/closed a port dialog.
+    // Re-evaluate even without events: the save picker can open from the game thread.
+    UpdateCursor();
     return is_open;
 }
 

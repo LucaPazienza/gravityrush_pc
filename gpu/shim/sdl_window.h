@@ -43,6 +43,8 @@ private:
     int display_mode = -1; ///< applied Gow3Settings display mode (window thread)
     int refresh_rate = 0;  ///< applied Gow3Settings refresh rate (window thread)
     void ApplyDisplayMode(int mode);
+    void UpdateCursor();
+    int cursor_hidden = -1; ///< unknown until the first successful SDL update (window thread)
     int text_state{};
     std::string text, text_prompt, base_title;
     void UpdateTextTitle();
