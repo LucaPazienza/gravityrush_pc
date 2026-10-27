@@ -44,6 +44,7 @@ What works today:
   Native/DLAA, Quality, Balanced and Performance modes that render below the screen and enlarge the
   image to it, the HUD kept as the game draws it. FSR 1.0 is available as a simple upscaler.
 - **Input:** controllers through SDL3 (Xbox, DualSense and others), keyboard and mouse.
+  The launcher offers [Cross/Circle menu confirmation](docs/menu-buttons.md) without swapping gameplay buttons.
   The touchpad works with real touch ids; the mouse acts as a finger (hold and drag for swipes).
   The **DualSense gyro** steers the gravity camera like on the PS4 (adjustable sensitivity).
 - **Launcher:** a dark window with a sidebar menu and pages in a card (game, video, controls,

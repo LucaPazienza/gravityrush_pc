@@ -145,7 +145,7 @@ INI_DEFAULTS = {'upscaler': 'off', 'preset': '1', 'sharpen': '0', 'sharpness': '
                 'live_resolution': 'auto', 'display_mode': 'borderless', 'vsync': '1', 'fps_limit': '0',
                 'async_shaders': '1', 'deferred_readback': '1', 'stale_readback': '0',
                 'render_resolution': 'native', 'engine_fps': '60', 'fsr1': '0', 'rcas': '1',
-                'rcas_strength': '75', 'frames_queued': '1',
+                'rcas_strength': '75', 'frames_queued': '1', 'menu_confirm': 'cross',
                 # The Video page's other settings: only the keys listed here are written to the file.
                 'refresh_rate': '0', 'shadow_quality': 'standard', 'anisotropy': '16', 'fxaa': '1'}
 DISPLAY_MODES = [('windowed', ('Windowed',)), ('borderless', ('Borderless',)), ('fullscreen', ('Fullscreen',))]

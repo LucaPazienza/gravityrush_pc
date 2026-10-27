@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "gow3_overlay.h"
+#include "../../src/runtime_menu.h"
 
 #include <algorithm>
 #include <atomic>
@@ -550,7 +551,9 @@ void TextEntryBox() {
     ImGui::SetWindowFontScale(1.0f);
     ImGui::Separator();
     ImGui::TextDisabled("Keyboard: type, Backspace to erase, Enter = OK, Esc = cancel");
-    ImGui::TextDisabled("Controller: Cross (A) = OK, Circle (B) = cancel");
+    ImGui::TextDisabled("%s", menu_circle_confirm()
+        ? "Controller: Circle (B) = OK, Cross (A) = cancel"
+        : "Controller: Cross (A) = OK, Circle (B) = cancel");
     ImGui::End();
 }
 
@@ -603,7 +606,9 @@ void ChoiceBox() {
         }
     }
     ImGui::Separator();
-    ImGui::TextDisabled("Up/Down or D-pad: choose   Enter or Cross (A): OK   Esc or Circle (B): cancel");
+    ImGui::TextDisabled("%s", menu_circle_confirm()
+        ? "Up/Down or D-pad: choose   Enter or Circle (B): OK   Esc or Cross (A): cancel"
+        : "Up/Down or D-pad: choose   Enter or Cross (A): OK   Esc or Circle (B): cancel");
     ImGui::End();
 }
 
@@ -698,6 +703,7 @@ void Init(const Vulkan::Instance& instance, vk::Format format, u32 image_count) 
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr; // window positions are not kept
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad;
+    io.ConfigNavSwapGamepadButtons = menu_circle_confirm();
     io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
     io.BackendPlatformName = "gow3";
 
@@ -859,7 +865,7 @@ void PollChoiceInput() {
         move = (buttons & Up) ? -1 : 1;
         repeat_at = now + std::chrono::milliseconds(120);
     }
-    const int finish = (pressed & Cross) ? 1 : (pressed & Circle) ? 2 : 0;
+    const int finish = menu_button_result(pressed & Cross, pressed & Circle);
     if (move || finish) {
         std::scoped_lock lock{imgui_mutex};
         ChoiceStep(move, finish);
@@ -880,7 +886,8 @@ bool HandleChoiceEvent(const SDL_Event& event) {
         }
         const u8 button = event.gbutton.button;
         move = button == SDL_GAMEPAD_BUTTON_DPAD_UP ? -1 : button == SDL_GAMEPAD_BUTTON_DPAD_DOWN ? 1 : 0;
-        finish = button == SDL_GAMEPAD_BUTTON_SOUTH ? 1 : button == SDL_GAMEPAD_BUTTON_EAST ? 2 : 0;
+        finish = menu_button_result(button == SDL_GAMEPAD_BUTTON_SOUTH,
+                                    button == SDL_GAMEPAD_BUTTON_EAST);
     } else {
         return event.type == SDL_EVENT_KEY_UP || event.type == SDL_EVENT_GAMEPAD_BUTTON_UP;
     }

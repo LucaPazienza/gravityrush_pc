@@ -8,6 +8,7 @@ restart the game confirms them (restart_unconfirmed=0) once it shows frames; whe
 never did, the next start goes back to the last confirmed values.
 """
 import json
+import os
 from pathlib import Path
 
 RESOLUTIONS = ('native', '480p', '720p', '1440p', '1800p', '4K',
@@ -15,7 +16,7 @@ RESOLUTIONS = ('native', '480p', '720p', '1440p', '1800p', '4K',
                '540p', '648p', '864p', '972p', '1296p')  # upscaling modes (launcher)
 ENGINE_FPS = (60, 120, 240)
 DEFAULTS = {'render_resolution': 'native', 'engine_fps': '60', 'deferred_readback': '1',
-            'stale_readback': '1', 'async_shaders': '1', 'shadow_quality': 'standard'}
+            'stale_readback': '1', 'async_shaders': '1', 'shadow_quality': 'standard', 'menu_confirm': 'cross'}
 RESOLUTION_PREFIX = 'Resolution Patch'
 FPS_PREFIX = 'Frame Rate Patch'
 SHADOW_PREFIX = 'Shadow Quality'
@@ -61,6 +62,8 @@ def write_keys(path, updates):
 def startup_options(ini):
     """The startup options, normalized; unknown values fall back to the defaults."""
     options = {key: ini.get(key, value) for key, value in DEFAULTS.items()}
+    if options['menu_confirm'] not in ('cross', 'circle'):
+        options['menu_confirm'] = 'cross'
     if options['render_resolution'] not in RESOLUTIONS:
         options['render_resolution'] = 'native'
     if options['shadow_quality'] not in SHADOW_PATCHES:
@@ -117,4 +120,5 @@ def patch_names(names, options, texture_fix_available=True, camera_fix_available
 def environment(options):
     return {'GOW3_DEFERRED_READBACK': options['deferred_readback'],
             'GOW3_STALE_READBACK': options['stale_readback'],
-            'GOW3_ASYNC_SHADERS': options['async_shaders']}
+            'GOW3_ASYNC_SHADERS': options['async_shaders'],
+            'GOW3_MENU_CONFIRM': os.environ.get('GOW3_MENU_CONFIRM', options['menu_confirm'])}
