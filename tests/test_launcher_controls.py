@@ -16,12 +16,23 @@ class ControlMapTest(unittest.TestCase):
 
     def test_changed_buttons_in_table_order(self):
         controls = {'key': {'circle': ' Left Shift ', 'cross': 'Q', 'square': ''}, 'pad': {'cross': 'b'}}
-        self.assertEqual(launcher.control_map(controls, 'key'), 'cross=Q,circle=Left Shift')
+        # Each changed button with its main and alternative binding ('' main: the mouse only).
+        self.assertEqual(launcher.control_map(controls, 'key'),
+                         'cross=Q,circle=Left Shift|Mouse Middle,square=Mouse Left')
         self.assertEqual(launcher.control_map(controls, 'pad'), 'cross=b')
 
+    def test_alternative_bindings_and_freed_buttons(self):
+        controls = {'key': {'l1': 'Left Ctrl'}, 'alt': {'l1': 'Mouse X1', 'r1': '', 'cross': 'Left Alt'}}
+        self.assertEqual(launcher.control_map(controls, 'key'),
+                         'cross=Space|Left Alt,l1=Left Ctrl|Mouse X1,r1=3')
+        controls = {'key': {'r1': ''}, 'alt': {'r1': ''}}
+        self.assertEqual(launcher.control_map(controls, 'key'), 'r1=')
+        self.assertEqual(launcher.key_bindings({}, 'square'), ('E', 'Mouse Left'))
+
     def test_rejects_separators_unknown_buttons_and_bad_shapes(self):
-        controls = {'key': {'cross': 'a,b', 'circle': 'x=y', 'jump': 'Q', 'square': 5}}
-        self.assertEqual(launcher.control_map(controls, 'key'), '')
+        controls = {'key': {'cross': 'a,b', 'circle': 'x=y', 'jump': 'Q', 'square': 5, 'l1': 'a|b'}}
+        # Bad values fall back to the defaults; unknown buttons are left out.
+        self.assertEqual(launcher.control_map(controls, 'key'), 'cross=Space,circle=Left Shift|Mouse Middle,l1=1')
         self.assertEqual(launcher.control_map([], 'key'), '')
         self.assertEqual(launcher.control_map({}, 'pad'), '')
 
@@ -60,12 +71,23 @@ class ControlMapTest(unittest.TestCase):
     def test_settings_keys_kept(self):
         # The redesign hides some options (player name) but keeps every saved setting working.
         for key in ('game_dir', 'user_dir', 'mods_dir', 'patches_dir', 'language', 'player_name', 'hdr',
-                    'draw_pipe', 'readbacks', 'background_warmup', 'parallel_warmup', 'controls', 'pad_style'):
+                    'draw_pipe', 'readbacks', 'background_warmup', 'parallel_warmup', 'controls', 'button_names',
+                    'input_device', 'mouse_look', 'mouse_sens', 'mouse_invert'):
             self.assertIn(key, launcher.APP_DEFAULTS)
         env = launcher.game_environment({**launcher.APP_DEFAULTS, 'player_name': ' Kat '})
         self.assertEqual(env['GOW3_USER_NAME'], 'Kat')
         for key in ('display_mode', 'fps_limit', 'render_resolution', 'engine_fps', 'rcas_strength'):
             self.assertIn(key, launcher.INI_DEFAULTS)
+
+    def test_mouse_and_input_device(self):
+        env = launcher.game_environment(dict(launcher.APP_DEFAULTS))
+        self.assertEqual((env['GOW3_MOUSE_LOOK'], env['GOW3_MOUSE_INVERT_Y']), ('1', '0'))
+        self.assertNotIn('GOW3_INPUT', env)
+        self.assertNotIn('GOW3_KEY_MAP', env)
+        env = launcher.game_environment({**launcher.APP_DEFAULTS, 'input_device': 'controller'})
+        self.assertEqual((env['GOW3_INPUT'], env['GOW3_MOUSE_LOOK']), ('pad', '0'))
+        env = launcher.game_environment({**launcher.APP_DEFAULTS, 'input_device': 'keyboard'})
+        self.assertEqual((env['GOW3_INPUT'], env['GOW3_MOUSE_LOOK']), ('keyboard', '1'))
 
     def test_graphics_defaults_match_the_game(self):
         d = launcher.INI_DEFAULTS

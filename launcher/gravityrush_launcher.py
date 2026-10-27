@@ -156,9 +156,11 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': os.environ.get('GOW3_GAME_DIR', '
                 'prep_workers': '', 'copy_threads': '', 'record_thread': True, 'gpu': '',
                 'background_warmup': True, 'parallel_warmup': True, 'pipeline_binary_cache': True, 'perf_diag': False, 'frame_capture_key': False, 'frame_stats': False, 'gpu_profile': False,
                 'vk_validation': False, 'close_on_play': False, 'f12_quits': False,
-                'check_updates': False, 'game_patches': {}, 'controls': {}, 'pad_style': 'playstation',
+                'check_updates': False, 'game_patches': {}, 'controls': {}, 'button_names': 'auto',
                 'last_pkg': '', 'update_check': True,
-                # Play time in seconds, and the save backups made before every start.
+                # Mouse look: the camera follows the mouse; its buttons press PS4 buttons.
+                'input_device': 'auto', 'mouse_look': True, 'mouse_sens': 1.0, 'mouse_invert': False,
+                # The save backups made before every start.
                 'save_backup': True, 'save_backup_keep': 10}
 
 # PS4 button, default key, default gamepad button (SDL names; src/runtime_pad.c). L2/R2 come
@@ -167,11 +169,17 @@ CONTROLS = [('cross', 'Space', 'a'), ('circle', 'Left Shift', 'b'), ('square', '
             ('triangle', 'Q', 'y'), ('l1', '1', 'leftshoulder'), ('r1', '3', 'rightshoulder'),
             ('l2', 'R', None), ('r2', 'F', None), ('l3', 'Z', 'leftstick'),
             ('r3', 'C', 'rightstick'), ('options', 'Return', 'start'), ('touchpad', 'Tab', 'back'),
-            ('up', 'I', 'dpup'), ('down', 'K', 'dpdown'), ('left', 'J', 'dpleft'), ('right', 'L', 'dpright')]
+            ('up', 'I', 'dpup'), ('down', 'K', 'dpdown'), ('left', 'J', 'dpleft'), ('right', 'L', 'dpright'),
+            # Gravity slide: L2 and R2 together on one key ('' on the gamepad: its triggers do it).
+            ('slide', 'Left Ctrl', '')]
+# The second keyboard/mouse binding of a button (src/runtime_pad.c key map): with mouse look the
+# mouse buttons kick, shift gravity and make a stasis field.
+ALT_KEYS = {'square': 'Mouse Left', 'r1': 'Mouse Right', 'circle': 'Mouse Middle'}
+MOUSE_KEYS = ('Mouse Left', 'Mouse Right', 'Mouse Middle', 'Mouse X1', 'Mouse X2')
 PS_BUTTON_NAMES = {'cross': 'Cross', 'circle': 'Circle', 'square': 'Square', 'triangle': 'Triangle',
                    'l1': 'L1', 'r1': 'R1', 'l2': 'L2', 'r2': 'R2', 'l3': 'L3', 'r3': 'R3',
                    'options': 'Options', 'touchpad': 'Touchpad', 'up': 'D-pad up', 'down': 'D-pad down',
-                   'left': 'D-pad left', 'right': 'D-pad right'}
+                   'left': 'D-pad left', 'right': 'D-pad right', 'slide': 'L2 + R2'}
 # Gamepad buttons by SDL name, labelled as on a PlayStation or an Xbox controller.
 PAD_STYLES = {
     'playstation': {'a': 'Cross', 'b': 'Circle', 'x': 'Square', 'y': 'Triangle', 'leftshoulder': 'L1',
@@ -194,12 +202,80 @@ def control_changes(values, kind):
             and values[row[0]].strip().casefold() != row[column].casefold()}
 
 
+# Input device (controls page): 'auto' plays with whatever is connected, 'controller' only with the
+# controller, 'keyboard' only with the keyboard and mouse (GOW3_INPUT, src/runtime_pad.c).
+INPUT_DEVICES = ('auto', 'controller', 'keyboard')
+# SDL_GamepadType values (SDL3) of PlayStation pads; Xbox and the others use the Xbox names.
+SDL_PLAYSTATION_TYPES = {4, 5, 6}  # PS3, PS4, PS5
+
+
+def gamepads():
+    """[(name, style)] of the connected controllers, found with the game's own SDL3 (the same
+    names and types the game sees). Empty when SDL3 is missing or nothing is connected."""
+    import ctypes
+    candidates = [PORT_DIR / 'bin' / 'SDL3.dll', Path(r'C:\msys64\clang64\bin\SDL3.dll')]
+    sdl = None
+    for path in candidates:
+        if path.is_file():
+            try:
+                sdl = ctypes.CDLL(str(path))  # full path: PyInstaller's folder holds no SDL3
+                break
+            except OSError:
+                continue
+    if sdl is None:
+        return []
+    found = []
+    try:
+        sdl.SDL_Init.argtypes, sdl.SDL_Init.restype = [ctypes.c_uint32], ctypes.c_bool
+        sdl.SDL_GetGamepads.argtypes = [ctypes.POINTER(ctypes.c_int)]
+        sdl.SDL_GetGamepads.restype = ctypes.POINTER(ctypes.c_uint32)
+        sdl.SDL_GetGamepadNameForID.argtypes, sdl.SDL_GetGamepadNameForID.restype = [ctypes.c_uint32], ctypes.c_char_p
+        sdl.SDL_GetGamepadTypeForID.argtypes, sdl.SDL_GetGamepadTypeForID.restype = [ctypes.c_uint32], ctypes.c_int
+        sdl.SDL_free.argtypes = [ctypes.c_void_p]
+        if not sdl.SDL_Init(0x00002000):  # SDL_INIT_GAMEPAD
+            return []
+        count = ctypes.c_int(0)
+        ids = sdl.SDL_GetGamepads(ctypes.byref(count))
+        for i in range(count.value if ids else 0):
+            name = (sdl.SDL_GetGamepadNameForID(ids[i]) or b'Controller').decode('utf-8', 'replace')
+            style = 'playstation' if sdl.SDL_GetGamepadTypeForID(ids[i]) in SDL_PLAYSTATION_TYPES else 'xbox'
+            found.append((name, style))
+        if ids:
+            sdl.SDL_free(ids)
+        sdl.SDL_Quit()
+    except (AttributeError, OSError, ValueError):
+        return found
+    return found
+
+
+def key_bindings(controls, button):
+    """(main, alternative) keyboard/mouse binding of a button: the chosen ones, else the defaults;
+    '' is no binding."""
+    controls = controls if isinstance(controls, dict) else {}
+    default = next(row[1] for row in CONTROLS if row[0] == button)
+    picked = []
+    for kind, fallback in (('key', default), ('alt', ALT_KEYS.get(button, ''))):
+        chosen = controls.get(kind, {}) if isinstance(controls.get(kind), dict) else {}
+        value = chosen.get(button, fallback)
+        picked.append(value.strip() if isinstance(value, str) and not set(value) & set(',=|') else fallback)
+    return tuple(picked)
+
+
 def control_map(controls, kind):
-    """GOW3_KEY_MAP/GOW3_PAD_MAP value: 'cross=Q,circle=Left Shift' for the changed buttons."""
-    chosen = controls.get(kind, {}) if isinstance(controls, dict) else {}
+    """GOW3_KEY_MAP/GOW3_PAD_MAP value for the changed buttons: 'cross=Q,square=E|Mouse Left'
+    (keyboard: main and alternative binding; 'circle=' leaves a button without any)."""
+    controls = controls if isinstance(controls, dict) else {}
+    if kind == 'key':
+        changed = set()
+        for part in ('key', 'alt'):
+            if isinstance(controls.get(part), dict):
+                changed |= {b for b, v in controls[part].items() if isinstance(v, str)}
+        return ','.join(f"{button}={'|'.join(k for k in key_bindings(controls, button) if k)}"
+                        for button, _key, _pad in CONTROLS if button in changed)
+    chosen = controls.get(kind, {}) if isinstance(controls.get(kind), dict) else {}
     return ','.join(f'{button}={chosen[button].strip()}' for button, _key, _pad in CONTROLS
                     if isinstance(chosen.get(button), str) and chosen[button].strip()
-                    and not set(chosen[button]) & set(',='))
+                    and not set(chosen[button]) & set(',=|'))
 
 UPSCALERS = [('dlss', ('DLSS (NVIDIA GeForce RTX)',)),
              ('fsr4', ('FSR 4 (best quality)', 'FSR 4 (лучшее качество)')),
@@ -422,6 +498,10 @@ def game_environment(s):
             env[name] = value
     if s.get('gyro_sens'):
         env['GOW3_GYRO_SENS'] = str(s['gyro_sens'])
+    if s.get('input_device') in ('controller', 'keyboard'):
+        env['GOW3_INPUT'] = 'pad' if s['input_device'] == 'controller' else 'keyboard'
+    env['GOW3_MOUSE_LOOK'] = '1' if s.get('mouse_look', True) and s.get('input_device') != 'controller' else '0'
+    env['GOW3_MOUSE_INVERT_Y'] = '1' if s.get('mouse_invert') else '0'
     env.setdefault('GOW3_FPS_LOG', '1')  # FPS and worst frame every 5 s in the log (diagnostics)
     env.setdefault('GOW3_FRAME_STATS', '1')  # draws, compiles and stalls every 5 s (diagnostics)
     # F12 in the game (or creating the trigger file) saves the next frames here, for bug reports
