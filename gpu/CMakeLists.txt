@@ -299,6 +299,9 @@ target_link_libraries(async-fetch-snapshot-test PRIVATE Vulkan::Headers fmt::fmt
 target_compile_options(depth-stencil-state-test PRIVATE -UNDEBUG)
 target_include_directories(depth-stencil-state-test PRIVATE shim shadps4 third_party/gcn/include)
 target_link_libraries(depth-stencil-state-test PRIVATE Vulkan::Headers fmt::fmt Boost::headers magic_enum::magic_enum)
+add_executable(window-cursor-test EXCLUDE_FROM_ALL ../tests/test_window_cursor.cpp)
+target_compile_options(window-cursor-test PRIVATE -UNDEBUG -Wall -Wextra -Werror)
+
 add_executable(ui-composition-test EXCLUDE_FROM_ALL ../tests/test_ui_composition.cpp)
 target_compile_options(ui-composition-test PRIVATE -UNDEBUG -Wall -Wextra -Werror)
 target_include_directories(ui-composition-test PRIVATE ..)
