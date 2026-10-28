@@ -20,7 +20,7 @@ and shaders to Vulkan.
 
 ## Current Status
 
-**Status: version 0.1.9 — the whole story has been played from start to finish with this port,
+**Status: version 0.1.10 — the whole story has been played from start to finish with this port,
 with sound and saves.**
 
 **[Download the latest release](https://github.com/LucaPazienza/gravityrush_pc/releases/latest)** —
