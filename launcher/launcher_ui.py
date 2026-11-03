@@ -342,6 +342,12 @@ _ROWS = [
     ('Close', 'Chiudi', 'Fermer', 'Schließen', 'Cerrar'),
     # Advanced: GPU readbacks and threads.
     ('GPU AND THREADS', 'GPU E THREAD', 'GPU ET THREADS', 'GPU UND THREADS', 'GPU E HILOS'),
+    ('Graphics card', 'Scheda video', 'Carte graphique', 'Grafikkarte', 'Tarjeta gráfica'),
+    ('The card the game uses when the PC has more than one, such as a laptop with integrated and dedicated graphics. Auto picks the most capable one. Applied at start.',
+     'La scheda usata dal gioco quando il PC ne ha più di una, come i portatili con grafica integrata e dedicata. Automatico sceglie la più potente. Applicata all’avvio.',
+     'La carte utilisée par le jeu quand le PC en a plusieurs, comme les portables avec graphismes intégrés et dédiés. Auto choisit la plus puissante. Appliqué au démarrage.',
+     'Die Karte, die das Spiel nutzt, wenn der PC mehrere hat, etwa Laptops mit integrierter und dedizierter Grafik. Auto wählt die leistungsstärkste. Wird beim Start übernommen.',
+     'La tarjeta que usa el juego cuando el PC tiene más de una, como los portátiles con gráficos integrados y dedicados. Auto elige la más potente. Se aplica al iniciar.'),
     ('Auto', 'Automatico', 'Auto', 'Automatisch', 'Automático'),
     ('On', 'Attivo', 'Activé', 'An', 'Activado'),
     ('Relaxed', 'Rilassate', 'Souples', 'Locker', 'Relajadas'),
@@ -401,6 +407,121 @@ _ROWS = [
     ('Exit code {}. Its last messages:', 'Codice di uscita {}. Gli ultimi messaggi:', 'Code de sortie {}. Ses derniers messages :', 'Exit-Code {}. Die letzten Meldungen:', 'Código de salida {}. Sus últimos mensajes:'),
     ('Open the log', 'Apri il log', 'Ouvrir le journal', 'Protokoll öffnen', 'Abrir el registro'),
     ('Close the game before updating.', 'Chiudi il gioco prima di aggiornare.', 'Fermez le jeu avant la mise à jour.', 'Schließe das Spiel vor dem Update.', 'Cierra el juego antes de actualizar.'),
+    ('MOVEMENT', 'MOVIMENTO', 'DÉPLACEMENT', 'BEWEGUNG', 'MOVIMIENTO'),
+    ('ACTIONS', 'AZIONI', 'ACTIONS', 'AKTIONEN', 'ACCIONES'),
+    ('CAMERA AND MENUS', 'VISUALE E MENU', 'CAMÉRA ET MENUS', 'KAMERA UND MENÜS', 'CÁMARA Y MENÚS'),
+    ('MOUSE', 'MOUSE', 'SOURIS', 'MAUS', 'RATÓN'),
+    ('ACTION', 'AZIONE', 'ACTION', 'AKTION', 'ACCIÓN'),
+    ('KEYBOARD AND MOUSE', 'TASTIERA E MOUSE', 'CLAVIER ET SOURIS', 'TASTATUR UND MAUS', 'TECLADO Y RATÓN'),
+    ('Button names', 'Nomi dei tasti', 'Noms des boutons', 'Tastennamen', 'Nombres de los botones'),
+    ('Click a controller button to choose another one, or a key and then press the new one (Esc cancels).', 'Clicca un tasto del controller per sceglierne un altro, oppure un tasto della tastiera e poi premi quello nuovo (Esc annulla).', 'Cliquez sur un bouton de la manette pour en choisir un autre, ou sur une touche puis appuyez sur la nouvelle (Échap annule).', 'Klicke auf eine Controllertaste, um eine andere zu wählen, oder auf eine Taste und drücke dann die neue (Esc bricht ab).', 'Haz clic en un botón del mando para elegir otro, o en una tecla y pulsa la nueva (Esc cancela).'),
+    ('Move', 'Movimento', 'Se déplacer', 'Bewegen', 'Moverse'),
+    ('Camera', 'Visuale', 'Caméra', 'Kamera', 'Cámara'),
+    ('Left stick', 'Levetta sinistra', 'Stick gauche', 'Linker Stick', 'Joystick izquierdo'),
+    ('Right stick', 'Levetta destra', 'Stick droit', 'Rechter Stick', 'Joystick derecho'),
+    ('Mouse or arrow keys', 'Mouse o frecce', 'Souris ou flèches', 'Maus oder Pfeiltasten', 'Ratón o flechas'),
+    ('Arrow keys', 'Frecce', 'Flèches', 'Pfeiltasten', 'Flechas'),
+    ('Jump', 'Salta', 'Sauter', 'Springen', 'Saltar'),
+    ('Kick', 'Calcio', 'Coup de pied', 'Tritt', 'Patada'),
+    ('Stasis field', 'Campo di stasi', 'Champ de stase', 'Stasisfeld', 'Campo de estasis'),
+    ('Special attack', 'Attacco speciale', 'Attaque spéciale', 'Spezialangriff', 'Ataque especial'),
+    ('Shift gravity', 'Altera la gravità', 'Modifier la gravité', 'Schwerkraft verändern', 'Alterar la gravedad'),
+    ('Return to normal gravity', 'Torna a gravità normale', 'Revenir à la gravité normale', 'Zur normalen Schwerkraft zurück', 'Volver a la gravedad normal'),
+    ('Evade (with the left stick)', 'Schivata (con la levetta sinistra)', 'Esquive (avec le stick gauche)', 'Ausweichen (mit dem linken Stick)', 'Esquivar (con el joystick izquierdo)'),
+    ('Gravity slide (with R2)', 'Scivolata gravitazionale (con R2)', 'Glissade gravitationnelle (avec R2)', 'Schwerkraftrutschen (mit R2)', 'Deslizamiento gravitatorio (con R2)'),
+    ('Pause menu', 'Menu di pausa', 'Menu pause', 'Pausenmenü', 'Menú de pausa'),
+    ('First-person view', 'Visuale in prima persona', 'Vue à la première personne', 'Ego-Perspektive', 'Vista en primera persona'),
+    ('Reset camera', 'Ripristina visuale', 'Réinitialiser la caméra', 'Kamera zurücksetzen', 'Restablecer cámara'),
+    ('Touchpad', 'Touchpad', 'Pavé tactile', 'Touchpad', 'Panel táctil'),
+    ('Left stick click', 'Clic levetta sinistra', 'Clic stick gauche', 'Linker Stick (drücken)', 'Pulsar joystick izquierdo'),
+    ('Right stick click', 'Clic levetta destra', 'Clic stick droit', 'Rechter Stick (drücken)', 'Pulsar joystick derecho'),
+    ('Move the camera with the mouse', 'Muovi la visuale con il mouse', 'Bouger la caméra avec la souris', 'Kamera mit der Maus bewegen', 'Mover la cámara con el ratón'),
+    ('The pointer stays in the game window while you play; the Insert menu or Alt+Tab frees it.', 'Il puntatore resta nella finestra del gioco mentre giochi; il menu Insert o Alt+Tab lo liberano.', 'Le pointeur reste dans la fenêtre du jeu pendant la partie ; le menu Inser ou Alt+Tab le libère.', 'Der Zeiger bleibt beim Spielen im Spielfenster; das Einfg-Menü oder Alt+Tab gibt ihn frei.', 'El puntero se queda en la ventana del juego mientras juegas; el menú Insert o Alt+Tab lo liberan.'),
+    ('Mouse sensitivity', 'Sensibilità del mouse', 'Sensibilité de la souris', 'Mausempfindlichkeit', 'Sensibilidad del ratón'),
+    ('Invert vertical camera', 'Inverti visuale verticale', 'Inverser la caméra verticale', 'Vertikale Kamera umkehren', 'Invertir cámara vertical'),
+    ('Nothing', 'Nessuna', 'Rien', 'Nichts', 'Nada'),
+    ('Left button', 'Tasto sinistro', 'Bouton gauche', 'Linke Taste', 'Botón izquierdo'),
+    ('Right button', 'Tasto destro', 'Bouton droit', 'Rechte Taste', 'Botón derecho'),
+    ('Middle button', 'Tasto centrale', 'Bouton du milieu', 'Mittlere Taste', 'Botón central'),
+    ('Side button (back)', 'Tasto laterale (indietro)', 'Bouton latéral (arrière)', 'Seitentaste (zurück)', 'Botón lateral (atrás)'),
+    ('Side button (forward)', 'Tasto laterale (avanti)', 'Bouton latéral (avant)', 'Seitentaste (vor)', 'Botón lateral (adelante)'),
+    ('Without it, holding the left button over the game is a finger on the touchpad.', 'Senza, tenere premuto il tasto sinistro sul gioco equivale a un dito sul touchpad.', 'Sans elle, maintenir le bouton gauche sur le jeu équivaut à un doigt sur le pavé tactile.', 'Ohne sie ist die gedrückte linke Taste über dem Spiel ein Finger auf dem Touchpad.', 'Sin ella, mantener el botón izquierdo sobre el juego equivale a un dedo en el panel táctil.'),
+    ('MODS', 'MOD', 'MODS', 'MODS', 'MODS'),
+    ('Use mods', 'Usa le mod', 'Utiliser les mods', 'Mods verwenden', 'Usar mods'),
+    ('Mods folder', 'Cartella delle mod', 'Dossier des mods', 'Mod-Ordner', 'Carpeta de mods'),
+    ('Empty: the mods folder next to the launcher.', 'Vuota: la cartella mods accanto al launcher.', 'Vide : le dossier mods à côté du lanceur.', 'Leer: der Ordner mods neben dem Launcher.', 'Vacía: la carpeta mods junto al lanzador.'),
+    ("Each mod is a folder inside the mods folder, with files in the same paths as the game's. They are used in place of the originals; your game folder is not changed.", 'Ogni mod è una cartella dentro la cartella delle mod, con i file negli stessi percorsi di quelli del gioco. Vengono usati al posto degli originali; la cartella del gioco non viene modificata.', 'Chaque mod est un dossier dans le dossier des mods, avec les fichiers aux mêmes chemins que ceux du jeu. Ils remplacent les originaux ; le dossier du jeu n’est pas modifié.', 'Jeder Mod ist ein Ordner im Mod-Ordner, mit Dateien unter denselben Pfaden wie die des Spiels. Sie ersetzen die Originale; der Spielordner wird nicht verändert.', 'Cada mod es una carpeta dentro de la carpeta de mods, con archivos en las mismas rutas que los del juego. Se usan en lugar de los originales; la carpeta del juego no se modifica.'),
+    ('Options', 'Options', 'Options', 'Options', 'Options'),
+    ('Share / Create', 'Share / Create', 'Share / Create', 'Share / Create', 'Share / Create'),
+    ('DEVICE', 'DISPOSITIVO', 'APPAREIL', 'GERÄT', 'DISPOSITIVO'),
+    ('Play with', 'Gioca con', 'Jouer avec', 'Spielen mit', 'Jugar con'),
+    ('Automatic', 'Automatico', 'Automatique', 'Automatisch', 'Automático'),
+    ('Automatic: keyboard and mouse', 'Automatico: tastiera e mouse', 'Automatique : clavier et souris', 'Automatisch: Tastatur und Maus', 'Automático: teclado y ratón'),
+    ('Controller', 'Controller', 'Manette', 'Controller', 'Mando'),
+    ('Controller (none connected)', 'Controller (nessuno collegato)', 'Manette (aucune connectée)', 'Controller (keiner verbunden)', 'Mando (ninguno conectado)'),
+    ('Keyboard and mouse', 'Tastiera e mouse', 'Clavier et souris', 'Tastatur und Maus', 'Teclado y ratón'),
+    ('Search again', 'Cerca di nuovo', 'Rechercher', 'Erneut suchen', 'Buscar de nuevo'),
+    ('The controller when one is connected, the keyboard and mouse at any time.', 'Il controller quando è collegato, tastiera e mouse in ogni momento.', 'La manette quand elle est connectée, le clavier et la souris à tout moment.', 'Der Controller, wenn einer verbunden ist, Tastatur und Maus jederzeit.', 'El mando cuando hay uno conectado, el teclado y el ratón en todo momento.'),
+    ('Only the controller: the keyboard and mouse do not move Kat.', 'Solo il controller: tastiera e mouse non muovono Kat.', 'Seulement la manette : le clavier et la souris ne déplacent pas Kat.', 'Nur der Controller: Tastatur und Maus bewegen Kat nicht.', 'Solo el mando: el teclado y el ratón no mueven a Kat.'),
+    ('Only the keyboard and mouse: a connected controller is ignored.', 'Solo tastiera e mouse: un controller collegato viene ignorato.', 'Seulement le clavier et la souris : une manette connectée est ignorée.', 'Nur Tastatur und Maus: ein verbundener Controller wird ignoriert.', 'Solo teclado y ratón: se ignora un mando conectado.'),
+    ('Connected: {}', 'Collegati: {}', 'Connectées : {}', 'Verbunden: {}', 'Conectados: {}'),
+    ('Click a button to choose another one.', 'Clicca un tasto per sceglierne un altro.', 'Cliquez sur un bouton pour en choisir un autre.', 'Klicke auf eine Taste, um eine andere zu wählen.', 'Haz clic en un botón para elegir otro.'),
+    ('Space', 'Spazio', 'Espace', 'Leertaste', 'Espacio'),
+    ('Left Shift', 'Maiusc sinistro', 'Maj gauche', 'Umschalt links', 'Mayús izquierda'),
+    ('Right Shift', 'Maiusc destro', 'Maj droite', 'Umschalt rechts', 'Mayús derecha'),
+    ('Left Ctrl', 'Ctrl sinistro', 'Ctrl gauche', 'Strg links', 'Ctrl izquierdo'),
+    ('Right Ctrl', 'Ctrl destro', 'Ctrl droit', 'Strg rechts', 'Ctrl derecho'),
+    ('Left Alt', 'Alt sinistro', 'Alt gauche', 'Alt links', 'Alt izquierdo'),
+    ('Right Alt', 'Alt Gr', 'Alt Gr', 'Alt Gr', 'Alt Gr'),
+    ('Return', 'Invio', 'Entrée', 'Eingabe', 'Intro'),
+    ('Backspace', 'Backspace', 'Retour arrière', 'Rücktaste', 'Retroceso'),
+    ('CapsLock', 'Bloc Maiusc', 'Verr Maj', 'Feststell', 'Bloq Mayús'),
+    ('Delete', 'Canc', 'Suppr', 'Entf', 'Supr'),
+    ('Home', 'Home', 'Début', 'Pos1', 'Inicio'),
+    ('End', 'Fine', 'Fin', 'Ende', 'Fin'),
+    ('PageUp', 'Pag su', 'Page préc', 'Bild auf', 'Re Pág'),
+    ('PageDown', 'Pag giù', 'Page suiv', 'Bild ab', 'Av Pág'),
+    ('Mouse Left', 'Mouse sinistro', 'Souris gauche', 'Maus links', 'Ratón izquierdo'),
+    ('Mouse Right', 'Mouse destro', 'Souris droite', 'Maus rechts', 'Ratón derecho'),
+    ('Mouse Middle', 'Mouse centrale', 'Souris milieu', 'Maus Mitte', 'Ratón central'),
+    ('Mouse X1', 'Mouse laterale 1', 'Souris latéral 1', 'Maus Seite 1', 'Ratón lateral 1'),
+    ('Mouse X2', 'Mouse laterale 2', 'Souris latéral 2', 'Maus Seite 2', 'Ratón lateral 2'),
+    ('Click a controller button to choose another one. For the keyboard and mouse, click a box and press a key or a mouse button: Esc cancels, Delete leaves it empty.', 'Clicca un tasto del controller per sceglierne un altro. Per tastiera e mouse clicca una casella e premi un tasto o un pulsante del mouse: Esc annulla, Canc la lascia vuota.', 'Cliquez sur un bouton de la manette pour en choisir un autre. Pour le clavier et la souris, cliquez sur une case et appuyez sur une touche ou un bouton de la souris : Échap annule, Suppr la vide.', 'Klicke auf eine Controllertaste, um eine andere zu wählen. Für Tastatur und Maus klicke auf ein Feld und drücke eine Taste oder Maustaste: Esc bricht ab, Entf leert es.', 'Haz clic en un botón del mando para elegir otro. Para teclado y ratón, haz clic en una casilla y pulsa una tecla o un botón del ratón: Esc cancela, Supr la vacía.'),
+    ('Click a box and press a key or a mouse button: Esc cancels, Delete leaves it empty.', 'Clicca una casella e premi un tasto o un pulsante del mouse: Esc annulla, Canc la lascia vuota.', 'Cliquez sur une case et appuyez sur une touche ou un bouton de la souris : Échap annule, Suppr la vide.', 'Klicke auf ein Feld und drücke eine Taste oder Maustaste: Esc bricht ab, Entf leert es.', 'Haz clic en una casilla y pulsa una tecla o un botón del ratón: Esc cancela, Supr la vacía.'),
+    ('L2 (with R2: gravity slide)', 'L2 (con R2: scivolata)', 'L2 (avec R2 : glissade)', 'L2 (mit R2: Rutschen)', 'L2 (con R2: deslizamiento)'),
+    ('Gravity slide (L2 + R2 on one button)', 'Scivolata gravitazionale (L2 + R2 in un tasto)', 'Glissade gravitationnelle (L2 + R2 sur une touche)', 'Schwerkraftrutschen (L2 + R2 auf einer Taste)', 'Deslizamiento gravitatorio (L2 + R2 en un botón)'),
+    ('The pointer stays in the game window while you play; the Insert menu or Alt+Tab frees it. The camera turns with your mouse as it is: its DPI set the speed.', 'Il puntatore resta nella finestra del gioco mentre giochi; il menu Insert o Alt+Tab lo liberano. La visuale segue il mouse così com’è: la velocità la decidono i suoi DPI.', 'Le pointeur reste dans la fenêtre du jeu pendant la partie ; le menu Inser ou Alt+Tab le libère. La caméra suit la souris telle quelle : ses DPI règlent la vitesse.', 'Der Zeiger bleibt beim Spielen im Spielfenster; das Einfg-Menü oder Alt+Tab gibt ihn frei. Die Kamera folgt der Maus unverändert: ihre DPI bestimmen das Tempo.', 'El puntero se queda en la ventana del juego mientras juegas; el menú Insert o Alt+Tab lo liberan. La cámara sigue al ratón tal cual: sus DPI fijan la velocidad.'),
+    ('{} removed from: {}', '{} tolto da: {}', '{} retiré de : {}', '{} entfernt von: {}', '{} quitado de: {}'),
+    ('The same key does several actions at once:', 'Lo stesso tasto fa più azioni insieme:', 'La même touche fait plusieurs actions à la fois :', 'Dieselbe Taste löst mehrere Aktionen aus:', 'La misma tecla hace varias acciones a la vez:'),
+    ('Escape', 'Esc', 'Échap', 'Esc', 'Esc'),
+    ('Click a controller button to choose another one. For the keyboard and mouse, click a box and press a key or a mouse button (Delete leaves it empty, 5 seconds without one cancel).', 'Clicca un tasto del controller per sceglierne un altro. Per tastiera e mouse clicca una casella e premi un tasto o un pulsante del mouse (Canc la lascia vuota, 5 secondi senza premere niente annullano).', 'Cliquez sur un bouton de la manette pour en choisir un autre. Pour le clavier et la souris, cliquez sur une case et appuyez sur une touche ou un bouton de la souris (Suppr la vide, 5 secondes sans rien annulent).', 'Klicke auf eine Controllertaste, um eine andere zu wählen. Für Tastatur und Maus klicke auf ein Feld und drücke eine Taste oder Maustaste (Entf leert es, 5 Sekunden ohne Taste brechen ab).', 'Haz clic en un botón del mando para elegir otro. Para teclado y ratón, haz clic en una casilla y pulsa una tecla o un botón del ratón (Supr la vacía, 5 segundos sin pulsar nada cancelan).'),
+    ('Click a box and press a key or a mouse button (Delete leaves it empty, 5 seconds without one cancel).', 'Clicca una casella e premi un tasto o un pulsante del mouse (Canc la lascia vuota, 5 secondi senza premere niente annullano).', 'Cliquez sur une case et appuyez sur une touche ou un bouton de la souris (Suppr la vide, 5 secondes sans rien annulent).', 'Klicke auf ein Feld und drücke eine Taste oder Maustaste (Entf leert es, 5 Sekunden ohne Taste brechen ab).', 'Haz clic en una casilla y pulsa una tecla o un botón del ratón (Supr la vacía, 5 segundos sin pulsar nada cancelan).'),
+    ('L2 + R2', 'L2 + R2', 'L2 + R2', 'L2 + R2', 'L2 + R2'),
+    ('Controller: choose from the list. Keyboard and mouse: click a box, then press a key or a mouse button (Delete empties it).', 'Controller: scegli dall’elenco. Tastiera e mouse: clicca una casella e premi un tasto o un pulsante del mouse (Canc la svuota).', 'Manette : choisissez dans la liste. Clavier et souris : cliquez sur une case puis appuyez sur une touche ou un bouton de la souris (Suppr la vide).', 'Controller: aus der Liste wählen. Tastatur und Maus: Feld anklicken, dann eine Taste oder Maustaste drücken (Entf leert es).', 'Mando: elige de la lista. Teclado y ratón: haz clic en una casilla y pulsa una tecla o un botón del ratón (Supr la vacía).'),
+    ('Choose a button from the list.', 'Scegli un tasto dall’elenco.', 'Choisissez un bouton dans la liste.', 'Wähle eine Taste aus der Liste.', 'Elige un botón de la lista.'),
+    ('Click a box, then press a key or a mouse button (Delete empties it).', 'Clicca una casella e premi un tasto o un pulsante del mouse (Canc la svuota).', 'Cliquez sur une case puis appuyez sur une touche ou un bouton de la souris (Suppr la vide).', 'Feld anklicken, dann eine Taste oder Maustaste drücken (Entf leert es).', 'Haz clic en una casilla y pulsa una tecla o un botón del ratón (Supr la vacía).'),
+    ('Show', 'Mostra', 'Afficher', 'Anzeigen', 'Mostrar'),
+    ('Click a box to change it.', 'Clicca una casella per cambiarla.', 'Cliquez sur une case pour la changer.', 'Klicke auf ein Feld, um es zu ändern.', 'Haz clic en una casilla para cambiarla.'),
+    ('Click a box: a key or a mouse button, main and second one (Delete empties a box).', 'Clicca una casella: un tasto o un pulsante del mouse, principale e secondo (Canc svuota una casella).', 'Cliquez sur une case : une touche ou un bouton de la souris, principal et second (Suppr vide une case).', 'Klicke auf ein Feld: eine Taste oder Maustaste, erste und zweite (Entf leert ein Feld).', 'Haz clic en una casilla: una tecla o un botón del ratón, principal y segundo (Supr vacía una casilla).'),
+    ('Main key…', 'Tasto principale…', 'Touche principale…', 'Erste Taste…', 'Tecla principal…'),
+    ('Second key…', 'Secondo tasto…', 'Seconde touche…', 'Zweite Taste…', 'Segunda tecla…'),
+    ('Empty main key', 'Svuota tasto principale', 'Vider la touche principale', 'Erste Taste leeren', 'Vaciar tecla principal'),
+    ('Empty second key', 'Svuota secondo tasto', 'Vider la seconde touche', 'Zweite Taste leeren', 'Vaciar segunda tecla'),
+    ('short:Left Shift', 'Shift sx', 'Maj g.', 'Umsch. l.', 'Mayús izq.'),
+    ('short:Right Shift', 'Shift dx', 'Maj d.', 'Umsch. r.', 'Mayús der.'),
+    ('short:Left Ctrl', 'Ctrl sx', 'Ctrl g.', 'Strg l.', 'Ctrl izq.'),
+    ('short:Right Ctrl', 'Ctrl dx', 'Ctrl d.', 'Strg r.', 'Ctrl der.'),
+    ('short:Left Alt', 'Alt', 'Alt', 'Alt', 'Alt'),
+    ('short:Right Alt', 'Alt Gr', 'Alt Gr', 'Alt Gr', 'Alt Gr'),
+    ('short:Mouse Left', 'Mouse sx', 'Souris g.', 'Maus l.', 'Ratón izq.'),
+    ('short:Mouse Right', 'Mouse dx', 'Souris d.', 'Maus r.', 'Ratón der.'),
+    ('short:Mouse Middle', 'Mouse c.', 'Souris m.', 'Maus M.', 'Ratón c.'),
+    ('short:Mouse X1', 'Mouse 4', 'Souris 4', 'Maus 4', 'Ratón 4'),
+    ('short:Mouse X2', 'Mouse 5', 'Souris 5', 'Maus 5', 'Ratón 5'),
+    ('Click a label to change it.', 'Clicca una scritta per cambiarla.', 'Cliquez sur une étiquette pour la changer.', 'Klicke auf eine Beschriftung, um sie zu ändern.', 'Haz clic en una etiqueta para cambiarla.'),
+    ('Click a label: a key or a mouse button, main and second one (Delete empties it).', 'Clicca una scritta: un tasto o un pulsante del mouse, principale e secondo (Canc la svuota).', 'Cliquez sur une étiquette : une touche ou un bouton de la souris, principal et second (Suppr la vide).', 'Klicke auf eine Beschriftung: eine Taste oder Maustaste, erste und zweite (Entf leert sie).', 'Haz clic en una etiqueta: una tecla o un botón del ratón, principal y segundo (Supr la vacía).'),
+    ('Report a problem', 'Segnala un problema', 'Signaler un problème', 'Problem melden', 'Informar de un problema'),
+    ('Attach last_run.log from the folder that opened', 'Allega last_run.log dalla cartella che si è aperta', 'Joignez last_run.log depuis le dossier qui s’est ouvert', 'Hänge last_run.log aus dem geöffneten Ordner an', 'Adjunta last_run.log desde la carpeta que se abrió'),
     ('Updated to version {}', 'Aggiornato alla versione {}', 'Mis à jour vers la version {}', 'Auf Version {} aktualisiert', 'Actualizado a la versión {}'),
 ]
 TRANSLATIONS = {code: {row[0]: row[i] for row in _ROWS} for i, code in enumerate(('it', 'fr', 'de', 'es'), 1)}
@@ -453,6 +574,38 @@ def pick_language(choice, windows):
 BUTTON_NAMES = {'cross': 'Cross', 'circle': 'Circle', 'square': 'Square', 'triangle': 'Triangle', 'l1': 'L1', 'r1': 'R1',
                 'l2': 'L2', 'r2': 'R2', 'l3': 'L3', 'r3': 'R3', 'options': 'Options', 'touchpad': 'Touchpad',
                 'up': 'Up', 'down': 'Down', 'left': 'Left', 'right': 'Right'}
+# The game's actions per PS4 button (its own help texts), in the controls page's groups.
+ACTION_GROUPS = [
+    ('ACTIONS', [('cross', 'Jump'), ('square', 'Kick'), ('circle', 'Stasis field'),
+                 ('triangle', 'Special attack'), ('r1', 'Shift gravity'), ('l1', 'Return to normal gravity'),
+                 ('r2', 'Evade (with the left stick)'), ('l2', 'L2 (with R2: gravity slide)'),
+                 ('slide', 'Gravity slide (L2 + R2 on one button)')]),
+    ('CAMERA AND MENUS', [('options', 'Pause menu'), ('up', 'First-person view'), ('down', 'Reset camera'),
+                          ('left', 'D-pad left'), ('right', 'D-pad right'), ('touchpad', 'Touchpad'),
+                          ('l3', 'Left stick click'), ('r3', 'Right stick click')]),
+]
+# The rows of the controls page: the PS4 buttons the keyboard, mouse and controller emulate.
+BUTTON_ORDER = ['cross', 'circle', 'square', 'triangle', 'l1', 'r1', 'l2', 'r2', 'slide', 'l3', 'r3', 'options',
+                'touchpad', 'up', 'down', 'left', 'right']
+# Gamepad buttons offered for remapping, by SDL name (the triggers are not remapped).
+PAD_CHOICES = ['a', 'b', 'x', 'y', 'leftshoulder', 'rightshoulder', 'leftstick', 'rightstick', 'start', 'back',
+               'touchpad', 'dpup', 'dpdown', 'dpleft', 'dpright']
+TRIGGER_NAMES = {'playstation': {'l2': 'L2', 'r2': 'R2'}, 'xbox': {'l2': 'LT', 'r2': 'RT'}}
+# Windows virtual keys -> the SDL names the runtime's key map uses (src/runtime_pad.c), for the
+# key capture. Left out: ',' and '=' (the map's separators), Insert, F9, F11 and F12 (the port's
+# shortcuts), and Shift/Ctrl/Alt without a side (their sided codes come too).
+VK_NAMES = {0x01: 'Mouse Left', 0x02: 'Mouse Right', 0x04: 'Mouse Middle', 0x05: 'Mouse X1', 0x06: 'Mouse X2',
+            0x08: 'Backspace', 0x1B: 'Escape', 0x09: 'Tab', 0x0D: 'Return', 0x14: 'CapsLock', 0x20: 'Space', 0x21: 'PageUp',
+            0x22: 'PageDown', 0x23: 'End', 0x24: 'Home', 0x25: 'Left', 0x26: 'Up', 0x27: 'Right', 0x28: 'Down',
+            0xA0: 'Left Shift', 0xA1: 'Right Shift', 0xA2: 'Left Ctrl', 0xA3: 'Right Ctrl', 0xA4: 'Left Alt',
+            0xA5: 'Right Alt', 0xBA: ';', 0xBD: '-', 0xBE: '.', 0xBF: '/', 0xC0: '`', 0xDB: '[', 0xDC: '\\',
+            0xDD: ']', 0xDE: "'", 0x6A: 'Keypad *', 0x6B: 'Keypad +', 0x6D: 'Keypad -', 0x6E: 'Keypad .',
+            0x6F: 'Keypad /',
+            **{vk: chr(vk) for vk in range(0x30, 0x3A)}, **{vk: chr(vk) for vk in range(0x41, 0x5B)},
+            **{0x60 + n: f'Keypad {n}' for n in range(10)}, **{0x70 + n: f'F{n + 1}' for n in range(8)},
+            0x79: 'F10'}
+VK_DELETE = 0x2E
+CAPTURE_SECONDS = 5  # a key capture with nothing pressed for this long is cancelled
 # Tk key names -> the SDL key names the runtime's key map uses (src/runtime_pad.c).
 TK_KEYS = {'space': 'Space', 'Shift_L': 'Left Shift', 'Shift_R': 'Right Shift', 'Control_L': 'Left Ctrl',
            'Control_R': 'Right Ctrl', 'Alt_L': 'Left Alt', 'Alt_R': 'Right Alt', 'Return': 'Return', 'Tab': 'Tab',
@@ -1574,8 +1727,11 @@ class LauncherWindow:
             cv.coords(close, self.px(PANEL_X + PANEL_W - 30), self.px(PANEL_Y + 32 + dy))
 
         def landed():
-            if window in self.panel_items:
+            # Not under a dialog opened meanwhile: close_modal shows the page.
+            if window in self.panel_items and not self.modal_items:
                 cv.itemconfigure(window, state='normal')
+            elif window in self.panel_items:
+                self.hidden_page = window
         update(0.0)
         self.anim.add(220, update, ease_out, done=landed)
 
@@ -1673,6 +1829,11 @@ class LauncherWindow:
         self.sec(body, 'FOLDERS', first=True)
         self.folder_row(body, 'Game folder', 'game_dir', 'Your game dump (eboot.bin, sce_module, sce_sys).')
         self.folder_row(body, 'Saves folder', 'user_dir', 'Empty: the launcher data folder (it also holds the shader cache).')
+        self.sec(body, 'MODS')
+        self.toggle_row(body, 'Use mods', self.app.get('mods_enabled', True), lambda v: self.set_app('mods_enabled', v),
+                        "Each mod is a folder inside the mods folder, with files in the same paths as the game's. "
+                        'They are used in place of the originals; your game folder is not changed.')
+        self.folder_row(body, 'Mods folder', 'mods_dir', 'Empty: the mods folder next to the launcher.')
         self.sec(body, 'DETECTED GAME')
         found = logic.game_info(self.app['game_dir'])
         if found:
@@ -1721,6 +1882,17 @@ class LauncherWindow:
 
     def page_video(self, body, foot):
         self.sec(body, 'SCREEN', first=True)
+        gpus = self.logic.vulkan_gpus()
+        if gpus or self.app.get('gpu'):
+            names = [name for name, _ in gpus]
+            options = [('', 'Auto')] + [(name, name) for name in names]
+            if self.app.get('gpu') and self.app['gpu'] not in names:
+                options.append((self.app['gpu'], self.app['gpu']))
+            self.row(body, 'Graphics card',
+                     lambda c: self.choice(c, options, self.app.get('gpu', ''), lambda v: self.set_app('gpu', v),
+                                           26).pack(side='right'),
+                     'The card the game uses when the PC has more than one, such as a laptop with integrated and '
+                     'dedicated graphics. Auto picks the most capable one. Applied at start.')
         self.row(body, 'Window mode', lambda c: Segments(self, c, WINDOW_MODES, self.ini.get('display_mode', 'borderless'),
                                                         lambda v: self.set_ini('display_mode', v)).widget.pack(side='right'))
         self.toggle_row(body, 'Vertical sync', self.ini.get('vsync', '1') == '1', lambda v: self.set_ini('vsync', '1' if v else '0'))
@@ -1877,6 +2049,21 @@ class LauncherWindow:
                 chip.widget.place(x=self.px(480), rely=.5, anchor='w')
         self.footer(foot, [('Reset', self.reset_controls, False), ('Close', lambda: self.open_page(None), True)])
 
+    def button_label(self, button):
+        """The PS4 button a row emulates, as the game shows it (Cross, L1, L2 + R2...)."""
+        return t(self.logic.PS_BUTTON_NAMES.get(button, button))
+
+    def set_pad(self, button, name):
+        controls = self.app.get('controls') if isinstance(self.app.get('controls'), dict) else {}
+        pads = dict(controls.get('pad', {}))
+        if name == next(row[2] for row in self.logic.CONTROLS if row[0] == button):
+            pads.pop(button, None)
+        else:
+            pads[button] = name
+        controls['pad'] = pads
+        self.app['controls'] = controls
+        self.save()
+
     def page_advanced(self, body, foot):
         self.sec(body, 'LAUNCHER', first=True)
         self.row(body, 'Launcher language', lambda c: self.choice(c, [('', t('System'))] + LANGUAGES,
@@ -1954,7 +2141,7 @@ class LauncherWindow:
 
         def restore():
             for key, value in (('readbacks', ''), ('draw_pipe', ''), ('prep_workers', ''), ('copy_threads', ''),
-                               ('record_thread', True)):
+                               ('record_thread', True), ('gpu', '')):
                 self.app[key] = value
             self.ini['deferred_readback'], self.ini['stale_readback'] = '1', '0'
             self.save()
@@ -1981,7 +2168,18 @@ class LauncherWindow:
         for line in self.log_lines:
             self.console_line(line)
         text.configure(state='disabled')
-        self.footer(foot, [('Copy log', self.copy_log, False), ('Open log folder', lambda: self.open_path(str(self.user_dir())), True)])
+        self.footer(foot, [('Report a problem', self.report_problem, False), ('Copy log', self.copy_log, False),
+                           ('Open log folder', lambda: self.open_path(str(self.user_dir())), True)])
+
+    def report_problem(self):
+        """The report form on GitHub, filled in, and the folder with last_run.log to attach."""
+        import webbrowser
+        webbrowser.open(self.logic.report_url(self.app))
+        try:
+            self.open_path(str(self.user_dir()))
+        except OSError:
+            pass
+        self.toast(t('Attach last_run.log from the folder that opened'))
 
     def console_line(self, line):
         tag = 'warn' if ('Fault' in line or 'STOP' in line or 'error' in line.lower() or '<Warning>' in line) else \
@@ -2038,33 +2236,77 @@ class LauncherWindow:
         self.open_page('advanced')
         self.toast(t('Defaults restored'))
 
-    def start_capture(self, button, chip):
+    def start_capture(self, button, chip, part='key'):
+        import time
+        if time.monotonic() < getattr(self, 'capture_quiet', 0):
+            return  # the click that just set a binding also reached this box
         if self.capture:
             self.capture[1].set_text(self.capture[2])
-        self.capture = (button, chip, chip.text)
+        self.capture = (button, chip, chip.text, part, False)
+        self.capture_until = time.monotonic() + CAPTURE_SECONDS
         chip.set_text(t('Press a key…'))
+        self.root.after(15, self.poll_capture)
 
-    def key_press(self, event):
+    def poll_capture(self):
+        """Waits for every key and button to be up (the click on the box), then takes the first
+        one pressed while the launcher is in front: keys Tk does not see (Alt) and mouse buttons."""
+        import ctypes
+        import time
         if not self.capture:
             return
-        button, chip, old = self.capture
-        self.capture = None
-        if event.keysym == 'Escape':
+        button, chip, old, part, armed = self.capture
+        user = ctypes.windll.user32
+        down = [vk for vk in (*VK_NAMES, VK_DELETE) if user.GetAsyncKeyState(vk) & 0x8000]
+        if time.monotonic() > getattr(self, 'capture_until', float('inf')):
+            self.capture = None  # nothing pressed in time: the box keeps its binding
             chip.set_text(old)
-            return 'break'
-        name = TK_KEYS.get(event.keysym) or (event.keysym.upper() if len(event.keysym) == 1 else event.keysym)
-        chip.set_text(name)
+            return
+        owner = ctypes.c_ulong(0)
+        user.GetWindowThreadProcessId(user.GetForegroundWindow(), ctypes.byref(owner))
+        front = owner.value == os.getpid()  # the launcher is in front (not another program)
+        if not armed or not front:
+            self.capture = (button, chip, old, part, not down and front)
+            self.root.after(15, self.poll_capture)
+            return
+        if not down:
+            self.root.after(15, self.poll_capture)
+            return
+        self.capture = None
+        self.capture_quiet = time.monotonic() + 0.4
+        vk = down[0]
+        name = '' if vk == VK_DELETE else VK_NAMES[vk]
+        chip.set_text(t(name) if name else '—')
         controls = self.app.get('controls') if isinstance(self.app.get('controls'), dict) else {}
-        keys = dict(controls.get('key', {}))
-        default = next(row[1] for row in self.logic.CONTROLS if row[0] == button)
-        if name.casefold() == default.casefold():
-            keys.pop(button, None)
-        else:
-            keys[button] = name
-        controls['key'] = keys
+        # The key leaves every other action (and this action's other box) that had it.
+        taken = []
+        if name:
+            for other, _key, _pad in self.logic.CONTROLS:
+                for other_part, bound in zip(('key', 'alt'), self.logic.key_bindings(controls, other)):
+                    if (other, other_part) != (button, part) and bound.casefold() == name.casefold():
+                        self.set_binding(controls, other, other_part, '')
+                        if other != button:
+                            taken.append(other)
+        self.set_binding(controls, button, part, name)
         self.app['controls'] = controls
         self.save()
-        return 'break'
+        if taken:
+            self.toast(t('{} removed from: {}').format(t(name), ', '.join(self.button_label(b) for b in taken)))
+        self.root.after(10, lambda: self.open_page('controls'))  # the box shows both bindings
+
+    def set_binding(self, controls, button, part, name):
+        """Stores a keyboard/mouse binding (part 'key' or 'alt'); the default is not stored."""
+        chosen = dict(controls.get(part, {})) if isinstance(controls.get(part), dict) else {}
+        default = (next(row[1] for row in self.logic.CONTROLS if row[0] == button) if part == 'key'
+                   else self.logic.ALT_KEYS.get(button, ''))
+        if name.casefold() == default.casefold():
+            chosen.pop(button, None)
+        else:
+            chosen[button] = name
+        controls[part] = chosen
+
+    def key_press(self, event):
+        # The key capture reads Windows directly (poll_capture); Tk's copy of the key is dropped.
+        return 'break' if self.capture else None
 
     def shortcut(self):
         """Gravity Rush.lnk (plays with the saved settings) and Gravity Rush Launcher.lnk on the desktop."""
@@ -2152,6 +2394,8 @@ class LauncherWindow:
     def open_path(self, path, key=None):
         if key == 'user_dir' and not path:
             path = self.logic.DATA_DIR / 'user'
+        if key == 'mods_dir' and not path:
+            path = self.logic.DATA_DIR / 'mods'
         path = Path(path or self.logic.DATA_DIR)
         if not path.exists():
             path.mkdir(parents=True, exist_ok=True)
@@ -2168,6 +2412,7 @@ class LauncherWindow:
         and rises a little. size: (width, ignored height)."""
         self.close_modal()
         tk, cv = self.tk, self.cv
+        still = self.hide_page()
         self.photos['overlay'] = ImageTk.PhotoImage(self.paint.overlay())
         dim = cv.create_image(0, 0, anchor='nw', image=self.photos['overlay'])
         bw = (size or (440, 0))[0]
@@ -2196,7 +2441,7 @@ class LauncherWindow:
         box = cv.create_image(self.px(bx - 28), self.px(by - 28), anchor='nw', image=self.photos['box'])
         win = cv.create_window(self.px(bx + 28), self.px(by + 24), anchor='nw', window=frame)
         self.modal_frame = frame
-        self.modal_items = [dim, box, win]
+        self.modal_items = [dim, box, win] + ([still] if still else [])
 
         def pop(v):
             dy = 10 * (1 - v)
@@ -2214,10 +2459,47 @@ class LauncherWindow:
         self.modal_gauge.image = photo
         self.root.after(33, self.tick_gauge)
 
+    def hide_page(self):
+        """Hides the open page's controls (native windows, drawn above the dimming and the
+        dialog) and puts a still picture of them in their place; returns its canvas item."""
+        if len(self.panel_items) < 3:
+            return None
+        cv, item = self.cv, self.panel_items[2]
+        still = None
+        try:
+            widget = cv.nametowidget(cv.itemcget(item, 'window'))
+            w, h = widget.winfo_width(), widget.winfo_height()
+            user, gdi = ctypes.windll.user32, ctypes.windll.gdi32
+            hwnd = widget.winfo_id()
+            hdc = user.GetDC(hwnd)
+            mem = gdi.CreateCompatibleDC(hdc)
+            bmp = gdi.CreateCompatibleBitmap(hdc, w, h)
+            gdi.SelectObject(mem, bmp)
+            gdi.BitBlt(mem, 0, 0, w, h, hdc, 0, 0, 0x00CC0020)  # SRCCOPY
+            header = (ctypes.c_uint32 * 10)(40, w, (-h) & 0xFFFFFFFF, 1 | (32 << 16), 0, 0, 0, 0, 0, 0)
+            data = ctypes.create_string_buffer(w * h * 4)
+            gdi.GetDIBits(mem, bmp, 0, h, data, header, 0)
+            gdi.DeleteObject(bmp)
+            gdi.DeleteDC(mem)
+            user.ReleaseDC(hwnd, hdc)
+            picture = Image.frombuffer('RGBA', (w, h), data, 'raw', 'BGRA', 0, 1).convert('RGB')
+            self.photos['still'] = ImageTk.PhotoImage(picture)
+            x, y = cv.coords(item)
+            still = cv.create_image(x, y, anchor='nw', image=self.photos['still'])
+        except Exception:  # no picture: the page is only hidden
+            still = None
+        cv.itemconfigure(item, state='hidden')
+        self.hidden_page = item
+        return still
+
     def close_modal(self):
         for item in self.modal_items:
             self.cv.delete(item)
         self.modal_items = []
+        if getattr(self, 'hidden_page', None) is not None:
+            if self.hidden_page in self.panel_items:
+                self.cv.itemconfigure(self.hidden_page, state='normal')
+            self.hidden_page = None
         if hasattr(self, 'modal_frame'):
             self.modal_frame.destroy()
             del self.modal_frame
@@ -2469,6 +2751,7 @@ class LauncherWindow:
                 t('The game closed right away')
             self.modal(title, t('Exit code {}. Its last messages:').format(code) + '\n\n' + '\n'.join(last)[-700:],
                        [('Close', self.close_modal, False),
+                        ('Report a problem', lambda: (self.close_modal(), self.report_problem()), False),
                         ('Open the log', lambda: (self.close_modal(), self.open_page('log')), True)])
             return
         self.toast(t('The game exited.'))

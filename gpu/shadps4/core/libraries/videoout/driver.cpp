@@ -604,8 +604,12 @@ void VideoOutDriver::DrawLastFrame() {
     }, true);
 }
 
+// gow3: the game's flips so far, for the runtime's stall watchdog (GOW3_STALL_DUMP).
+extern "C" volatile unsigned long long gow3_flip_count = 0;
+
 bool VideoOutDriver::SubmitFlip(VideoOutPort* port, s32 index, s64 flip_arg,
                                 bool is_eop /*= false*/) {
+    __atomic_add_fetch(&gow3_flip_count, 1, __ATOMIC_RELAXED);
     // gow3: GOW3_FLIP_LOG=1 prints the game's flips per second (its own update rate), once a second.
     static const bool flip_log = std::getenv("GOW3_FLIP_LOG") != nullptr;
     if (flip_log) {
@@ -718,15 +722,15 @@ void VideoOutDriver::PresentThread(std::stop_token token) {
         return {};
     };
 
-    // gow3: with a frame limit (uncapped presets) a queued flip is presented as soon as it
-    // arrives and its slot allows, between vblanks, instead of on the next vblank tick.
-    bool immediate_flips = frame_limit != 0;
+    // gow3: a queued flip is presented as soon as it arrives and its slot allows, between
+    // vblanks, instead of on the next vblank tick. Without a limit ("Unlimited") every flip is
+    // presented at once: waiting for the 60 Hz vblank capped "Unlimited" at 60 FPS.
+    constexpr bool immediate_flips = true;
 
     while (!token.stop_requested()) {
         if (const u32 limit = current_limit(); limit != frame_limit) {
             frame_limit = limit;
             frame_period = limit ? std::chrono::nanoseconds(1000000000 / limit) : std::chrono::nanoseconds(0);
-            immediate_flips = limit != 0;
             next_flip = std::chrono::steady_clock::now();
             std::printf("VideoOut: frame limit %u FPS\n", limit);
         }

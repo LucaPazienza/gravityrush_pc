@@ -20,8 +20,8 @@ and shaders to Vulkan.
 
 ## Current Status
 
-**Status: version 0.1.7 — the opening, the first episode and the city work,
-with sound and saves. Not every part of the game has been tested yet.**
+**Status: version 0.1.10 — the whole story has been played from start to finish with this port,
+with sound and saves.**
 
 **[Download the latest release](https://github.com/LucaPazienza/gravityrush_pc/releases/latest)** —
 see [Playing](#playing) below.
@@ -30,8 +30,8 @@ Tested on Windows 11 with an NVIDIA RTX 5070 Ti, an Xbox One controller and a Du
 
 What works today:
 
-- **Boot and story:** title flow, the opening apple scene, the opening movie, episode 1 and the
-  city of Hekseville; dialogue, menus and trophies.
+- **Boot and story:** the whole game, from the title and the opening apple scene to the ending,
+  has been played through with this port; dialogue, menus, movies and the upgrade shop.
 - **Audio:** movies (AvPlayer) and the game's own sound engine on top of a real NGS2 sampler:
   PCM effects, ATRAC9 streamed music and ambience (wind, city), voice volume, pitch and panning,
   pause and resume, a mastering limiter, and a 7.1-to-stereo downmix for stereo devices.
@@ -49,14 +49,22 @@ What works today:
   On handhelds whose controller has no gyro (ROG Xbox Ally), **Vita mode** uses the console's own
   gyroscope instead (Windows sensors; a switch on the Controls page).
 - **Launcher:** a dark window with a sidebar menu and pages in a card (game, video, controls,
-  advanced, log), in English, Italian, French, German and Spanish. `Gravity Rush.exe` starts the game directly with the saved settings.
+  advanced, log), in English, Italian, French, German and Spanish; a mods folder of your choice. `Gravity Rush.exe` starts the game directly with the saved settings.
   The launcher finds new releases on GitHub by itself and installs them when the player agrees
   (saves, settings and mods are kept).
 - **In-game menu** (Insert, or R3+L2): image options, performance and an FPS overlay.
 
 Not done yet / known gaps:
 
-- No systematic testing of later episodes, stability over long sessions, or other hardware.
+- Only Nvidia graphics cards have been tested so far.
+- Trophies are not saved or shown yet.
+- **This port is developed for the European release only** (CUSA01113, version 01.00): every fix and
+  enhancement is made and checked on that version. Other releases, such as the American one
+  (CUSA01130), may start and play, but nothing specific to the port's work on the game applies to
+  them: render resolution stays at 1080p (no higher resolutions, no upscaling modes that render
+  below the screen), shadows stay at the game's quality, the gravity-shift camera may swing above
+  60 FPS (a 60 FPS limit avoids it), and the mouse turns the camera through the right stick, with
+  the game's own inertia, instead of directly.
 
 ### Roadmap
 
@@ -69,7 +77,7 @@ Not done yet / known gaps:
 - [x] Render resolution up to 4K, high-quality shadows
 - [x] First preview release
 - [x] First official release (0.1.2), with automatic updates
-- [ ] Play through the whole story and fix what breaks
+- [x] Play through the whole story and fix what breaks
 - [ ] Trophies
 - [ ] Performance and stability work
 
@@ -79,7 +87,8 @@ Not done yet / known gaps:
 - A graphics card with Vulkan 1.3 and a current driver.
 - Your own legally acquired copy of Gravity Rush Remastered (PS4), as an unpacked game folder
   (eboot.bin, sce_module, sce_sys) that you prepare with your own tools. Tested with the European
-  release CUSA01113, version 01.00; the resolution and shadow patches only apply to that version.
+  release CUSA01113, version 01.00: the port is developed for that version only (see the known
+  gaps above).
 
 ## Playing
 
@@ -91,9 +100,15 @@ Not done yet / known gaps:
 4. New versions: the launcher offers them when it opens (Advanced > Updates).
 
 The Video page sets the render resolution (up to 4K), shadow quality and the display options.
-To report a problem, press **F12** where you see it (the frames are saved in `user\screenshots`)
-and open an [issue](https://github.com/LucaPazienza/gravityrush_pc/issues) with them,
-`user\last_run.log` and where you were in the game.
+
+### Reporting problems
+
+Use the launcher's **Report a problem** button (Log page, or the notice after the game closes
+unexpectedly): it opens the [report form](https://github.com/LucaPazienza/gravityrush_pc/issues/new/choose)
+already filled in with the version and your graphics card, and the folder with `last_run.log` to
+attach. If the picture goes wrong or the game freezes, press **F12** at that moment first (the frames
+are saved in `user\screenshots`). Questions and impressions are welcome in
+[Discussions](https://github.com/LucaPazienza/gravityrush_pc/discussions).
 
 ## Building and Running
 

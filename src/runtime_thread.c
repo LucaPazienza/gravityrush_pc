@@ -542,6 +542,41 @@ static void apply_pokes(const char *spec) {
         if (*end && *end!=',') return;
     }
 }
+/* GOW3_HEAP_CHECK=<ms>: validates every heap of the process that often; the first damaged one
+ * is reported with a thread dump (who was running near the write), then checking stops. */
+static void heap_check(void) {
+    static ULONGLONG every=(ULONGLONG)-1, next;
+    if (every==(ULONGLONG)-1) { const char *e=getenv("GOW3_HEAP_CHECK"); every=e ? strtoull(e,NULL,0) : 0; }
+    if (!every || GetTickCount64()<next) return;
+    next=GetTickCount64()+every;
+    HANDLE heaps[64];
+    DWORD n=GetProcessHeaps(64,heaps);
+    for (DWORD i=0;i<n && i<64;++i) {
+        if (HeapValidate(heaps[i],0,NULL)) continue;
+        printf("Runtime: heap %p (%lu of %lu) is damaged\n",heaps[i],i+1,n);
+        dump_threads("GOW3_HEAP_CHECK");
+        every=0;
+        return;
+    }
+}
+/* GOW3_STALL_DUMP=<s> (default 10, 0 = off): once the game has flipped, a pause of that many
+ * seconds without a flip dumps the threads once (a stuck movie or load explains itself). */
+extern volatile unsigned long long gow3_flip_count;
+static void stall_check(void) {
+    static long long seconds=-1;
+    static unsigned long long last;
+    static ULONGLONG since;
+    static int dumped;
+    if (seconds<0) { const char *e=getenv("GOW3_STALL_DUMP"); seconds=e ? atoll(e) : 10; }
+    unsigned long long flips=__atomic_load_n(&gow3_flip_count,__ATOMIC_RELAXED);
+    if (!seconds || !flips) return;
+    if (flips!=last) { last=flips; since=GetTickCount64(); dumped=0; return; }
+    if (dumped || GetTickCount64()-since<(ULONGLONG)seconds*1000) return;
+    dumped=1;
+    char why[64];
+    snprintf(why,sizeof(why),"no flip for %lld s",seconds);
+    dump_threads(why);
+}
 static void *dump_watcher(void *arg) {
     (void)arg;
     const char *pokes=getenv("GOW3_POKE");
@@ -555,6 +590,8 @@ static void *dump_watcher(void *arg) {
         fflush(stdout);
         if (pokes) apply_pokes(pokes);
         mw_poll();
+        heap_check();
+        stall_check();
         int down=(GetAsyncKeyState(VK_F12)&0x8000)!=0;
         if (down && !was_down) dump_threads("F12");
         was_down=down;

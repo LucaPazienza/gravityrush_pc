@@ -166,7 +166,7 @@ TemporalUpscaler::TemporalUpscaler(const Instance& instance_, Scheduler& schedul
     // Reject unsupported shaders before allocating resources or recording a frame.
     Gow3Settings::ConfigureUpscalerSupport(instance.IsFsr4Int8Supported(),
                                          instance.IsFsr411Supported());
-    fsr4 = std::make_unique<Fsr4Upscaler>(instance, scheduler);
+    // The FSR 4 context is made by its first RecordFsr4 (only when FSR 4 is chosen).
     {
         const Dlss* dlss = Dlss::Get();
         static std::string problem;
@@ -318,7 +318,7 @@ bool TemporalUpscaler::OnFrameStart() {
     if (applied_upscaler != upscaler) {
         // A failed provider keeps a fatal flag internally; a user retry gets a fresh context.
         scheduler.Finish();
-        fsr4 = std::make_unique<Fsr4Upscaler>(instance, scheduler);
+        fsr4.reset();
         if (Gow3Settings::IsFsr4(upscaler)) Gow3Settings::Get().fsr4_problem = nullptr;
     }
     if (applied_upscaler != upscaler) fsr4_failed = false; // retry after a menu change
@@ -2463,6 +2463,9 @@ bool TemporalUpscaler::RecordFsr4(vk::CommandBuffer cmdbuf, Fsr4Upscaler::Image 
     // Same jitter convention as FSR 3; the menu (or toggle 1 << 26) flips it for tests.
     const float sign =
         Gow3Toggle::Disabled(1u << 26) != settings.fsr4_invert_jitter.load() ? -1.0f : 1.0f;
+    if (!fsr4) {
+        fsr4 = std::make_unique<Fsr4Upscaler>(instance, scheduler);
+    }
     const bool ok = fsr4->Record({
         .cmdbuf = cmdbuf,
         .color = color,
