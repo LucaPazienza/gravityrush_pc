@@ -44,8 +44,13 @@ What works today:
   Native/DLAA, Quality, Balanced and Performance modes that render below the screen and enlarge the
   image to it, the HUD kept as the game draws it. FSR 1.0 is available as a simple upscaler.
 - **Input:** controllers through SDL3 (Xbox, DualSense and others), keyboard and mouse.
-  The touchpad works with real touch ids; the mouse acts as a finger (hold and drag for swipes).
-  The **DualSense gyro** steers the gravity camera like on the PS4 (adjustable sensitivity).
+  **Mouse look**: the mouse turns the game's camera directly, on the ground and while floating,
+  at once and by the mouse's own counts (its DPI), at any frame rate. Every button can be
+  remapped on the controller and on the keyboard and mouse (two keys per button, Alt, Ctrl, Esc
+  and the mouse buttons included); the gravity slide (L2 + R2) can sit on one key. The launcher
+  plays with the controller, the keyboard and mouse, or both, and finds the connected controller.
+  The touchpad works with real touch ids. The **DualSense gyro** steers the gravity camera like on
+  the PS4 (adjustable sensitivity).
   On handhelds whose controller has no gyro (ROG Xbox Ally), **Vita mode** uses the console's own
   gyroscope instead (Windows sensors; a switch on the Controls page).
 - **Launcher:** a dark window with a sidebar menu and pages in a card (game, video, controls,
