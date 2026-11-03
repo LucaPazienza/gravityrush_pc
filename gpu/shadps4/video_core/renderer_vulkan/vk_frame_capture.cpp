@@ -337,6 +337,19 @@ void FrameCapture::Sampled(const VideoCore::ImageInfo& info, bool storage) {
     }
 }
 
+void FrameCapture::Text(std::string line, VAddr address, u64 size, u32 pitch, u32 height) {
+    pending_buffers.push_back(std::move(line));
+    const auto dir = CaptureDir();
+    std::error_code ec;
+    std::filesystem::create_directories(dir, ec);
+    const std::string path =
+        (dir / std::format("text_{:x}_{}x{}.bin", address, pitch, height)).string();
+    if (FILE* f = std::fopen(path.c_str(), "wb")) {
+        std::fwrite(reinterpret_cast<const void*>(address), 1, size, f);
+        std::fclose(f);
+    }
+}
+
 void FrameCapture::Note(const char* text) {
     if (!entries.empty()) {
         entries.back().note += text;

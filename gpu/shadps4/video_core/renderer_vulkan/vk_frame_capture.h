@@ -44,6 +44,9 @@ public:
     /// Contents of a bound buffer (first 1 KiB), kept for small passes and a pass's first draw.
     static void Buffer(u64 stage_hash, u32 slot, VAddr address, const void* data, u64 size);
     static void Note(const char* text);
+    /// gow3: a text texture's state line (Gow3TextState) for the next draw, and its guest memory
+    /// written next to the captures as text_<address>_<pitch>x<height>.bin.
+    static void Text(std::string line, VAddr address, u64 size, u32 pitch, u32 height);
 
     /// In-game menu: records the next full frame (as the trigger file does).
     static void Request();

@@ -6,12 +6,18 @@
 #include "common/assert.h"
 #include "common/logging/log.h"
 #include "sdl_window.h"
+#include "window_cursor.h"
 #include "gow3_overlay.h"
 #include "gow3_graphics.h"
 #include "gow3_settings.h"
 #ifdef _WIN32
 #include <windows.h>
 #endif
+
+// gow3: mouse look (src/runtime_pad.c): the cursor's motion while it is captured in the window.
+extern "C" void runtime_pad_mouse_motion(float dx, float dy);
+extern "C" void runtime_pad_mouse_capture(int on);
+extern "C" int runtime_pad_mouse_look(void);
 
 namespace Frontend {
 
@@ -129,6 +135,7 @@ WindowSDL::WindowSDL(s32 width_, s32 height_, const char* title) : width{width_}
     width = w;
     height = h;
     LOG_INFO(Frontend, "Window {}x{} on {}", w, h, driver);
+    UpdateCursor();
 }
 
 // Windowed, borderless (desktop-sized, the monitor at the chosen refresh rate) or exclusive
@@ -166,7 +173,25 @@ void WindowSDL::ApplyDisplayMode(int mode) {
 }
 
 WindowSDL::~WindowSDL() {
+    SDL_ShowCursor();
     SDL_DestroyWindow(window);
+}
+
+void WindowSDL::UpdateCursor() {
+    const SDL_WindowFlags flags = SDL_GetWindowFlags(window);
+    const auto policy = FullscreenCursorPolicy(
+        IsOpen() && (flags & SDL_WINDOW_FULLSCREEN) != 0, (flags & SDL_WINDOW_INPUT_FOCUS) != 0,
+        SDL_GetMouseFocus() == window, text_active || Gow3Overlay::CapturesInput(),
+        SDL_GetWindowRelativeMouseMode(window));
+    if (policy == CursorVisibility::Keep) {
+        // Relative mode owns the pointer. Force a fresh decision when it releases it.
+        cursor_hidden = -1;
+        return;
+    }
+    const int hide = policy == CursorVisibility::Hide;
+    if (hide != cursor_hidden && (hide ? SDL_HideCursor() : SDL_ShowCursor())) {
+        cursor_hidden = hide;
+    }
 }
 
 void WindowSDL::BeginTextInput(const std::string& initial, const std::string& prompt) {
@@ -210,6 +235,18 @@ bool WindowSDL::PollEvents() {
         mode != display_mode || Gow3Settings::Get().refresh_rate != refresh_rate) {
         ApplyDisplayMode(mode);
     }
+    // gow3: mouse look captures the cursor while the game has the focus and nothing of the port's
+    // (its menu, a text entry) needs the pointer; SDL then reports motion without an edge.
+    if (runtime_pad_mouse_look()) {
+        static bool captured = false;
+        const bool want = (SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) != 0 &&
+                          !Gow3Overlay::CapturesInput() && !text_active;
+        if (want != captured) {
+            captured = want;
+            SDL_SetWindowRelativeMouseMode(window, want);
+            runtime_pad_mouse_capture(want ? 1 : 0);
+        }
+    }
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
         if (text_active && (event.type == SDL_EVENT_TEXT_INPUT || event.type == SDL_EVENT_KEY_DOWN)) {
@@ -243,6 +280,11 @@ bool WindowSDL::PollEvents() {
             continue;
         }
         switch (event.type) {
+        case SDL_EVENT_MOUSE_MOTION:
+            if (SDL_GetWindowRelativeMouseMode(window)) {
+                runtime_pad_mouse_motion(event.motion.xrel, event.motion.yrel);
+            }
+            break;
         case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
         case SDL_EVENT_WINDOW_RESIZED: {
             int w = 0, h = 0;
@@ -262,6 +304,9 @@ bool WindowSDL::PollEvents() {
             break;
         }
     }
+    // Run on the SDL window thread, after events may have opened/closed a port dialog.
+    // Re-evaluate even without events: the save picker can open from the game thread.
+    UpdateCursor();
     return is_open;
 }
 

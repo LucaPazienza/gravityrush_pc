@@ -44,10 +44,11 @@ NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
 # (Advanced > Updates) and installs it when the player agrees. Pre-releases count too (the first
 # releases were previews). Tests: GR_UPDATE_API serves another release list, GR_UPDATE_TEST_FROM
 # makes this build compare as an older version.
-VERSION = '0.1.7'
+VERSION = '0.1.10'
 RELEASES_API = os.environ.get('GR_UPDATE_API') or \
     'https://api.github.com/repos/LucaPazienza/gravityrush_pc/releases?per_page=20'
 RELEASES_PAGE = 'https://github.com/LucaPazienza/gravityrush_pc/releases'
+ISSUE_FORM = 'https://github.com/LucaPazienza/gravityrush_pc/issues/new'
 INSTALLED_VERSION = os.environ.get('GR_UPDATE_TEST_FROM') or VERSION
 # The Windows package of a release (packaging/windows/package.sh).
 RELEASE_ASSET = re.compile(r'GravityRush-PC-[0-9.]+-Windows\.zip', re.IGNORECASE)
@@ -153,12 +154,15 @@ FPS_LIMITS = [('30', ('30',)), ('60', ('60',)), ('120', ('120',)), ('240', ('240
 APP_DEFAULTS = {'ui_language': '', 'game_dir': os.environ.get('GOW3_GAME_DIR', ''), 'user_dir': '',
                 'mods_dir': '', 'mods_enabled': True, 'patches_dir': '', 'language': '1',
                 'player_name': '', 'hdr': False, 'draw_pipe': '', 'readbacks': '',
-                'prep_workers': '', 'copy_threads': '', 'record_thread': True,
+                'prep_workers': '', 'copy_threads': '', 'record_thread': True, 'gpu': '',
                 'background_warmup': True, 'parallel_warmup': True, 'pipeline_binary_cache': True, 'perf_diag': False, 'frame_capture_key': False, 'frame_stats': False, 'gpu_profile': False,
                 'vk_validation': False, 'close_on_play': False, 'f12_quits': False,
                 'check_updates': False, 'game_patches': {}, 'controls': {}, 'pad_style': 'playstation',
+                'vita_mode': True,
                 'last_pkg': '', 'update_check': True,
-                # Play time in seconds, and the save backups made before every start.
+                # Mouse look: the camera follows the mouse; its buttons press PS4 buttons.
+                'input_device': 'auto', 'mouse_look': True, 'mouse_sens': 1.0, 'mouse_invert': False,
+                # The save backups made before every start.
                 'save_backup': True, 'save_backup_keep': 10}
 
 # PS4 button, default key, default gamepad button (SDL names; src/runtime_pad.c). L2/R2 come
@@ -167,11 +171,17 @@ CONTROLS = [('cross', 'Space', 'a'), ('circle', 'Left Shift', 'b'), ('square', '
             ('triangle', 'Q', 'y'), ('l1', '1', 'leftshoulder'), ('r1', '3', 'rightshoulder'),
             ('l2', 'R', None), ('r2', 'F', None), ('l3', 'Z', 'leftstick'),
             ('r3', 'C', 'rightstick'), ('options', 'Return', 'start'), ('touchpad', 'Tab', 'back'),
-            ('up', 'I', 'dpup'), ('down', 'K', 'dpdown'), ('left', 'J', 'dpleft'), ('right', 'L', 'dpright')]
+            ('up', 'I', 'dpup'), ('down', 'K', 'dpdown'), ('left', 'J', 'dpleft'), ('right', 'L', 'dpright'),
+            # Gravity slide: L2 and R2 together on one key ('' on the gamepad: its triggers do it).
+            ('slide', 'Left Ctrl', '')]
+# The second keyboard/mouse binding of a button (src/runtime_pad.c key map): with mouse look the
+# mouse buttons kick, shift gravity and make a stasis field.
+ALT_KEYS = {'square': 'Mouse Left', 'r1': 'Mouse Right', 'circle': 'Mouse Middle'}
+MOUSE_KEYS = ('Mouse Left', 'Mouse Right', 'Mouse Middle', 'Mouse X1', 'Mouse X2')
 PS_BUTTON_NAMES = {'cross': 'Cross', 'circle': 'Circle', 'square': 'Square', 'triangle': 'Triangle',
                    'l1': 'L1', 'r1': 'R1', 'l2': 'L2', 'r2': 'R2', 'l3': 'L3', 'r3': 'R3',
                    'options': 'Options', 'touchpad': 'Touchpad', 'up': 'D-pad up', 'down': 'D-pad down',
-                   'left': 'D-pad left', 'right': 'D-pad right'}
+                   'left': 'D-pad left', 'right': 'D-pad right', 'slide': 'L2 + R2'}
 # Gamepad buttons by SDL name, labelled as on a PlayStation or an Xbox controller.
 PAD_STYLES = {
     'playstation': {'a': 'Cross', 'b': 'Circle', 'x': 'Square', 'y': 'Triangle', 'leftshoulder': 'L1',
@@ -194,12 +204,80 @@ def control_changes(values, kind):
             and values[row[0]].strip().casefold() != row[column].casefold()}
 
 
+# Input device (controls page): 'auto' plays with whatever is connected, 'controller' only with the
+# controller, 'keyboard' only with the keyboard and mouse (GOW3_INPUT, src/runtime_pad.c).
+INPUT_DEVICES = ('auto', 'controller', 'keyboard')
+# SDL_GamepadType values (SDL3) of PlayStation pads; Xbox and the others use the Xbox names.
+SDL_PLAYSTATION_TYPES = {4, 5, 6}  # PS3, PS4, PS5
+
+
+def gamepads():
+    """[(name, style)] of the connected controllers, found with the game's own SDL3 (the same
+    names and types the game sees). Empty when SDL3 is missing or nothing is connected."""
+    import ctypes
+    candidates = [PORT_DIR / 'bin' / 'SDL3.dll', Path(r'C:\msys64\clang64\bin\SDL3.dll')]
+    sdl = None
+    for path in candidates:
+        if path.is_file():
+            try:
+                sdl = ctypes.CDLL(str(path))  # full path: PyInstaller's folder holds no SDL3
+                break
+            except OSError:
+                continue
+    if sdl is None:
+        return []
+    found = []
+    try:
+        sdl.SDL_Init.argtypes, sdl.SDL_Init.restype = [ctypes.c_uint32], ctypes.c_bool
+        sdl.SDL_GetGamepads.argtypes = [ctypes.POINTER(ctypes.c_int)]
+        sdl.SDL_GetGamepads.restype = ctypes.POINTER(ctypes.c_uint32)
+        sdl.SDL_GetGamepadNameForID.argtypes, sdl.SDL_GetGamepadNameForID.restype = [ctypes.c_uint32], ctypes.c_char_p
+        sdl.SDL_GetGamepadTypeForID.argtypes, sdl.SDL_GetGamepadTypeForID.restype = [ctypes.c_uint32], ctypes.c_int
+        sdl.SDL_free.argtypes = [ctypes.c_void_p]
+        if not sdl.SDL_Init(0x00002000):  # SDL_INIT_GAMEPAD
+            return []
+        count = ctypes.c_int(0)
+        ids = sdl.SDL_GetGamepads(ctypes.byref(count))
+        for i in range(count.value if ids else 0):
+            name = (sdl.SDL_GetGamepadNameForID(ids[i]) or b'Controller').decode('utf-8', 'replace')
+            style = 'playstation' if sdl.SDL_GetGamepadTypeForID(ids[i]) in SDL_PLAYSTATION_TYPES else 'xbox'
+            found.append((name, style))
+        if ids:
+            sdl.SDL_free(ids)
+        sdl.SDL_Quit()
+    except (AttributeError, OSError, ValueError):
+        return found
+    return found
+
+
+def key_bindings(controls, button):
+    """(main, alternative) keyboard/mouse binding of a button: the chosen ones, else the defaults;
+    '' is no binding."""
+    controls = controls if isinstance(controls, dict) else {}
+    default = next(row[1] for row in CONTROLS if row[0] == button)
+    picked = []
+    for kind, fallback in (('key', default), ('alt', ALT_KEYS.get(button, ''))):
+        chosen = controls.get(kind, {}) if isinstance(controls.get(kind), dict) else {}
+        value = chosen.get(button, fallback)
+        picked.append(value.strip() if isinstance(value, str) and not set(value) & set(',=|') else fallback)
+    return tuple(picked)
+
+
 def control_map(controls, kind):
-    """GOW3_KEY_MAP/GOW3_PAD_MAP value: 'cross=Q,circle=Left Shift' for the changed buttons."""
-    chosen = controls.get(kind, {}) if isinstance(controls, dict) else {}
+    """GOW3_KEY_MAP/GOW3_PAD_MAP value for the changed buttons: 'cross=Q,square=E|Mouse Left'
+    (keyboard: main and alternative binding; 'circle=' leaves a button without any)."""
+    controls = controls if isinstance(controls, dict) else {}
+    if kind == 'key':
+        changed = set()
+        for part in ('key', 'alt'):
+            if isinstance(controls.get(part), dict):
+                changed |= {b for b, v in controls[part].items() if isinstance(v, str)}
+        return ','.join(f"{button}={'|'.join(k for k in key_bindings(controls, button) if k)}"
+                        for button, _key, _pad in CONTROLS if button in changed)
+    chosen = controls.get(kind, {}) if isinstance(controls.get(kind), dict) else {}
     return ','.join(f'{button}={chosen[button].strip()}' for button, _key, _pad in CONTROLS
                     if isinstance(chosen.get(button), str) and chosen[button].strip()
-                    and not set(chosen[button]) & set(',='))
+                    and not set(chosen[button]) & set(',=|'))
 
 UPSCALERS = [('dlss', ('DLSS (NVIDIA GeForce RTX)',)),
              ('fsr4', ('FSR 4 (best quality)', 'FSR 4 (лучшее качество)')),
@@ -303,11 +381,96 @@ def game_info(folder):
         return APP_NAME, '?'
 
 
+def report_url(settings):
+    """The 'Report a problem' form on GitHub (.github/ISSUE_TEMPLATE/bug_report.yml), filled in with
+    the port's version, the game's release and the graphics card and Windows version."""
+    import platform
+    from urllib.parse import urlencode
+    gpus = vulkan_gpus()
+    gpu = settings.get('gpu') or next((name for name, kind in gpus if kind == 'discrete'),
+                                      gpus[0][0] if gpus else '')
+    system = f'Windows {platform.release()} ({platform.version()})'
+    try:
+        title_id = game_profile_of(settings.get('game_dir', ''))[0]
+        found = game_info(settings.get('game_dir', ''))
+    except Exception:
+        title_id, found = None, None
+    release = ('European CUSA01113, version 01.00' if title_id == 'CUSA01113' and found and found[1] == '01.00'
+               else 'American CUSA01130' if title_id == 'CUSA01130' else 'Other or not sure')
+    fields = {'template': 'bug_report.yml', 'version': VERSION, 'release': release,
+              'gpu': f'{gpu}, {system}' if gpu else system}
+    return f'{ISSUE_FORM}?{urlencode(fields)}'
+
+
 def game_profile_of(folder):
     """(title id, (ids, built-in XML, app version)) of a game with a patch profile, else (id, None)."""
     from patches import game_profile, game_title_id
     title_id = game_title_id(folder) if folder else None
     return title_id, game_profile(title_id)
+
+
+_GPUS = None
+
+
+def vulkan_gpus():
+    """The graphics cards as Vulkan lists them (the game's GOW3_GPU_ID counts in this order):
+    [(name, kind)], kind 'discrete', 'integrated' or 'other'. Empty without a Vulkan driver."""
+    global _GPUS
+    if _GPUS is not None:
+        return _GPUS
+    _GPUS = []
+    # The packaged launcher (PyInstaller) resolves a bare DLL name in its own folder: the system's
+    # Vulkan loader is loaded by its full path first.
+    names = ([os.path.join(os.environ.get('SystemRoot', r'C:\Windows'), 'System32', 'vulkan-1.dll'), 'vulkan-1']
+             if os.name == 'nt' else ['libvulkan.so.1'])
+    vk = None
+    for name in names:
+        try:
+            vk = ctypes.WinDLL(name) if os.name == 'nt' else ctypes.CDLL(name)
+            break
+        except OSError as error:
+            gpu_probe_note(f'no Vulkan loader at {name}: {error!r}')
+    if vk is None:
+        return _GPUS
+
+    class InstanceCreateInfo(ctypes.Structure):
+        _fields_ = [('sType', ctypes.c_int), ('pNext', ctypes.c_void_p), ('flags', ctypes.c_uint),
+                    ('pApplicationInfo', ctypes.c_void_p), ('enabledLayerCount', ctypes.c_uint),
+                    ('ppEnabledLayerNames', ctypes.c_void_p), ('enabledExtensionCount', ctypes.c_uint),
+                    ('ppEnabledExtensionNames', ctypes.c_void_p)]
+    instance = ctypes.c_void_p()
+    info = InstanceCreateInfo(1, None, 0, None, 0, None, 0, None)  # VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO
+    try:
+        result = vk.vkCreateInstance(ctypes.byref(info), None, ctypes.byref(instance))
+        if result != 0:
+            gpu_probe_note(f'vkCreateInstance returned {result}')
+            return _GPUS
+        count = ctypes.c_uint(0)
+        vk.vkEnumeratePhysicalDevices(instance, ctypes.byref(count), None)
+        devices = (ctypes.c_void_p * count.value)()
+        vk.vkEnumeratePhysicalDevices(instance, ctypes.byref(count), devices)
+        for device in devices[:count.value]:
+            props = ctypes.create_string_buffer(2048)  # VkPhysicalDeviceProperties (824 bytes)
+            vk.vkGetPhysicalDeviceProperties(ctypes.c_void_p(device), props)
+            kind = int.from_bytes(props.raw[16:20], 'little')  # deviceType
+            name = props.raw[20:276].split(b'\0', 1)[0].decode('utf-8', 'replace')
+            _GPUS.append((name, {1: 'integrated', 2: 'discrete'}.get(kind, 'other')))
+        vk.vkDestroyInstance(instance, None)
+    except (OSError, AttributeError, ValueError) as error:
+        _GPUS = []
+        gpu_probe_note(f'error {error!r}')
+    gpu_probe_note(f'{len(_GPUS)} cards: {_GPUS}')
+    return _GPUS
+
+
+def gpu_probe_note(text):
+    # GR_GPU_PROBE=1: what the card list found, in the launcher data folder (diagnostics).
+    if os.environ.get('GR_GPU_PROBE'):
+        try:
+            with open(CONFIG_DIR / 'gpu_probe.txt', 'a', encoding='utf-8') as f:
+                f.write(text + '\n')
+        except OSError:
+            pass
 
 
 def game_environment(s):
@@ -339,6 +502,12 @@ def game_environment(s):
             env[name] = str(s[key])
     if not s.get('record_thread', True):
         env['GOW3_VK_RECORD_THREAD'] = '0'
+    # The card is saved by name: its index changes when cards are added or removed, and a missing
+    # one falls back to the game's own choice (an index past the list would stop the game).
+    if s.get('gpu'):
+        names = [name for name, _ in vulkan_gpus()]
+        if s['gpu'] in names:
+            env['GOW3_GPU_ID'] = str(names.index(s['gpu']))
     env['GOW3_BACKGROUND_WARMUP'] = '1' if s.get('background_warmup', True) else '0'
     env['GOW3_PARALLEL_WARMUP'] = '1' if s.get('parallel_warmup', True) else '0'
     env['GOW3_PIPELINE_BINARIES'] = '1' if s.get('pipeline_binary_cache', True) else '0'
@@ -352,6 +521,8 @@ def game_environment(s):
             env[name] = value
     if s.get('gyro_sens'):
         env['GOW3_GYRO_SENS'] = str(s['gyro_sens'])
+    # Vita mode: the PC's own gyro (handhelds) when the controller has none (src/runtime_host_motion.c).
+    env['GOW3_HOST_MOTION'] = '1' if s.get('vita_mode', True) else '0'
     env.setdefault('GOW3_FPS_LOG', '1')  # FPS and worst frame every 5 s in the log (diagnostics)
     env.setdefault('GOW3_FRAME_STATS', '1')  # draws, compiles and stalls every 5 s (diagnostics)
     # F12 in the game (or creating the trigger file) saves the next frames here, for bug reports
@@ -585,5 +756,7 @@ def main():
     launcher_ui.run(sys.modules[__name__], tk, filedialog)
 
 
+if __name__ == '__main__' and os.environ.get('GR_GPU_PROBE'):
+    vulkan_gpus()
 if __name__ == '__main__':
     main()

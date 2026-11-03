@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2024-2026 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <unordered_map>
 #include <xxhash.h>
 #include "video_core/amdgpu/liverpool.h"
 
@@ -28,6 +29,49 @@ namespace VideoCore {
 
 static constexpr u64 PageShift = 12;
 static constexpr u64 NumFramesBeforeRemoval = 32;
+
+// gow3: the game's text textures (R8, one line of text: menu labels, gem costs). The last upload
+// of each is remembered so a frame capture (F11) can tell whether the GPU copy still matches
+// guest memory, and where the upload read its data from.
+namespace {
+struct TextUpload {
+    u64 hash;
+    u32 flags;
+    bool from_gpu_buffer;
+    u64 serial;
+};
+std::mutex text_upload_mutex;
+std::unordered_map<VAddr, TextUpload> text_uploads;
+u64 text_upload_serial = 0;
+
+// Diagnostic sessions only (GOW3_CAPTURE_ALL): nothing is hashed or kept for players.
+bool IsTextImage(const ImageInfo& info) {
+    static const bool enabled = std::getenv("GOW3_CAPTURE_ALL") != nullptr;
+    return enabled && info.pixel_format == vk::Format::eR8Unorm && info.guest_size <= 64_KB;
+}
+} // namespace
+
+std::string Gow3TextState(const Image& image) {
+    if (!IsTextImage(image.info)) {
+        return {};
+    }
+    const u64 now = XXH3_64bits(std::bit_cast<const u8*>(image.info.guest_address),
+                                image.info.guest_size);
+    std::scoped_lock lock{text_upload_mutex};
+    const auto it = text_uploads.find(image.info.guest_address);
+    std::string out = fmt::format("    text {:#x} {}x{} pitch {} memory {:016x} flags {:#x}",
+                                  image.info.guest_address, image.info.size.width,
+                                  image.info.size.height, image.info.mips_layout[0].pitch, now,
+                                  u32(image.flags));
+    if (it == text_uploads.end()) {
+        return out + " never uploaded";
+    }
+    const TextUpload& up = it->second;
+    return out + fmt::format(" upload {:016x} #{} of {} flags {:#x} from {} -> {}", up.hash,
+                             up.serial, text_upload_serial, up.flags,
+                             up.from_gpu_buffer ? "gpu buffer" : "memory",
+                             up.hash == now ? "same" : "STALE");
+}
 
 TextureCache::TextureCache(const Vulkan::Instance& instance_, Vulkan::Scheduler& scheduler_,
                            Vulkan::Runtime& runtime_, AmdGpu::Liverpool* liverpool_,
@@ -700,6 +744,41 @@ std::tuple<ImageId, int, int> TextureCache::ResolveOverlap(const ImageInfo& imag
             cache_image.info.resources.levels == 1 && image_info.resources.layers == 1 &&
             cache_image.info.resources.layers == 1;
 
+        // gow3: the same bytes seen as a wider or taller 2D image. The game's text textures (R8,
+        // pitch 64) start as a 16 texel wide placeholder and are redrawn 64 wide at the same
+        // address (the gem cost after a purchase): a view of the old image showed a stretched
+        // 16 texel strip of the number. Replace it with the larger image. GOW3_WIDER_EXPAND=0
+        // keeps the old view (A/B tests).
+        static const bool wider_expand = [] {
+            const char* env = std::getenv("GOW3_WIDER_EXPAND");
+            return !(env && env[0] == '0');
+        }();
+        if (wider_expand && !merged_image_id &&
+            image_info.pixel_format == cache_image.info.pixel_format &&
+            image_info.type == cache_image.info.type &&
+            image_info.tile_mode == cache_image.info.tile_mode &&
+            image_info.resources.levels == cache_image.info.resources.levels &&
+            image_info.resources.layers == cache_image.info.resources.layers &&
+            image_info.size.width >= cache_image.info.size.width &&
+            image_info.size.height >= cache_image.info.size.height &&
+            image_info.size != cache_image.info.size) {
+            if (True(cache_image.flags & ImageFlagBits::GpuModified)) {
+                return {ExpandImage(image_info, cache_image_id), -1, -1};
+            }
+            // Contents from guest memory only: the new image uploads all of it, and copying the
+            // old one over it would put the placeholder's blank strip back (the first digit).
+            const ImageId new_image_id =
+                slot_images.insert(instance, runtime, slot_image_views, image_info);
+            RegisterImage(new_image_id);
+            auto& old_image = slot_images[cache_image_id]; // the insert may have moved it
+            if (old_image.binding.is_bound || old_image.binding.is_target) {
+                old_image.binding.needs_rebind = 1u;
+            }
+            FreeImage(cache_image_id);
+            TrackImage(new_image_id);
+            return {new_image_id, -1, -1};
+        }
+
         // Size and resources are less than or equal, use image view.
         if (image_info.pixel_format != cache_image.info.pixel_format ||
             image_info.guest_size <= cache_image.info.guest_size || pow2_padding_only) {
@@ -1186,17 +1265,11 @@ void TextureCache::RefreshImage(Image& image) {
 
     if (True(image.flags & ImageFlagBits::MaybeCpuDirty) &&
         False(image.flags & ImageFlagBits::CpuDirty)) {
-        // The image size should be less than page size to be considered MaybeCpuDirty
-        // So this calculation should be very uncommon and reasonably fast
-        // For now we'll just check up to 64 first pixels
+        // The image spans at most two pages to be considered MaybeCpuDirty, so hashing all of it
+        // is cheap. gow3: upstream hashed only the first 8x8 pixels; the game's text textures
+        // (R8, one line of text) keep that corner blank, so text redrawn in place could be missed.
         const auto addr = std::bit_cast<u8*>(image.info.guest_address);
-        const u32 w = std::min(image.info.size.width, u32(8));
-        const u32 h = std::min(image.info.size.height, u32(8));
-
-        const u32 s_w = image.info.props.is_block ? Common::DivCeil(w, 4u) : w;
-        const u32 s_h = image.info.props.is_block ? Common::DivCeil(h, 4u) : h;
-        const u32 size = s_w * s_h * (image.info.num_bits / 8);
-        const u64 hash = XXH3_64bits(addr, size);
+        const u64 hash = XXH3_64bits(addr, image.info.guest_size);
         if (image.hash == hash) {
             image.flags &= ~ImageFlagBits::MaybeCpuDirty;
             return;
@@ -1290,6 +1363,20 @@ void TextureCache::RefreshImage(Image& image) {
     }
 
     scheduler.EndRendering();
+
+    if (IsTextImage(image.info)) {
+        const TextUpload up{
+            .hash = XXH3_64bits(std::bit_cast<const u8*>(image.info.guest_address),
+                                image.info.guest_size),
+            .flags = u32(image.flags),
+            .from_gpu_buffer =
+                buffer_cache.IsRegionGpuModified(image.info.guest_address, image.info.guest_size),
+        };
+        std::scoped_lock lock{text_upload_mutex};
+        TextUpload& slot = text_uploads[image.info.guest_address];
+        slot = up;
+        slot.serial = ++text_upload_serial;
+    }
 
     const auto [in_buffer, in_offset] =
         buffer_cache.ObtainBufferForImage(image.info.guest_address, image.info.guest_size);
