@@ -149,6 +149,7 @@ def main():
              '<Patch>',
              '    <TitleID>',
              '        <ID>CUSA01113</ID>',
+             '        <ID>CUSA01130</ID>',
              '    </TitleID>']
     for name, (width, height) in RESOLUTIONS.items():
         v = values(width, height)

@@ -12,6 +12,7 @@ PROFILES = {
         'env': {},
     },
 }
+PROFILES['CUSA01130'] = PROFILES['CUSA01113']  # US release: the same eboot.bin
 DEFAULT = {'name': None, 'modules': ('libc.prx', 'libSceFios2.prx'), 'env': {}}
 
 

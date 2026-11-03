@@ -4,6 +4,7 @@
 <Patch>
     <TitleID>
         <ID>CUSA01113</ID>
+        <ID>CUSA01130</ID>
     </TitleID>
     <Metadata Title="Gravity Rush Remastered" Name="Resolution Patch - 720p" Note="Renders at 1280x720." Author="LucaPazienza" PatchVer="1.0" AppVer="01.00" AppElf="eboot.bin">
         <PatchList>
