@@ -157,7 +157,8 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': os.environ.get('GOW3_GAME_DIR', '
                 'prep_workers': '', 'copy_threads': '', 'record_thread': True, 'gpu': '',
                 'background_warmup': True, 'parallel_warmup': True, 'pipeline_binary_cache': True, 'perf_diag': False, 'frame_capture_key': False, 'frame_stats': False, 'gpu_profile': False,
                 'vk_validation': False, 'close_on_play': False, 'f12_quits': False,
-                'check_updates': False, 'game_patches': {}, 'controls': {}, 'button_names': 'auto',
+                'check_updates': False, 'game_patches': {}, 'controls': {}, 'pad_style': 'playstation',
+                'vita_mode': True,
                 'last_pkg': '', 'update_check': True,
                 # Mouse look: the camera follows the mouse; its buttons press PS4 buttons.
                 'input_device': 'auto', 'mouse_look': True, 'mouse_sens': 1.0, 'mouse_invert': False,
@@ -520,10 +521,8 @@ def game_environment(s):
             env[name] = value
     if s.get('gyro_sens'):
         env['GOW3_GYRO_SENS'] = str(s['gyro_sens'])
-    if s.get('input_device') in ('controller', 'keyboard'):
-        env['GOW3_INPUT'] = 'pad' if s['input_device'] == 'controller' else 'keyboard'
-    env['GOW3_MOUSE_LOOK'] = '1' if s.get('mouse_look', True) and s.get('input_device') != 'controller' else '0'
-    env['GOW3_MOUSE_INVERT_Y'] = '1' if s.get('mouse_invert') else '0'
+    # Vita mode: the PC's own gyro (handhelds) when the controller has none (src/runtime_host_motion.c).
+    env['GOW3_HOST_MOTION'] = '1' if s.get('vita_mode', True) else '0'
     env.setdefault('GOW3_FPS_LOG', '1')  # FPS and worst frame every 5 s in the log (diagnostics)
     env.setdefault('GOW3_FRAME_STATS', '1')  # draws, compiles and stalls every 5 s (diagnostics)
     # F12 in the game (or creating the trigger file) saves the next frames here, for bug reports

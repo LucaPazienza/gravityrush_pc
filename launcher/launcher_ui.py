@@ -181,6 +181,12 @@ _ROWS = [
     ('Aiming by moving a DualSense or DualShock 4.', 'Per mirare muovendo un DualSense o un DualShock 4.',
      'Pour viser en bougeant une DualSense ou une DualShock 4.', 'Zum Zielen durch Bewegen eines DualSense oder DualShock 4.',
      'Para apuntar moviendo un DualSense o un DualShock 4.'),
+    ('Vita mode', 'Modalità Vita', 'Mode Vita', 'Vita-Modus', 'Modo Vita'),
+    ('Aiming by moving the console itself (handhelds such as the ROG Ally), when the controller has no gyroscope.',
+     'Per mirare muovendo la console stessa (portatili come la ROG Ally), quando il controller non ha il giroscopio.',
+     'Pour viser en bougeant la console elle-même (portables comme la ROG Ally), quand la manette n\'a pas de gyroscope.',
+     'Zum Zielen durch Bewegen der Konsole selbst (Handhelds wie der ROG Ally), wenn der Controller kein Gyroskop hat.',
+     'Para apuntar moviendo la consola misma (portátiles como la ROG Ally), cuando el mando no tiene giroscopio.'),
     ('Click a key, then press the new one (Esc cancels).', 'Clicca un tasto, poi premi quello nuovo (Esc annulla).',
      'Cliquez sur une touche, puis appuyez sur la nouvelle (Échap annule).',
      'Klicke auf eine Taste und drücke dann die neue (Esc bricht ab).',
@@ -2002,120 +2008,45 @@ class LauncherWindow:
 
     def page_controls(self, body, foot):
         tk, logic = self.tk, self.logic
-        controls = self.app.get('controls') if isinstance(self.app.get('controls'), dict) else {}
-        pads = controls.get('pad', {})
-        connected = logic.gamepads()
-        device = self.app.get('input_device', 'auto')
-        device = device if device in logic.INPUT_DEVICES else 'auto'
-        chosen_style = self.app.get('button_names', 'auto')
-        style = chosen_style if chosen_style in logic.PAD_STYLES else (connected[0][1] if connected else 'playstation')
-        pad_names = logic.PAD_STYLES[style]
-        defaults = {row[0]: row for row in logic.CONTROLS}
-        mouse_look = self.app.get('mouse_look', True)
-        show_pad, show_keys = device != 'keyboard', device != 'controller'
-        columns = [c for c, shown in (('pad', show_pad), ('keys', show_keys)) if shown]
-        col_x = dict(zip(columns, (self.px(220), self.px(420))))
+        self.sec(body, 'GYROSCOPE', first=True)
 
-        def cell(row, column, text):
-            if column in col_x:
-                tk.Label(row, text=t(text), bg=CARD, fg=TEXT3, font=self.font(13)).place(
-                    x=col_x[column] + self.px(4), rely=.5, anchor='w')
+        def make_slider(control):
+            value = float(self.app.get('gyro_sens', 1.4))
+            shown = tk.Label(control, text=f'{value:.1f}×', bg=PAPER, fg=MU, font=self.font(14, 'bold'), width=5, anchor='e')
 
-        self.sec(body, 'DEVICE', first=True)
-        first = connected[0][0] if connected else ''
-        options = [('auto', f"{t('Automatic')}: {first}" if first else t('Automatic: keyboard and mouse')),
-                   ('controller', f"{t('Controller')}: {first}" if first else t('Controller (none connected)')),
-                   ('keyboard', t('Keyboard and mouse'))]
-
-        def device_row(control):
-            ImageButton(self, control, t('Search again'), lambda: self.open_page('controls')).widget.pack(
-                side='right', padx=(self.px(8), 0))
-            self.choice(control, options, device, lambda v: (self.set_app('input_device', v), self.open_page('controls')),
-                        30, False).pack(side='right')
-        self.row(body, 'Play with', device_row)
-        if show_pad:
-            self.row(body, 'Button names', lambda c: Segments(
-                self, c, [('auto', 'Automatic'), ('playstation', 'PlayStation'), ('xbox', 'Xbox')],
-                chosen_style if chosen_style in logic.PAD_STYLES else 'auto',
-                lambda v: (self.set_app('button_names', v), self.open_page('controls'))).widget.pack(side='right'))
-
-        self.sec(body, 'BUTTONS')
-        if show_keys:
-            users = {}
-            for b, _k, _p in logic.CONTROLS:
-                for bound in set(logic.key_bindings(controls, b)):
-                    if bound:
-                        users.setdefault(bound.casefold(), (bound, []))[1].append(b)
-            shared = [f"{t(bound)}: {', '.join(self.button_label(b) for b in members)}"
-                      for bound, members in users.values() if len(members) > 1]
-            if shared:
-                tk.Label(body, text=t('The same key does several actions at once:') + '\n' + '\n'.join(shared),
-                         bg=CARD, fg=WARN_C, font=self.font(13), anchor='w', justify='left',
-                         wraplength=self.px(PANEL_W - 120)).pack(fill='x', pady=(0, self.px(8)))
-        head = tk.Frame(body, bg=CARD, height=self.px(26))
-        head.pack(fill='x')
-        head.pack_propagate(False)
-        for column, title in (('pad', 'CONTROLLER'), ('keys', 'KEYBOARD AND MOUSE')):
-            if column in col_x:
-                tk.Label(head, text=t(title), bg=CARD, fg=TEXT3, font=self.font(11, 'bold')).place(
-                    x=col_x[column], rely=.5, anchor='w')
-
-        def line(title):
-            row = tk.Frame(body, bg=CARD, height=self.px(40))
-            row.pack(fill='x')
-            row.pack_propagate(False)
-            tk.Label(row, text=title, bg=CARD, fg=TEXT, font=self.font(14), anchor='w').place(x=0, rely=.5, anchor='w')
-            return row
-
-        row = line(t('Left stick'))
-        cell(row, 'pad', 'Left stick')
-        cell(row, 'keys', 'W A S D')
-        row = line(t('Right stick'))
-        cell(row, 'pad', 'Right stick')
-        cell(row, 'keys', 'Mouse or arrow keys' if mouse_look else 'Arrow keys')
-        for button in BUTTON_ORDER:
-            row = line(self.button_label(button))
-            pad_default = defaults[button][2]
-            if show_pad and button in TRIGGER_NAMES[style]:
-                cell(row, 'pad', TRIGGER_NAMES[style][button])
-            elif show_pad:
-                choices = ([] if pad_default else [('', 'Nothing')]) + [
-                    (name, pad_names.get(name, name)) for name in PAD_CHOICES]
-                self.choice(row, choices, pads.get(button) or pad_default,
-                            lambda v, b=button: self.set_pad(b, v), 13).place(x=col_x['pad'], rely=.5, anchor='w')
-            if show_keys:
-                x = col_x['keys']
-                for part, name in zip(('key', 'alt'), logic.key_bindings(controls, button)):
-                    chip = ImageButton(self, row, t(name) if name else '—', None, 'chip')
-                    chip.command = lambda b=button, c=chip, k=part: self.start_capture(b, c, k)
-                    chip.widget.place(x=x, rely=.5, anchor='w')
-                    chip.widget.update_idletasks()
-                    x += max(self.px(130), chip.widget.winfo_reqwidth() + self.px(10))
-        self.hint(body, {'auto': 'Controller: choose from the list. Keyboard and mouse: click a box, then press a key or '
-                                 'a mouse button (Delete empties it).',
-                         'controller': 'Choose a button from the list.',
-                         'keyboard': 'Click a box, then press a key or a mouse button (Delete empties it).'}[device])
-        if show_keys:
-            self.sec(body, 'MOUSE')
-            self.toggle_row(body, 'Move the camera with the mouse', mouse_look,
-                            lambda v: (self.set_app('mouse_look', v), self.open_page('controls')))
-            if mouse_look:
-                self.toggle_row(body, 'Invert vertical camera', self.app.get('mouse_invert', False),
-                                lambda v: self.set_app('mouse_invert', v))
-        if show_pad:
-            self.sec(body, 'GYROSCOPE')
-
-            def gyro(control):
-                value = float(self.app.get('gyro_sens', 1.4))
-                shown = tk.Label(control, text=f'{value:.1f}x', bg=CARD, fg=TEXT2, font=self.font(14, 'bold'),
-                                 width=5, anchor='e')
-
-                def changed(v):
-                    shown.configure(text=f'{v:.1f}x')
-                    self.set_app('gyro_sens', round(v, 1))
-                Slider(self, control, 0.5, 3.0, 0.1, value, changed).widget.pack(side='left')
-                shown.pack(side='left')
-            self.row(body, 'Sensitivity', gyro)
+            def changed(v):
+                shown.configure(text=f'{v:.1f}×')
+                self.set_app('gyro_sens', round(v, 1))
+            Slider(self, control, 0.5, 3.0, 0.1, value, changed).widget.pack(side='left')
+            shown.pack(side='left')
+        self.row(body, 'Sensitivity', make_slider, 'Aiming by moving a DualSense or DualShock 4.')
+        self.toggle_row(body, 'Vita mode', self.app.get('vita_mode', True), lambda v: self.set_app('vita_mode', v),
+                        'Aiming by moving the console itself (handhelds such as the ROG Ally), when the controller has '
+                        'no gyroscope.')
+        keys = self.app.get('controls', {}).get('key', {}) if isinstance(self.app.get('controls'), dict) else {}
+        pads = logic.PAD_STYLES.get(self.app.get('pad_style', 'playstation'), logic.PAD_STYLES['playstation'])
+        for group, members in (('BUTTONS', logic.CONTROLS[:12]), ('D-PAD', logic.CONTROLS[12:])):
+            self.sec(body, group)
+            if group == 'BUTTONS':
+                self.hint(body, 'Click a key, then press the new one (Esc cancels).')
+                head = tk.Frame(body, bg=PAPER, height=self.px(26))
+                head.pack(fill='x', pady=(self.px(4), 0))
+                head.pack_propagate(False)
+                for text, x in (('COMMAND', 0), ('CONTROLLER', 250), ('KEYBOARD', 480)):  # the rows' columns
+                    tk.Label(head, text=t(text), bg=PAPER, fg=TEXT3, font=self.font(11.5, 'bold')).place(
+                        x=self.px(x), rely=.5, anchor='w')
+            for button, default_key, pad in members:
+                line = tk.Frame(body, bg=PAPER, height=self.px(36))
+                line.pack(fill='x')
+                line.pack_propagate(False)
+                tk.Label(line, text=t(BUTTON_NAMES[button]), bg=PAPER, fg=SD,
+                         font=self.font(13.5), width=0, anchor='w').place(x=0, rely=.5, anchor='w')
+                pad_label = t(pads.get(pad, pad) if pad else 'Trigger')
+                tk.Label(line, text=pad_label, bg=PAPER, fg=SD,
+                         font=self.font(13.5)).place(x=self.px(250), rely=.5, anchor='w')
+                chip = ImageButton(self, line, keys.get(button) or default_key, None, 'chip')
+                chip.command = lambda b=button, c=chip: self.start_capture(b, c)
+                chip.widget.place(x=self.px(480), rely=.5, anchor='w')
         self.footer(foot, [('Reset', self.reset_controls, False), ('Close', lambda: self.open_page(None), True)])
 
     def button_label(self, button):
@@ -2292,8 +2223,7 @@ class LauncherWindow:
     def reset_controls(self):
         self.app['controls'] = {}
         self.app['gyro_sens'] = 1.4
-        self.app.update({'input_device': 'auto', 'button_names': 'auto', 'mouse_look': True, 'mouse_sens': 1.0,
-                         'mouse_invert': False})
+        self.app['vita_mode'] = True
         self.save()
         self.open_page('controls')
         self.toast(t('Defaults restored'))
