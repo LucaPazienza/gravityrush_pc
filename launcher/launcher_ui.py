@@ -421,6 +421,12 @@ _ROWS = [
     ('ACTION', 'AZIONE', 'ACTION', 'AKTION', 'ACCIÓN'),
     ('KEYBOARD AND MOUSE', 'TASTIERA E MOUSE', 'CLAVIER ET SOURIS', 'TASTATUR UND MAUS', 'TECLADO Y RATÓN'),
     ('Button names', 'Nomi dei tasti', 'Noms des boutons', 'Tastennamen', 'Nombres de los botones'),
+    ('Confirm in menus', 'Conferma nei menu', 'Valider dans les menus', 'Bestätigen in Menüs', 'Confirmar en los menús'),
+    ('Circle confirms and Cross goes back, as on Japanese consoles. Menus only, gameplay does not change. Applies at the next start.',
+     'Cerchio conferma e Croce torna indietro, come sulle console giapponesi. Solo nei menu, il gameplay non cambia. Vale dal prossimo avvio.',
+     'Rond valide et Croix revient en arrière, comme sur les consoles japonaises. Menus seulement, le gameplay ne change pas. Appliqué au prochain lancement.',
+     'Kreis bestätigt und Kreuz geht zurück, wie auf japanischen Konsolen. Nur in Menüs, das Gameplay ändert sich nicht. Gilt ab dem nächsten Start.',
+     'Círculo confirma y Equis vuelve atrás, como en las consolas japonesas. Solo en los menús, el juego no cambia. Se aplica en el próximo inicio.'),
     ('Click a controller button to choose another one, or a key and then press the new one (Esc cancels).', 'Clicca un tasto del controller per sceglierne un altro, oppure un tasto della tastiera e poi premi quello nuovo (Esc annulla).', 'Cliquez sur un bouton de la manette pour en choisir un autre, ou sur une touche puis appuyez sur la nouvelle (Échap annule).', 'Klicke auf eine Controllertaste, um eine andere zu wählen, oder auf eine Taste und drücke dann die neue (Esc bricht ab).', 'Haz clic en un botón del mando para elegir otro, o en una tecla y pulsa la nueva (Esc cancela).'),
     ('Move', 'Movimento', 'Se déplacer', 'Bewegen', 'Moverse'),
     ('Camera', 'Visuale', 'Caméra', 'Kamera', 'Cámara'),
@@ -2053,6 +2059,11 @@ class LauncherWindow:
                 self, c, [('auto', 'Automatic'), ('playstation', 'PlayStation'), ('xbox', 'Xbox')],
                 chosen_style if chosen_style in logic.PAD_STYLES else 'auto',
                 lambda v: (self.set_app('button_names', v), self.open_page('controls'))).widget.pack(side='right'))
+            self.row(body, 'Confirm in menus', lambda c: Segments(
+                self, c, [('cross', 'Cross'), ('circle', 'Circle')],
+                'circle' if self.app.get('menu_confirm') == 'circle' else 'cross',
+                lambda v: self.set_app('menu_confirm', v)).widget.pack(side='right'),
+                'Circle confirms and Cross goes back, as on Japanese consoles. Menus only, gameplay does not change. Applies at the next start.')
 
         self.sec(body, 'BUTTONS')
         if show_keys:
