@@ -20,7 +20,7 @@ and shaders to Vulkan.
 
 ## Current Status
 
-**Status: version 0.1.12 — the whole story has been played from start to finish with this port,
+**Status: version 0.1.13 — the whole story has been played from start to finish with this port,
 with sound and saves.**
 
 **[Download the latest release](https://github.com/LucaPazienza/gravityrush_pc/releases/latest)** —
@@ -61,7 +61,9 @@ What works today:
 
 Not done yet / known gaps:
 
-- Only Nvidia graphics cards have been tested so far.
+- Developed and tested on an Nvidia graphics card; players confirmed AMD cards from 0.1.12 on.
+- CPUs older than Intel Haswell (2013) lack instructions the game uses (BMI1, LZCNT, MOVBE): from
+  0.1.13 the port emulates them there, but this has not been confirmed on such a CPU yet.
 - Trophies are not saved or shown yet.
 - **This port is developed for the European release only** (CUSA01113, version 01.00): every fix and
   enhancement is made and checked on that version. Other releases, such as the American one
