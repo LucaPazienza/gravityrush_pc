@@ -756,6 +756,7 @@ bool GraphicsPipeline::SerializationSupport::Deserialize(Serialization::Archive&
 
 bool PipelineCache::LoadGraphicsPipeline(Serialization::Archive& ar) {
     sel.graphics_key.Deserialize(ar);
+    sel.fetch_shader.reset(); // a pipeline that failed to load must not pass its own on
 
     GraphicsPipeline::SerializationSupport sdata{};
     sdata.Deserialize(ar);
@@ -812,8 +813,15 @@ bool PipelineCache::LoadPipelineStage(Serialization::Archive& ar, size_t stage) 
     Shader::StageSpecialization spec{};
     spec.info = &program->info;
     size_t perm_idx{};
-    if (!LoadShaderMeta(ar, program->info, sel.fetch_shader, spec, perm_idx)) {
+    // gow3: only the vertex stage has a fetch shader. The stages load in SwStage order, so a
+    // geometry stage (after the vertex one) used to clear it: the pipeline then bound no vertex
+    // buffers and the characters drawn with it were invisible (issues #7, #8, #30, #32).
+    std::optional<Shader::Gcn::FetchShaderData> fetch;
+    if (!LoadShaderMeta(ar, program->info, fetch, spec, perm_idx)) {
         return false;
+    }
+    if (fetch) {
+        sel.fetch_shader = std::move(fetch);
     }
 
     std::vector<u32> spv{};
@@ -1259,7 +1267,9 @@ void PipelineCache::PumpWarmUp() {
                 usable = stage.info != nullptr;
                 infos[i] = stage.info;
                 modules[i] = stage.result;
-                fetch = stage.fetch; // the blocking load keeps the last stage's too
+                if (stage.fetch) {
+                    fetch = stage.fetch; // the vertex stage's (see LoadPipelineStage)
+                }
             }
         }
         if (!usable) {

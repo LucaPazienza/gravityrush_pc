@@ -708,6 +708,45 @@ const GraphicsPipeline* PipelineCache::TryPreparedPipeline(const PreparedDraw& p
     return it != graphics_pipelines.end() ? it->second.get() : nullptr;
 }
 
+// gow3: GOW3_PRELOAD_CHECK=1. A pipeline rebuilt from the disk cache must use the shaders
+// the draw asks for now: logs the first mismatch of each pipeline.
+static const GraphicsPipeline* CheckPreloaded(const GraphicsPipeline* pipeline,
+                                              const PipelineSelection& sel) {
+    static const bool enabled = [] {
+        const char* env = std::getenv("GOW3_PRELOAD_CHECK");
+        return env && *env == '1';
+    }();
+    if (!enabled || !pipeline || !pipeline->preloaded) {
+        return pipeline;
+    }
+    static std::unordered_set<const GraphicsPipeline*> checked;
+    if (!checked.insert(pipeline).second) {
+        return pipeline;
+    }
+    const auto stages = pipeline->GetStages();
+    std::string diff;
+    for (u32 i = 0; i < MaxShaderStages && i < stages.size(); ++i) {
+        if (stages[i] != sel.infos[i] || pipeline->stage_modules[i] != sel.modules[i]) {
+            diff += fmt::format(" stage {}: info {}/{} module {:#x}/{:#x}", i,
+                                fmt::ptr(stages[i]), fmt::ptr(sel.infos[i]),
+                                u64(VkShaderModule(pipeline->stage_modules[i])),
+                                u64(VkShaderModule(sel.modules[i])));
+        }
+    }
+    const auto& fetch = pipeline->GetFetchShader();
+    if (fetch.has_value() != sel.fetch_shader.has_value() ||
+        (fetch && (fetch->attributes.size() != sel.fetch_shader->attributes.size() ||
+                   !(*fetch == *sel.fetch_shader)))) {
+        diff += fmt::format(" fetch {}/{} attributes {}/{}", fetch.has_value(),
+                            sel.fetch_shader.has_value(), fetch ? fetch->attributes.size() : 0,
+                            sel.fetch_shader ? sel.fetch_shader->attributes.size() : 0);
+    }
+    std::printf("Preload check %#llx: %s\n",
+                (unsigned long long)std::hash<GraphicsPipelineKey>{}(pipeline->GetGraphicsKey()),
+                diff.empty() ? "same" : diff.c_str());
+    return pipeline;
+}
+
 const GraphicsPipeline* PipelineCache::GetGraphicsPipeline(const DrawIndirectParams params,
                                                            const PreparedDraw* prepared) {
     SeedWorkerCaches();
@@ -733,7 +772,7 @@ const GraphicsPipeline* PipelineCache::GetGraphicsPipeline(const DrawIndirectPar
         !EmulatorSettings.IsShaderCollect()) {
         const auto found = graphics_pipelines.find(sel.graphics_key);
         if (found != graphics_pipelines.end()) {
-            return found->second.get();
+            return CheckPreloaded(found->second.get(), sel);
         }
         if (!pending_graphics.contains(sel.graphics_key) && compiler->HasCapacity()) {
             PhaseTimer capture{g_gow3_snapshot_ns};
@@ -804,7 +843,7 @@ const GraphicsPipeline* PipelineCache::GetGraphicsPipeline(const DrawIndirectPar
         }
         sel.fetch_shader.reset();
     }
-    return it->second.get();
+    return CheckPreloaded(it->second.get(), sel);
 }
 
 const ComputePipeline* PipelineCache::GetComputePipeline() {

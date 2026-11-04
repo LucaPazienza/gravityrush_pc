@@ -280,11 +280,18 @@ bool Instance::CreateDevice() {
     }
 
     boost::container::static_vector<const char*, 64> enabled_extensions;
+    // gow3: GOW3_VK_DISABLE_EXT=<name,name,...> (diagnostics) treats those extensions as missing,
+    // to reproduce drivers without them (the RX 570's lacks VK_EXT_vertex_input_dynamic_state).
+    const char* disabled = std::getenv("GOW3_VK_DISABLE_EXT");
     const auto add_extension = [&](std::string_view extension) -> bool {
         const auto result =
             std::find_if(available_extensions.begin(), available_extensions.end(),
                          [&](const std::string& name) { return name == extension; });
 
+        if (disabled && std::string_view{disabled}.find(extension) != std::string_view::npos) {
+            LOG_WARNING(Render_Vulkan, "Extension {} turned off (GOW3_VK_DISABLE_EXT).", extension);
+            return false;
+        }
         if (result != available_extensions.end()) {
             LOG_INFO(Render_Vulkan, "Enabling extension: {}", extension);
             enabled_extensions.push_back(extension.data());

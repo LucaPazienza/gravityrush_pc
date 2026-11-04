@@ -109,6 +109,10 @@ public:
         return key;
     }
 
+    /// gow3: diagnosis of pipelines rebuilt from the disk cache (GOW3_PRELOAD_CHECK).
+    std::array<vk::ShaderModule, MaxShaderStages> stage_modules{};
+    bool preloaded = false;
+
     /// gow3: second draw squaring a self-scaled MIN/MAX blend, or null (vk_blend_rewrite.h).
     vk::Pipeline SquarePassHandle() const noexcept {
         return *square_pipeline;

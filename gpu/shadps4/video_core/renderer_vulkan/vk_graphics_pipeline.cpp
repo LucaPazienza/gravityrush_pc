@@ -54,6 +54,10 @@ GraphicsPipeline::GraphicsPipeline(
     const auto started = Clock::now();
     const vk::Device device = instance.GetDevice();
     std::ranges::copy(infos, stages.begin());
+    for (u32 i = 0; i < MaxShaderStages && i < modules.size(); ++i) {
+        stage_modules[i] = modules[i];
+    }
+    preloaded = preloading;
     BuildDescSetLayout(preloading);
     const auto debug_str = GetDebugString();
 
