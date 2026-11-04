@@ -6,6 +6,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include "runtime.h"
+#include "runtime_menu.h"
 #include "gpu/gow3gpu.h"
 #if !defined(__x86_64__) || !defined(__GNUC__)
 #error This prototype requires x86-64 GCC or Clang (including MinGW).
@@ -208,6 +209,11 @@ static LONG CALLBACK vectored_fault(EXCEPTION_POINTERS *info) {
     if (code==EXCEPTION_ILLEGAL_INSTRUCTION && image &&
         (uintptr_t)info->ContextRecord->Rip-(uintptr_t)image<0x20000000 &&
         runtime_sse4a_emulate(info->ContextRecord))
+        return EXCEPTION_CONTINUE_EXECUTION;
+    /* BMI1/LZCNT/MOVBE in guest code on a CPU without them (Intel before Haswell): runtime_newisa.c. */
+    if (code==EXCEPTION_ILLEGAL_INSTRUCTION && image &&
+        (uintptr_t)info->ContextRecord->Rip-(uintptr_t)image<0x20000000 &&
+        runtime_newisa_emulate(info->ContextRecord))
         return EXCEPTION_CONTINUE_EXECUTION;
     if (code==EXCEPTION_ACCESS_VIOLATION || code==EXCEPTION_ILLEGAL_INSTRUCTION || code==EXCEPTION_PRIV_INSTRUCTION ||
         code==EXCEPTION_STACK_OVERFLOW || code==EXCEPTION_INT_DIVIDE_BY_ZERO || code==EXCEPTION_DATATYPE_MISALIGNMENT) {
@@ -426,6 +432,21 @@ static DWORD WINAPI rt_trace_printer(void *arg) {
         fflush(stdout);
     }
     return 0;
+}
+/* GOW3_MENU_CONFIRM=circle: Circle confirms in the game's menus. Gravity Rush 01.00 (EU and US
+ * eboot) picks the menu's confirm and back buttons at start-up from its own region setting, not
+ * from the system parameter: `mov ecx,0xd; mov edx,0xe` at 0x29ae stores Cross (button 14) as
+ * confirm and Circle (13) as back; the regions that use Circle take the other branch. */
+static void menu_confirm_patch(uint64_t size) {
+    static const unsigned char cross[10] = {0xb9, 0x0d, 0, 0, 0, 0xba, 0x0e, 0, 0, 0};
+    if (!menu_circle_confirm()) return;
+    if (size < 0x29ae + sizeof(cross) || memcmp(image + 0x29ae, cross, sizeof(cross))) {
+        printf("Menu confirm: Circle requested, but this game build is not the one patched here\n");
+        return;
+    }
+    image[0x29af] = 0x0e;
+    image[0x29b4] = 0x0d;
+    printf("Menu confirm: Circle confirms, Cross goes back (game menus and the port's dialogs)\n");
 }
 static void install_rt_trace(uint64_t size) {
     static const unsigned char original[8] = {0x55,0x48,0x89,0xe5,0x48,0x83,0xec,0x10};
@@ -757,6 +778,8 @@ int main(int argc, char **argv) {
         _exit(missing ? 1 : 0); /* no destructors: GPU threads are running */
     }
     if (patch_file) apply_patches(patch_file, segments, ns, relocs, nr);
+    runtime_newisa_install(image, size);
+    menu_confirm_patch(size);
 #ifdef _WIN32
     char hooks_sfo[4096], hooks_serial[32]="";
     snprintf(hooks_sfo,sizeof(hooks_sfo),"%s/sce_sys/param.sfo",app0 ? app0 : ".");

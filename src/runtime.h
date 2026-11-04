@@ -110,4 +110,6 @@ uintptr_t runtime_extra_resolve(const char *name);
 void runtime_extra_report(void);
 unsigned char *runtime_image_base(void);
 int runtime_sse4a_emulate(void *context_record);
+int runtime_newisa_emulate(void *context_record);
+void runtime_newisa_install(unsigned char *image, uint64_t image_size);
 #endif
