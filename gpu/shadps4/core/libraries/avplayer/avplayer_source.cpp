@@ -787,6 +787,27 @@ AvPlayerSource::AVFramePtr AvPlayerSource::ConvertAudioFrame(const AVFrame& fram
         LOG_ERROR(Lib_AvPlayer, "Could not convert to NV12: {}", av_err2str(res));
         return AVFramePtr{nullptr, &ReleaseAVFrame};
     }
+    // The PS4 player hands 5.1 audio over in AAC's own channel order (C, L, R, Ls, Rs, LFE) and
+    // games remap it from there; FFmpeg decodes to L, R, C, LFE, Ls, Rs. Gravity Rush movies
+    // (5.1 AAC with only L and R used) otherwise came out with the left channel in the centre and
+    // the right one on the left only. GOW3_AVPLAYER_AAC_ORDER=0 keeps FFmpeg's order.
+    static const bool aac_order = [] {
+        const char* env = std::getenv("GOW3_AVPLAYER_AAC_ORDER");
+        return !(env && env[0] == '0');
+    }();
+    if (aac_order && pcm16_frame->ch_layout.nb_channels == 6 &&
+        av_channel_layout_index_from_channel(&pcm16_frame->ch_layout, AV_CHAN_FRONT_CENTER) == 2 &&
+        av_channel_layout_index_from_channel(&pcm16_frame->ch_layout, AV_CHAN_LOW_FREQUENCY) == 3) {
+        static constexpr int aac_from_ffmpeg[6] = {2, 0, 1, 4, 5, 3};
+        auto* samples = reinterpret_cast<s16*>(pcm16_frame->data[0]);
+        for (int f = 0; f < pcm16_frame->nb_samples; ++f, samples += 6) {
+            s16 in[6];
+            std::memcpy(in, samples, sizeof(in));
+            for (int c = 0; c < 6; ++c) {
+                samples[c] = in[aac_from_ffmpeg[c]];
+            }
+        }
+    }
     return pcm16_frame;
 }
 
