@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <cassert>
 #include <deque>
@@ -68,6 +69,17 @@ public:
         }
     }
     std::uint64_t Bytes() const { return bytes; }
+    /// gow3: the pages of the copies a CPU access can still wait for (valid and watched), as
+    /// [begin, end); {0, 0} when there are none.
+    std::pair<std::uint64_t, std::uint64_t> WatchedSpan() const {
+        std::uint64_t begin = ~std::uint64_t{0}, end = 0;
+        for (const auto& entry : entries) {
+            if (!entry.valid || !entry.watched || !entry.size) continue;
+            begin = std::min(begin, entry.address & ~std::uint64_t{4095});
+            end = std::max(end, (entry.address + entry.size + 4095) & ~std::uint64_t{4095});
+        }
+        return end ? std::pair{begin, end} : std::pair<std::uint64_t, std::uint64_t>{0, 0};
+    }
 
 private:
     static bool OverlapsPage(const Entry& entry, std::uint64_t address, std::uint64_t size) {

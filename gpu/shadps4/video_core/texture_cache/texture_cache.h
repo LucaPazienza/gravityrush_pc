@@ -472,6 +472,11 @@ private:
     ReadbackQueue<Vulkan::StagingBufferRef> pending_readbacks;
     std::mutex readback_mutex;
     std::atomic<bool> has_pending_readbacks{false};
+    /// gow3: the pages the pending copies cover (ReadbackQueue::WatchedSpan), so that buffer
+    /// and image accesses elsewhere skip ResolveReadbacks' lock: every bound buffer of every
+    /// draw asks, and in gameplay a small copy (the exposure) is nearly always pending.
+    std::atomic<u64> readback_span_begin{0}, readback_span_end{0};
+    void UpdateReadbackSpan(); ///< with readback_mutex held, after the queue changed
     u64 readbacks_queued = 0, readbacks_completed = 0, readbacks_waited = 0;
     u64 readbacks_canceled = 0, readbacks_peak_bytes = 0;
     std::chrono::steady_clock::time_point readback_report = std::chrono::steady_clock::now();

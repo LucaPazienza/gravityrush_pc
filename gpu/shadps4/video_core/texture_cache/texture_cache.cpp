@@ -153,20 +153,37 @@ void TextureCache::RetireReadbacks() {
             }
             runtime.GetStagingPool().FreeDeferred(entry.payload);
         });
+    UpdateReadbackSpan();
     has_pending_readbacks.store(pending_readbacks.Bytes() != 0, std::memory_order_release);
+}
+
+void TextureCache::UpdateReadbackSpan() {
+    const auto [begin, end] = pending_readbacks.WatchedSpan();
+    readback_span_begin.store(begin, std::memory_order_relaxed);
+    readback_span_end.store(end, std::memory_order_release);
 }
 
 bool TextureCache::ResolveReadbacks(VAddr address, u64 size, bool assume_locks,
                                     ReadbackSource source) {
     if (!deferred_readbacks || !has_pending_readbacks.load(std::memory_order_acquire)) return false;
+    // Outside every pending copy's pages: nothing to wait for or to release (GOW3_TOGGLE bit
+    // ReadbackSpan turns the shortcut off).
+    if (!Gow3Toggle::Disabled(Gow3Toggle::ReadbackSpan)) {
+        const u64 end = readback_span_end.load(std::memory_order_acquire);
+        const u64 begin = readback_span_begin.load(std::memory_order_relaxed);
+        if (!size || address >= end || address + size <= begin) return false;
+    }
     {
         std::scoped_lock lock{readback_mutex};
         // Stale mode, byte rule: a game may write every frame to the page that holds a
         // 1x1 exposure copy, but not to its bytes. That write need not wait for the GPU: the
         // copy only stops protecting its page and is still published when the GPU is done.
         if (stale_readbacks && source == ReadbackSource::CpuWrite) {
-            readbacks_released += pending_readbacks.ReleaseOutside(address, size, 64_KB,
-                [this](auto& entry) { WatchReadback<false>(entry.address, entry.size); });
+            if (const unsigned released = pending_readbacks.ReleaseOutside(address, size, 64_KB,
+                    [this](auto& entry) { WatchReadback<false>(entry.address, entry.size); })) {
+                readbacks_released += released;
+                UpdateReadbackSpan();
+            }
         }
         if (!pending_readbacks.RequiredTick(address, size)) return false;
     }
@@ -210,6 +227,7 @@ void TextureCache::CancelReadbacks(VAddr address, u64 size) {
         if (entry.watched) WatchReadback<false>(entry.address, entry.size);
         ++readbacks_canceled;
     });
+    UpdateReadbackSpan();
 }
 
 // gow3: every copy is recorded first and the GPU is waited for once. A wait per image (as
@@ -264,6 +282,7 @@ void TextureCache::ProcessDownloadImages() {
                     }
                     pending_readbacks.Push(copy->guest_address, copy->size,
                         scheduler.CurrentTick(), copy->staging);
+                    UpdateReadbackSpan();
                     has_pending_readbacks.store(true, std::memory_order_release);
                     ++readbacks_queued;
                     readbacks_peak_bytes = std::max(readbacks_peak_bytes, pending_readbacks.Bytes());
