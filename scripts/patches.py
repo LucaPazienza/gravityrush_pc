@@ -75,6 +75,11 @@ GAMES=[
     (('CUSA01113','CUSA01130'),PATCHES_DIR/'CUSA01113.xml','01.00',
      '7c0216e8ff7254d03141e98c2df2b69f4f2259d08f2fe2754c33c5a3f137033a'),  # Gravity Rush Remastered (EU, US)
 ]
+# The same builds as plain ELF dumps: sha256 of the loaded segments (prepare.segments_sha256).
+SEGMENT_SHA256={
+    '7c0216e8ff7254d03141e98c2df2b69f4f2259d08f2fe2754c33c5a3f137033a':
+        'f83b99c223bdc6e12c15cafc0d8887ab8199b91449d131a5f95d89d951b1f19d',
+}
 DMEM_RETAIL_MB=5056  # runtime_memory.c POOL_SIZE default
 
 
@@ -97,8 +102,14 @@ def eboot_matches(game, profile):
         return True
     import hashlib
     try:
-        return hashlib.sha256((Path(game)/'eboot.bin').read_bytes()).hexdigest()==profile[3]
-    except OSError:
+        data=(Path(game)/'eboot.bin').read_bytes()
+        if hashlib.sha256(data).hexdigest()==profile[3]:
+            return True
+        if data[:4]!=b'\x7fELF' or profile[3] not in SEGMENT_SHA256:
+            return False
+        from prepare import segments_sha256
+        return segments_sha256(data)==SEGMENT_SHA256[profile[3]]
+    except (OSError, ValueError):
         return False
 
 

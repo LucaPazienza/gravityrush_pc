@@ -60,6 +60,17 @@ class SelfTests(unittest.TestCase):
         self.assertEqual(ph[0]['vaddr'], 0)
         self.assertEqual(missing, [])
 
+    def test_plain_elf_matches_self(self):
+        source = fixture()
+        elf, header, ph, segments, missing = parse_self(source)
+        plain = bytes(elf)
+        elf2, header2, ph2, segments2, missing2 = parse_self(plain)
+        self.assertEqual(bytes(elf2), plain)
+        self.assertEqual((header2, ph2, missing2), (header, ph, []))
+        self.assertEqual(segments2, [])
+        with self.assertRaisesRegex(ValueError, 'truncated ELF'):
+            parse_self(plain[:0x1008])
+
     def test_truncated_payload_rejected(self):
         with self.assertRaisesRegex(ValueError, 'out of bounds'):
             parse_self(fixture()[:-1])
