@@ -825,7 +825,13 @@ public:
     /// recording). Other threads (draw preparation workers) must not Record(): KickRecording
     /// hands the chunk to the recorder and briefly leaves none.
     [[nodiscard]] bool OwnsRecording() const noexcept {
-        return recording_owner.load(std::memory_order_relaxed) == std::this_thread::get_id();
+        return recording_owner.load(std::memory_order_relaxed) == ThreadToken();
+    }
+    /// gow3: an address unique to the calling thread. std::this_thread::get_id() (libc++ over
+    /// winpthreads) costs system calls, and OwnsRecording() runs for every small guest copy.
+    static const void* ThreadToken() noexcept {
+        static thread_local const char token = 0;
+        return &token;
     }
 
     /// Waits until every recorded command is in the command buffer.
@@ -946,7 +952,7 @@ private:
     bool is_rendering = false;
     // gow3: threaded recording
     std::unique_ptr<RecordChunk> record_chunk;
-    std::atomic<std::thread::id> recording_owner{}; // see OwnsRecording()
+    std::atomic<const void*> recording_owner{}; // ThreadToken() of the owner, see OwnsRecording()
     std::vector<std::unique_ptr<RecordChunk>> full_chunks;
     std::mutex recorder_mutex;
     std::condition_variable_any recorder_cv;
@@ -968,8 +974,10 @@ private:
     void* recording_check_context = nullptr;
     void CheckRecordingThread(const char* what, void* caller);
     u64 host_copies_issued = 0;
-    std::atomic<u64> host_copies_done{0};
-    std::atomic<u64> deferred_signals_issued{0}; ///< by the thread recording (A or B)
+    /// Written by the recording thread after every small copy: on its own cache line, away
+    /// from the fields the GPU thread writes for each copy (host_copies_issued).
+    alignas(64) std::atomic<u64> host_copies_done{0};
+    alignas(64) std::atomic<u64> deferred_signals_issued{0}; ///< by the thread recording (A or B)
     std::shared_ptr<std::atomic<u64>> deferred_signals_done =
         std::make_shared<std::atomic<u64>>(0);
     // gow3: whether recorder_thread runs, read on every Record(). std::jthread::joinable()

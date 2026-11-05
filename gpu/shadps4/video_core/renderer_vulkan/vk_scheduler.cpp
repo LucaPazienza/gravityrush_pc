@@ -331,7 +331,7 @@ void Scheduler::KickRecording(bool force) {
     if (!recording_threaded) {
         return;
     }
-    recording_owner.store(std::this_thread::get_id(), std::memory_order_relaxed);
+    recording_owner.store(ThreadToken(), std::memory_order_relaxed);
     // Callers kick where nobody holds the raw command buffer: deferral resumes.
     direct_mode = false;
     // Batches of tens of KiB keep the queue handoff cheap relative to the work it carries.
