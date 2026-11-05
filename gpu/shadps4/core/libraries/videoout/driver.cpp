@@ -699,11 +699,11 @@ void VideoOutDriver::PresentThread(std::stop_token token) {
         const u32 base = EmulatorSettings.GetFrameLimit();
         return !env_limit && user && (!base || user < base) ? user : base;
     };
-    // gow3: 60 FPS at most while a movie plays: the game's subtitle scripts count 60 frames per
-    // second, so at 120 FPS the subtitles ran twice as fast and replaced each other early.
+    // gow3: exactly 60 FPS while a movie plays: the game advances its movies and their subtitle
+    // scripts one step per frame and counts 60 frames per second. At 120 FPS the subtitles ran
+    // twice as fast; with a 30 FPS limit the picture ran at half speed behind its sound.
     const auto current_limit = [&] {
-        const u32 limit = chosen_limit();
-        return Libraries::AvPlayer::Gow3MoviePlaying() && (!limit || limit > 60) ? 60u : limit;
+        return Libraries::AvPlayer::Gow3MoviePlaying() ? 60u : chosen_limit();
     };
     u32 frame_limit = current_limit();
     auto frame_period = frame_limit ? std::chrono::nanoseconds(1000000000 / frame_limit)
