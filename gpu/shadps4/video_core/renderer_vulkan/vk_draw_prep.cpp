@@ -226,12 +226,42 @@ std::shared_ptr<DrawPreparation::Submission> DrawPreparation::Build(
     if (!Enabled()) {
         return {};
     }
-    auto submission = std::make_shared<Submission>();
+    std::shared_ptr<Submission> submission;
+    if (!Gow3Toggle::Disabled(Gow3Toggle::SubmissionReuse)) {
+        std::scoped_lock lk{mutex};
+        if (!spare.empty()) {
+            submission = std::move(spare.back());
+            spare.pop_back();
+        }
+    }
+    if (submission) {
+        // As new (the fields a fresh Submission starts with), keeping the allocations.
+        submission->seq = 0;
+        submission->num_draws = 0;
+        submission->flat_chunks.clear();
+        submission->start_checksum = submission->end_checksum = 0;
+        submission->delta.reset = false;
+        submission->delta.blocks.clear();
+        submission->delta.words.clear();
+        submission->scanned.store(false, std::memory_order_relaxed);
+        submission->claimed.store(false, std::memory_order_relaxed);
+        submission->gpu_done.store(false, std::memory_order_relaxed);
+    } else {
+        submission = std::make_shared<Submission>();
+    }
     submission->commands.assign(commands.begin(), commands.end());
     ForEachPacket(submission->commands, [&](const AmdGpu::PM4Header* header) {
         submission->num_draws += IsDirectDraw(header->type3.opcode);
     });
-    submission->draws = std::make_unique<PreparedDraw[]>(submission->num_draws);
+    if (submission->num_draws > submission->draws_capacity) {
+        submission->draws = std::make_unique<PreparedDraw[]>(submission->num_draws);
+        submission->draws_capacity = submission->num_draws;
+    } else {
+        for (u32 i = 0; i < submission->num_draws; ++i) {
+            std::destroy_at(&submission->draws[i]);
+            ::new (&submission->draws[i]) PreparedDraw();
+        }
+    }
     return submission;
 }
 
@@ -319,6 +349,12 @@ void DrawPreparation::Collect() {
             front->delta.Apply(*tail_regs);
             tail_seq = front->seq + 1;
             tail_checksum = front->end_checksum;
+        }
+        // Nobody else holds it (the draw recording thread may keep the current one): reuse.
+        constexpr size_t MaxSpare = 8;
+        if (front.use_count() == 1 && spare.size() < MaxSpare &&
+            !Gow3Toggle::Disabled(Gow3Toggle::SubmissionReuse)) {
+            spare.push_back(std::move(submissions.front()));
         }
         submissions.pop_front();
     }

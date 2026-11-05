@@ -121,6 +121,7 @@ public:
         std::vector<u32> commands;
         std::unique_ptr<PreparedDraw[]> draws;
         u32 num_draws{};
+        u32 draws_capacity{}; ///< entries `draws` holds (a reused submission keeps its array)
         std::vector<std::unique_ptr<u32[]>> flat_chunks; ///< from the claiming worker
         u64 start_checksum{}, end_checksum{}; ///< set by the scanner
         AmdGpu::RegDelta delta;                ///< registers written, values at the end
@@ -148,6 +149,10 @@ private:
     std::mutex mutex;
     std::condition_variable_any cv;
     std::deque<std::shared_ptr<Submission>> submissions; ///< ordered by seq
+    /// gow3: finished submissions kept for Build to reuse (guarded by `mutex`). Their draw
+    /// arrays are megabytes: freeing one on the GPU thread (Collect) went back to the system
+    /// (VirtualFree, ~1.3% of the GPU thread) and each new one page-faulted again.
+    std::vector<std::shared_ptr<Submission>> spare;
     std::atomic<u64> gpu_seq{0};
     std::shared_ptr<Submission> current;
 
