@@ -20,7 +20,7 @@ and shaders to Vulkan.
 
 ## Current Status
 
-**Status: version 0.1.13 — the whole story has been played from start to finish with this port,
+**Status: version 0.1.14 — the whole story has been played from start to finish with this port,
 with sound and saves.**
 
 **[Download the latest release](https://github.com/LucaPazienza/gravityrush_pc/releases/latest)** —
@@ -96,6 +96,7 @@ Not done yet / known gaps:
   (eboot.bin, sce_module, sce_sys) that you prepare with your own tools. Tested with the European
   release CUSA01113, version 01.00; the resolution and shadow patches only apply to that version.
   The US release CUSA01130 01.00 ships the same eboot.bin and gets the same patches.
+  eboot.bin and the .prx modules can be plaintext SELF files or plain ELF files, as dumpers write them.
 
 ## Playing
 
