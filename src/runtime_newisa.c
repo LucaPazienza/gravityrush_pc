@@ -29,6 +29,10 @@ static uint8_t original_bytes[SITE_COUNT][16];
 static uint8_t site_patched[SITE_COUNT];
 static unsigned char *isa_image;
 static volatile long emulated_count;
+/* GOW3_NEW_ISA_STATS=1: emulations per site, to find the hot ones (a trap costs microseconds). */
+static int count_sites;
+static volatile long site_hits[SITE_COUNT];
+static uint8_t site_trap[SITE_COUNT];
 
 /* A decoded instruction of the kinds above. */
 typedef struct {
@@ -224,6 +228,7 @@ int runtime_newisa_emulate(void *context_record) {
         if (!isa_image) return 0;
         const int site = find_site((uint64_t)(at - isa_image));
         if (site < 0 || !site_patched[site]) return 0;
+        if (count_sites) InterlockedIncrement(&site_hits[site]);
         memcpy(bytes, original_bytes[site], sizeof(bytes));
     }
     uint64_t flags = c->EFlags;
@@ -236,10 +241,30 @@ int runtime_newisa_emulate(void *context_record) {
 
 static DWORD WINAPI stats_thread(void *unused) {
     (void)unused;
+    static long last_hits[SITE_COUNT];
     for (long last = 0;;) {
         Sleep(5000);
         const long now = emulated_count;
-        printf("New ISA: %ld instructions emulated in 5 s (%ld in all)\n", now - last, now);
+        long traps = 0;
+        int top[5] = {-1, -1, -1, -1, -1};
+        long top_n[5] = {0};
+        for (int i = 0; i < SITE_COUNT; ++i) {
+            const long n = site_hits[i] - last_hits[i];
+            last_hits[i] += n;
+            if (site_trap[i]) traps += n;
+            for (int k = 0; k < 5; ++k) {
+                if (n > top_n[k]) {
+                    for (int j = 4; j > k; --j) { top[j] = top[j - 1]; top_n[j] = top_n[j - 1]; }
+                    top[k] = i; top_n[k] = n;
+                    break;
+                }
+            }
+        }
+        printf("New ISA: %ld instructions emulated in 5 s (%ld in all), %ld of them through traps; busiest:",
+               now - last, now, traps);
+        for (int k = 0; k < 5 && top[k] >= 0; ++k)
+            printf(" 0x%x%s=%ld", sites[top[k]].offset, site_trap[top[k]] ? "(trap)" : "", top_n[k]);
+        printf("\n");
         fflush(stdout);
         last = now;
     }
@@ -267,6 +292,7 @@ static int cpu_has_all(void) {
 uint64_t newisa_stub_helper(uint64_t *regs, uint64_t index, uint64_t *flags);
 uint64_t newisa_stub_helper(uint64_t *regs, uint64_t index, uint64_t *flags) {
     const uint64_t rip = (uint64_t)(uintptr_t)(isa_image + sites[index].offset);
+    if (count_sites) InterlockedIncrement(&site_hits[index]);
     const uint64_t next = emulate(regs, flags, original_bytes[index], rip);
     if (!next) {
         fprintf(stderr, "New ISA: site 0x%x could not be emulated\n", sites[index].offset);
@@ -349,6 +375,7 @@ void runtime_newisa_install(unsigned char *image, uint64_t image_size) {
             ++jumps;
         } else {
             at[0] = 0x06;
+            site_trap[i] = 1;
             ++traps;
         }
         site_patched[i] = 1;
@@ -358,7 +385,10 @@ void runtime_newisa_install(unsigned char *image, uint64_t image_size) {
            jumps + traps, jumps, traps, skipped);
     FlushInstructionCache(GetCurrentProcess(), NULL, 0);
     const char *stats = getenv("GOW3_NEW_ISA_STATS");
-    if (stats && stats[0] == '1') CloseHandle(CreateThread(NULL, 0, stats_thread, NULL, 0, NULL));
+    if (stats && stats[0] == '1') {
+        count_sites = 1;
+        CloseHandle(CreateThread(NULL, 0, stats_thread, NULL, 0, NULL));
+    }
 }
 #else
 int runtime_newisa_emulate(void *context_record) { (void)context_record; return 0; }
