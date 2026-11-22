@@ -751,6 +751,20 @@ def main():
     # play yet: open the launcher instead.
     if '--play' in args and (Path(settings['game_dir'] or '.') / 'eboot.bin').is_file():
         sys.exit(play_without_window(settings))
+    # Prevent multiple concurrent instances of the launcher window
+    try:
+        kernel32 = ctypes.windll.kernel32
+        user32 = ctypes.windll.user32
+        global _launcher_mutex
+        _launcher_mutex = kernel32.CreateMutexW(None, False, 'Local\\GravityRushLauncher_GUI')
+        if kernel32.GetLastError() == 183:  # ERROR_ALREADY_EXISTS
+            hwnd = user32.FindWindowW(None, 'Gravity Rush Launcher')
+            if hwnd:
+                user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+                user32.SetForegroundWindow(hwnd)
+            sys.exit(0)
+    except (AttributeError, OSError):
+        pass
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(1)  # sharp text on scaled displays
     except (AttributeError, OSError):
