@@ -1464,10 +1464,12 @@ class LauncherWindow:
     def taskbar_entry(self):
         """A frameless window still gets its taskbar button and Windows 11 rounded corners."""
         try:
+            self.root.update_idletasks()
             user32 = ctypes.windll.user32
-            hwnd = user32.GetParent(self.root.winfo_id())
+            hwnd = user32.GetParent(self.root.winfo_id()) or self.root.winfo_id()
             style = user32.GetWindowLongW(hwnd, -20)  # GWL_EXSTYLE
             user32.SetWindowLongW(hwnd, -20, (style & ~0x80) | 0x40000)  # no TOOLWINDOW, APPWINDOW
+            user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0, 0x0027)  # SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED
             corner = ctypes.c_int(2)  # DWMWCP_ROUND
             ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 33, ctypes.byref(corner), ctypes.sizeof(corner))
             self.root.withdraw()
